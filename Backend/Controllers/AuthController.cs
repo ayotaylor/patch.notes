@@ -8,7 +8,7 @@ using Backend.Models.DTO;
 namespace Backend.Controllers
 {
     [ApiController]
-    [Route("api/[controller]")]
+    [Route("api/auth")]
     public class AuthController : ControllerBase
     {
         private readonly IAuthService _authService;
@@ -155,10 +155,20 @@ namespace Backend.Controllers
         }
 
         [HttpPost("validateToken")]
-        public async Task<IActionResult> ValidateToken([FromBody] string token)
+        public async Task<IActionResult> ValidateToken()
         {
             try
             {
+                var header = Request.Headers["Authorization"].FirstOrDefault();
+                if (string.IsNullOrEmpty(header) || !header.StartsWith("Bearer "))
+                {
+                    return BadRequest(new
+                    {
+                        Message = "Authorization header is missing or invalid"
+                    });
+                }
+
+                var token = header.Substring("Bearer ".Length).Trim();
                 if (string.IsNullOrEmpty(token))
                 {
                     return BadRequest(new

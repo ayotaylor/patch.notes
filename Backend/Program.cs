@@ -92,7 +92,7 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowVueApp", policy =>
     {
-        policy.WithOrigins("https://localhost:8080", "http://localhost:3000")
+        policy.WithOrigins("http://localhost:8080", "http://localhost:3000")
             .AllowAnyHeader()
             .AllowAnyMethod()
             .AllowCredentials();
