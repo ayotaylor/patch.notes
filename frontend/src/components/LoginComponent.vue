@@ -134,7 +134,6 @@ const login = async () => {
     const response = await authStore.login(loginForm.value)
 
     if (response.success) {
-      authStore.setAuthData(response.token, response.user)
       toast.success('Login successful!')
 
       // Redirect to intended route or dashboard

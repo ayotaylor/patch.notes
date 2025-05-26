@@ -215,7 +215,6 @@ const register = async () => {
     const response = await authStore.register(registerForm.value)
 
     if (response.success) {
-      authStore.setAuthData(response.token, response.user)
       toast.success('Registration successful! Redirecting to dashboard...')
       router.push('/dashboard')
     } else {
@@ -236,7 +235,7 @@ const signUpWithGoogle = async () => {
   try {
     const response = await authStore.signUpWithGoogle()
     if (response.success) {
-      authStore.setAuthData(response.token, response.user)
+      //authStore.setAuthData(response.token, response.user)
       toast.success('Google registration successful! Redirecting to dashboard...')
       router.push('/dashboard')
     } else {
@@ -257,7 +256,7 @@ const signUpWithFacebook = async () => {
   try {
     const response = await authStore.signUpWithFacebook()
     if (response.success) {
-      authStore.setAuthData(response.token, response.user)
+      //authStore.setAuthData(response.token, response.user)
       toast.success('Facebook registration successful! Redirecting to dashboard...')
       router.push('/dashboard')
     } else {

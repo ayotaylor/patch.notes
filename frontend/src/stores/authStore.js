@@ -8,6 +8,8 @@ import {
   getStoredUser,
   clearAuthData,
   setAuthData,
+  AUTH_STORAGE_KEY,
+  USER_STORAGE_KEY,
 } from "@/utils/authUtils";
 
 export const useAuthStore = defineStore("auth", () => {
@@ -15,10 +17,16 @@ export const useAuthStore = defineStore("auth", () => {
   const user = ref(null);
   const token = ref(null);
   const loading = ref(false);
+  const lastTokenValidation = ref(null);
+  // Track if user was logged out via interceptor to prevent router conflicts
+  const loggedOutViaInterceptor = ref(false);
 
   // getters
+  // TODO: consider using a more robust authentication check
   const isAuthenticated = computed(() => {
-    return !!user.value && !!token.value;
+    return !!(
+      (user.value && user.value.id && token.value && token.value.length > 10) // Basic sanity check
+    );
   });
 
   const userFullName = computed(() => {
@@ -36,40 +44,41 @@ export const useAuthStore = defineStore("auth", () => {
   const toast = useToast();
 
   async function register(userData) {
-    this.loading = true;
+    loading.value = true;
     try {
       const response = await authService.register(userData);
 
       user.value = response.user;
       token.value = response.token;
+      lastTokenValidation.value = Date.now();
 
       // Store in localStorage
       setAuthData(token.value, user.value);
 
-      toast.success("Registration successful");
-
       return { success: true, data: response };
     } catch (error) {
       console.error("Registration error:", error);
-      toast.error(error.message || "Registration failed");
       throw error;
     } finally {
-      this.loading = false;
+      loading.value = false;
     }
   }
 
   async function login(credentials) {
     loading.value = true;
+    loggedOutViaInterceptor.value = false; // Reset flag
     try {
       const response = await authService.login(credentials);
+
       user.value = response.user;
       token.value = response.token;
+      //ticated.value = true;
+      lastTokenValidation.value = Date.now();
+
       setAuthData(token.value, user.value);
-      toast.success("Login successful");
       return { success: true, data: response };
     } catch (error) {
       console.error("Login error:", error);
-      toast.error(error.message || "Login failed");
       throw error;
     } finally {
       loading.value = false;
@@ -77,14 +86,13 @@ export const useAuthStore = defineStore("auth", () => {
   }
 
   async function logout() {
-    this.loading = true;
+    loading.value = true;
     try {
       // Clear local storage
       clearAuthData();
 
       // Reset user state
-      user.value = null;
-      token.value = null;
+      clearAuthState();
 
       // Redirect to login
       await router.push("/login");
@@ -94,23 +102,28 @@ export const useAuthStore = defineStore("auth", () => {
       console.error("Logout error:", error);
       toast.error("Error during logout");
     } finally {
-      this.loading = false;
+      loading.value = false;
     }
   }
 
   async function validateToken() {
-    const token = getStoredToken();
-    if (!token) {
+    // Skip if already being handled by interceptor
+    if (loggedOutViaInterceptor.value) {
+      return false;
+    }
+    const tokenToValidate = token.value || getStoredToken();
+    if (!tokenToValidate) {
       await logout();
       return false;
     }
 
     try {
-      const isValid = await authService.validateToken(token);
+      const isValid = await authService.validateToken();
       if (!isValid) {
         await logout();
         return false;
       }
+      lastTokenValidation.value = Date.now();
       return true;
     } catch (error) {
       console.error("Token validation error:", error);
@@ -121,44 +134,56 @@ export const useAuthStore = defineStore("auth", () => {
 
   function loadUserFromStorage() {
     const userStr = getStoredUser();
-    const token = getStoredToken();
+    const tokenStr = getStoredToken();
     if (userStr && token) {
       try {
-        this.user = JSON.parse(userStr);
-        this.token = token;
+        user.value = userStr;
+        token.value = tokenStr;
+        loggedOutViaInterceptor.value = false; // Reset flag
       } catch (error) {
         console.error("Error parsing user data:", error);
-        this.clearStorage();
+        clearAuthState();
       }
     }
   }
 
   function clearAuthState() {
-    clearAuthData();
     // Reset state
-    this.user = null;
-    this.token = null;
+    user.value = null;
+    token.value = null;
+    lastTokenValidation.value = null;
+  }
+
+  function setLastTokenValidation(timestamp) {
+    lastTokenValidation.value = timestamp;
+  }
+
+  // Flag for interceptor coordination
+  function setLoggedOutViaInterceptor(value) {
+    loggedOutViaInterceptor.value = value;
   }
 
   // Handle storage changes for multi-tab sync
   function handleStorageChange(event) {
-    if (event.key === "user") {
+    if (event.key === USER_STORAGE_KEY) {
       if (event.newValue) {
         try {
-          this.user = JSON.parse(event.newValue);
+          user.value = JSON.parse(event.newValue);
+          loggedOutViaInterceptor.value = false; // Reset flag
         } catch (error) {
           console.error("Error parsing user data from storage event:", error);
         }
       } else {
-        this.user = null;
+        // clear user and token from local storage
+        clearAuthData();
       }
-    } else if (event.key === "authToken") {
+    } else if (event.key === AUTH_STORAGE_KEY) {
       if (event.newValue) {
-        this.token = event.newValue;
+        token.value = event.newValue;
+        loggedOutViaInterceptor.value = false; // Reset flag
       } else {
-        // If token is removed, clear user as well
-        this.token = null;
-        this.user = null;
+        // clear user and token from local storage
+        clearAuthData();
       }
     }
   }
@@ -167,6 +192,7 @@ export const useAuthStore = defineStore("auth", () => {
     // state
     user,
     token,
+    lastTokenValidation,
     loading,
     // getters
     isAuthenticated,
@@ -178,6 +204,8 @@ export const useAuthStore = defineStore("auth", () => {
     validateToken,
     loadUserFromStorage,
     clearAuthState,
+    setLastTokenValidation,
+    setLoggedOutViaInterceptor,
     handleStorageChange,
   };
 });

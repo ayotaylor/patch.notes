@@ -1,6 +1,5 @@
 import { createRouter, createWebHistory } from "vue-router";
 import { useAuthStore } from "@/stores/authStore";
-import { authService } from "@/services/authService";
 import { getStoredToken, clearAuthData } from "@/utils/authUtils";
 
 // Import your views/components
@@ -23,6 +22,7 @@ const routes = [
     component: LoginComponent,
     meta: {
       requiresGuest: true,
+      validateToken: "never",
       title: "Login - Patch Notes",
     },
   },
@@ -32,6 +32,7 @@ const routes = [
     component: RegisterComponent,
     meta: {
       requiresGuest: true,
+      validateToken: "never",
       title: "Register - Patch Notes",
     },
   },
@@ -39,36 +40,49 @@ const routes = [
     path: "/dashboard",
     name: "Dashboard",
     component: DashboardComponent,
-    meta: { requiresAuth: true, title: "Login - Patch Notes" },
+    meta: {
+      requiresAuth: true,
+      validateToken: "cache",
+      title: "Dashboard - Patch Notes",
+    },
   },
-//   {
-//     path: "/profile",
-//     name: "Profile",
-//     component: () => ProfileComponent,
-//     meta: {
-//       requiresAuth: true,
-//       title: "Profile - AuthApp",
-//     },
-//   },
-//   {
-//     path: "/:pathMatch(.*)*",
-//     name: "NotFound",
-//     component: () => import("@/components/NotFoundComponent.vue"),
-//     meta: {
-//       title: "Page Not Found - AuthApp",
-//     },
-//   },
+  //   {
+  //     path: "/profile",
+  //     name: "Profile",
+  //     component: () => ProfileComponent,
+  //     meta: {
+  //       requiresAuth: true,
+  //       validateToken: "cache",
+  //       title: "Profile - AuthApp",
+  //     },
+  //   },
+  //   {
+  //     path: "/:pathMatch(.*)*",
+  //     name: "NotFound",
+  //     component: () => import("@/components/NotFoundComponent.vue"),
+  //     meta: {
+  //       title: "Page Not Found - AuthApp",
+  //     },
+  //   },
   //   {
   //     path: '/forgot-password',
   //     name: 'ForgotPassword',
   //     component: ForgotPassword,
-  //     meta: { requiresGuest: true }
+  //     meta: {
+  //      requiresGuest: true,
+  //      validateToken: "never",
+  //      title: 'Forgot Password - Patch Notes'
+  //     }
   //   },
   //   {
   //     path: '/reset-password',
   //     name: 'ResetPassword',
   //     component: ResetPassword,
-  //     meta: { requiresGuest: true }
+  //     meta: {
+  //        requiresGuest: true
+  //        validateToken: "never",
+  //        title: 'Reset Password - Patch Notes'
+  //     }
   //   },
 ];
 
@@ -89,42 +103,72 @@ router.beforeEach(async (to, from, next) => {
   // set page title
   document.title = to.meta.title || "Patch Notes";
 
+  const authStore = useAuthStore();
   const token = getStoredToken();
-  // Clear auth data if token is invalid or not present
-  if (!token) {
-    clearAuthData();
+
+  if (!to.meta.requiresAuth && !to.meta.requiresGuest) {
+    return next();
   }
 
-  // Validate token if it exists
-  if (token) {
+  // If no token exists, clear any stored auth data
+  if (!token) {
+    clearAuthData();
+    authStore.clearAuthState(); // Clear store state
+
+    if (to.meta.requiresAuth) {
+      return next("/login");
+    }
+    return next();
+  }
+
+  // Load user from storage if not already loaded
+  if (!authStore.isAuthenticated && token) {
+    authStore.loadUserFromStorage();
+  }
+
+  // Only validate token for protected routes and if not recently validated
+  if (to.meta.requiresAuth) {
+    const validationStrategy = to.meta.validateToken || "cache";
+    let isValid = true;
     try {
-      const isValid = await authService.validateToken(token);
-      if (!isValid) {
-        clearAuthData();
-        if (to.meta.requiresAuth) {
-          next("/login");
-          return;
+      if (validationStrategy === "always") {
+        // Always validate token
+        isValid = await authStore.validateToken();
+      } else if (validationStrategy === "cache") {
+        const lastValidation = authStore.lastTokenValidation;
+        const now = Date.now();
+        const validationThreshold = 5 * 60 * 1000; // 5 minutes in milliseconds
+
+        // Only call backend if token hasn't been validated recently
+        if (!lastValidation || now - lastValidation > validationThreshold) {
+          isValid = await authStore.validateToken();
+        }
+
+        if (!isValid) {
+          clearAuthData();
+          authStore.clearAuthState();
+          return next("/login");
         }
       }
+      // Check if token was recently validated (within last 5 minutes)
     } catch (error) {
       console.error("Token validation error:", error);
       clearAuthData();
-      if (to.meta.requiresAuth) {
-        next("/login");
-        return;
-      }
+      authStore.clearAuth();
+      return next("/login");
     }
   }
 
-  const authStore = useAuthStore();
-
+  // Route-specific logic
   if (to.meta.requiresAuth && !authStore.isAuthenticated) {
-    next("/login");
-  } else if (to.meta.requiresGuest && authStore.isAuthenticated) {
-    next("/dashboard");
-  } else {
-    next();
+    return next("/login");
   }
+
+  if (to.meta.requiresGuest && authStore.isAuthenticated) {
+    return next("/dashboard");
+  }
+
+  next();
 
   // Global error handling for navigation
   router.onError((error) => {

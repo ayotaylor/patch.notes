@@ -11,7 +11,7 @@ import 'bootstrap/dist/js/bootstrap.bundle.min.js'
 // Font Awesome
 import '@fortawesome/fontawesome-free/css/all.min.css'
 
-const app = createApp(App)//.mount('#app')
+const app = createApp(App)
 const pinia = createPinia();
 
 // configure toast notifications

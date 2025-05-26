@@ -1,4 +1,5 @@
 import apiClient from "./apiClient";
+import { getStoredToken, getStoredUser } from "@/utils/authUtils";
 
 export const authService = {
   // Login user
@@ -22,9 +23,9 @@ export const authService = {
   },
 
   // Validate token
-  async validateToken(token) {
+  async validateToken() {
     try {
-      const response = await apiClient.post("/auth/validate-token", { token });
+      const response = await apiClient.post("/auth/validateToken", {});
       return response.data.isValid;
     } catch (error) {
       console.error("Token validation error:", error);
@@ -69,7 +70,10 @@ export const authService = {
   // Change password
   async changePassword(passwordData) {
     try {
-      const response = await apiClient.post("/auth/change-password", passwordData);
+      const response = await apiClient.post(
+        "/auth/change-password",
+        passwordData
+      );
       return response.data;
     } catch (error) {
       throw new Error(
@@ -112,22 +116,14 @@ export const authService = {
     }
   },
 
+  // TODO: maybe remove this if not needed...already handled in store
   isAuthenticated() {
-    const token = localStorage.getItem("authToken");
+    const token = getStoredToken();
     return !!token;
   },
 
   getUser() {
-    const userStr = localStorage.getItem("user");
-    if (userStr) {
-      try {
-        return JSON.parse(userStr);
-      } catch (error) {
-        console.error("Error parsing user data:", error);
-        localStorage.removeItem("user");
-        return null;
-      }
-    }
-    return null;
+    const userStr = getStoredUser();
+    return !!userStr;
   },
 };
