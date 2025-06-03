@@ -177,7 +177,7 @@ namespace Backend.Controllers
                     });
                 }
 
-                var isValid = await _authService.ValidateTokenAsync(token);
+                var isValid = _authService.ValidateTokenAsync(token);
 
                 // maybe update response
                 return Ok(new { IsValid = isValid });

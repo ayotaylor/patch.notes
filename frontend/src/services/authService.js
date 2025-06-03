@@ -58,7 +58,7 @@ export const authService = {
   // Update user profile
   async updateProfile(profileData) {
     try {
-      const response = await apiClient.put("/auth/profile", profileData);
+      const response = await apiClient.put("/profile/update", profileData);
       return response.data;
     } catch (error) {
       throw new Error(

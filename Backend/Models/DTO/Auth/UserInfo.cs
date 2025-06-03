@@ -8,5 +8,7 @@ namespace Backend.Models.DTO
         public string LastName { get; set; } = string.Empty;
         public string Provider { get; set; } = string.Empty;
         public DateTime CreatedAt { get; set; }
+
+        public bool IsProfileUpdated { get; set; } = false;
     }
 }

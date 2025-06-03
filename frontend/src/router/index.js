@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory } from "vue-router";
 import { useAuthStore } from "@/stores/authStore";
 import { getStoredToken, clearAuthData } from "@/utils/authUtils";
+import CompleteProfile from "@/components/CompleteProfile.vue";
 
 // Import your views/components
 // You'll need to create these components or adjust the paths to match your existing ones
@@ -46,6 +47,16 @@ const routes = [
       title: "Dashboard - Patch Notes",
     },
   },
+  {
+    path: "/complete-profile",
+    name: "CompleteProfile",
+    component: () => CompleteProfile,
+    meta: {
+      requiresAuth: true,
+      validateToken: "cache",
+      title: "Complete Your Profile - AuthApp",
+    },
+  }
   //   {
   //     path: "/profile",
   //     name: "Profile",

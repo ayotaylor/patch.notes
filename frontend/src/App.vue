@@ -26,7 +26,8 @@ const authStore = useAuthStore();
 const loadingMessage = ref('');
 
 const showNavBar = computed(() => {
-  const authRoutes = ['/login', '/register', '/forgot-password', '/reset-password'];
+  const authRoutes = [
+    '/login', '/register', '/forgot-password', '/reset-password'];
   return !authRoutes.includes(route.path);
 });
 

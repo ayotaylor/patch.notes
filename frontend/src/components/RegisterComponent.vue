@@ -216,7 +216,7 @@ const register = async () => {
 
     if (response.success) {
       toast.success('Registration successful! Redirecting to dashboard...')
-      router.push('/dashboard')
+      router.push('/complete-profile');
     } else {
       error.value = response.message || 'Registration failed'
     }

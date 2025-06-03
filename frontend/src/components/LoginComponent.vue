@@ -136,6 +136,14 @@ const login = async () => {
     if (response.success) {
       toast.success('Login successful!')
 
+      let isProfileUpdated = authStore.user.isProfileUpdated
+
+      if (isProfileUpdated !== null && !isProfileUpdated) {
+        // Redirect to profile update page if profile is not updated
+        router.push('/complete-profile')
+        return
+      }
+
       // Redirect to intended route or dashboard
       const redirect = route.query.redirect || '/dashboard'
       router.push(redirect)

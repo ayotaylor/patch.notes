@@ -4,9 +4,9 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 
-using Backend.Models;
 using Backend.Models.DTO;
 using Backend.Config;
+using Backend.Models.Auth;
 
 namespace Backend.Services
 {
@@ -60,6 +60,15 @@ namespace Backend.Services
                     LastName = request.LastName,
                     Provider = "Local",
                     CreatedAt = DateTime.Now,
+                    UserProfile = new UserProfile
+                    {
+                        FirstName = request.FirstName,
+                        LastName = request.LastName,
+                        Email = request.Email,
+                        CreatedAt = DateTime.Now,
+                        // IsPublic = true, // Default to public profile
+                        // IsProfileUpdated = false, // Initially not updated
+                    }
                 };
 
                 var result = await _userManager.CreateAsync(user, request.Password);
@@ -73,7 +82,7 @@ namespace Backend.Services
                     };
                 }
 
-                var token = await GenerateJwtTokenAsync(user);
+                var token = GenerateJwtTokenAsync(user);
 
                 _logger.LogInformation("User {Email} registered successfully", user.Email);
 
@@ -128,11 +137,11 @@ namespace Backend.Services
                     };
                 }
 
-                var token = await GenerateJwtTokenAsync(user);
+                var token = GenerateJwtTokenAsync(user);
 
                 _logger.LogInformation("User {Email} logged in successfully", user.Email);
 
-                return new AuthResponse
+                var response = new AuthResponse 
                 {
                     Success = true,
                     Message = "Login successful",
@@ -147,6 +156,13 @@ namespace Backend.Services
                         CreatedAt = user.CreatedAt,
                     }
                 };
+
+                if (user.UserProfile != null && !user.UserProfile.IsProfileUpdated)
+                {
+                    response.User.IsProfileUpdated = user.UserProfile.IsProfileUpdated;
+                }
+                
+                return response;
             }
             catch (Exception ex)
             {
@@ -175,7 +191,7 @@ namespace Backend.Services
                         await _userManager.UpdateAsync(existingUser);
                     }
 
-                    var token = await GenerateJwtTokenAsync(existingUser);
+                    var token = GenerateJwtTokenAsync(existingUser);
 
                     _logger.LogInformation("User {Email} logged in with {Provider}", existingUser.Email, existingUser.Provider);
 
@@ -220,7 +236,7 @@ namespace Backend.Services
                     };
                 }
 
-                var newToken = await GenerateJwtTokenAsync(newUser);
+                var newToken = GenerateJwtTokenAsync(newUser);
 
                 _logger.LogInformation("User {Email} registered successfully", newUser.Email);
 
@@ -256,7 +272,7 @@ namespace Backend.Services
             return await _userManager.FindByEmailAsync(userId);
         }
 
-        public async Task<bool> ValidateTokenAsync(string token)
+        public bool ValidateTokenAsync(string token)
         {
             try
             {
@@ -286,7 +302,7 @@ namespace Backend.Services
             }
         }
 
-        public async Task<string> GenerateJwtTokenAsync(User user)
+        public string GenerateJwtTokenAsync(User user)
         {
             var jwtSettings = _configuration.GetSection("Jwt").Get<JwtSettings>();
             jwtSettings.SecretKey = _configuration["Jwt:SecretKey"]; // From secrets

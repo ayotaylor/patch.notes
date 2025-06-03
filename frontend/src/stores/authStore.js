@@ -14,7 +14,8 @@ import {
 
 export const useAuthStore = defineStore("auth", () => {
   //state
-  const user = ref(null);
+  const user = ref(null); // TODO: define a more specific type for user
+  // e.g. { id: string, email: string, firstName: string, lastName: string, profile: object }
   const token = ref(null);
   const loading = ref(false);
   const lastTokenValidation = ref(null);
@@ -72,7 +73,7 @@ export const useAuthStore = defineStore("auth", () => {
 
       user.value = response.user;
       token.value = response.token;
-      //ticated.value = true;
+      // Update last token validation time
       lastTokenValidation.value = Date.now();
 
       setAuthData(token.value, user.value);
@@ -82,6 +83,37 @@ export const useAuthStore = defineStore("auth", () => {
       throw error;
     } finally {
       loading.value = false;
+    }
+  }
+
+  async function updateProfile(profileData) {
+    loading.value = true;
+    try {
+      const response = await authService.updateProfile(profileData);
+      // Update user state
+      // TODO: might not be necessary if response.profile is the same as user.value.profile
+      updateUserProfileState(response.profile);  
+      
+      // TODO: maybe update last token validation time if needed
+
+      return { success: true, data: response };
+    } catch (error) {
+      console.error("Profile update error:", error);
+      throw error;
+    } finally {
+      loading.value = false;
+    }
+  }
+
+  const updateUserProfileState = (profileData) => {
+    if (user.value) {
+      user.value = {
+        ...user.value,
+        profile: {
+          ...user.value.profile,
+          ...profileData
+        }
+      }
     }
   }
 
@@ -200,6 +232,8 @@ export const useAuthStore = defineStore("auth", () => {
     // actions
     register,
     login,
+    updateProfile,
+    updateUserProfileState,
     logout,
     validateToken,
     loadUserFromStorage,

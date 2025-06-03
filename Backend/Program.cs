@@ -8,16 +8,17 @@ using System.Text;
 // using AuthApp.API.Models;
 // using AuthApp.API.Services;
 
-using Backend.Models;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Backend.Services;
 using Backend.Data;
 using Backend.Config;
+using Backend.Models.Auth;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<IUserProfileService, UserProfileService>();
 builder.Services.AddControllers();
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
