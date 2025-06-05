@@ -36,7 +36,6 @@ namespace Backend.Data.Configuration.Mapping
         {
             return new UserProfileDto
             {
-                Id = userProfile.Id,
                 FirstName = userProfile.FirstName,
                 LastName = userProfile.LastName,
                 DisplayName = userProfile.DisplayName,
@@ -46,6 +45,7 @@ namespace Backend.Data.Configuration.Mapping
                 PhoneNumber = userProfile.PhoneNumber,
                 CreatedAt = userProfile.CreatedAt,
                 UpdatedAt = userProfile.UpdatedAt,
+                Email = userProfile.Email,
             };
         }
 
@@ -53,7 +53,6 @@ namespace Backend.Data.Configuration.Mapping
         {
             return new UserProfile
             {
-                Id = userProfileDto.Id,
                 FirstName = userProfileDto.FirstName,
                 LastName = userProfileDto.LastName,
                 DisplayName = userProfileDto.DisplayName,
@@ -63,6 +62,7 @@ namespace Backend.Data.Configuration.Mapping
                 PhoneNumber = userProfileDto.PhoneNumber,
                 CreatedAt = userProfileDto.CreatedAt,
                 UpdatedAt = userProfileDto.UpdatedAt,
+                Email = userProfileDto.Email,
             };
         }
         
@@ -77,6 +77,7 @@ namespace Backend.Data.Configuration.Mapping
                 ProfileImageUrl = userProfile.ProfileUrlImageUrl,
                 DateOfBirth = userProfile.DateOfBirth,
                 PhoneNumber = userProfile.PhoneNumber,
+                Email = userProfile.Email,
             };
         }
         public static UserProfile FromUpdateDto(this UpdateUserProfileDto updateDto)
@@ -133,6 +134,7 @@ namespace Backend.Data.Configuration.Mapping
                 ProfileImageUrl = updateDto.ProfileImageUrl,
                 DateOfBirth = updateDto.DateOfBirth,
                 PhoneNumber = updateDto.PhoneNumber,
+                Email = updateDto.Email,
             };
         }
     }
