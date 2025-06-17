@@ -80,7 +80,7 @@ namespace Backend.Data
                 }
             }
 
-            // configure user entity
+            // configure user, profile and game entities
             builder.ApplyConfiguration(new UserConfiguration());
             builder.ApplyConfiguration(new UserProfileConfiguration());
             builder.ApplyConfiguration(new GameConfiguration());
