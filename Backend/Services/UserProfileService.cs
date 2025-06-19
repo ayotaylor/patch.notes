@@ -1,6 +1,6 @@
 using System.Linq.Expressions;
 using Backend.Data;
-using Backend.Data.Configuration.Mapping;
+using Backend.Mapping;
 using Microsoft.EntityFrameworkCore;
 
 public class UserProfileService : IUserProfileService

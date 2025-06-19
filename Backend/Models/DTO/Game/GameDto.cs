@@ -17,7 +17,7 @@ namespace Backend.Models.DTO.Game
         // Related data
         public List<GenreDto> Genres { get; set; } = new();
         public List<AgeRatingDto> AgeRatings { get; set; } = new();
-        public List<GameAltNameDto> AltNames { get; set; } = new();
+        public List<AltNameDto> AltNames { get; set; } = new();
         public List<GameCoverDto> Covers { get; set; } = new();
         public List<GameScreenshotDto> Screenshots { get; set; } = new();
         public List<FranchiseDto> Franchises { get; set; } = new();
@@ -26,7 +26,7 @@ namespace Backend.Models.DTO.Game
         public List<CompanyDto> Companies { get; set; } = new();
         public List<PlatformDto> Platforms { get; set; } = new();
         public List<PlayerPerspectiveDto> PlayerPerspectives { get; set; } = new();
-        public List<GameReleaseDateDto> ReleaseDates { get; set; } = new();
+        public List<ReleaseDateDto> ReleaseDates { get; set; } = new();
 
         // Game relationships
         public List<GameDto> Dlcs { get; set; } = new();

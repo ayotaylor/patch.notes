@@ -11,8 +11,8 @@ namespace Backend.Models.Game.ReferenceModels
         public string Name { get; set; } = string.Empty;
         [Required, MaxLength(150)]
         public string Slug { get; set; } = string.Empty;
+        public virtual RatingOrganization? RatingOrganization { get; set; }
         public virtual ICollection<GameAgeRating> GameAgeRatings { get; set; } = new List<GameAgeRating>();
 
-        public virtual RatingOrganization? RatingOrganization { get; set; }
     }
 }

@@ -1,7 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using Backend.Models.Game.ReferenceModels;
-using Game.Models.ReferenceModels;
 
 namespace Backend.Models.Game.Associations
 {

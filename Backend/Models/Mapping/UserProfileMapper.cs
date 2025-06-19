@@ -1,6 +1,6 @@
 using Backend.Models.Auth;
 
-namespace Backend.Data.Configuration.Mapping
+namespace Backend.Mapping
 {
     public static class UserProfileMapper
     {
@@ -30,6 +30,7 @@ namespace Backend.Data.Configuration.Mapping
                 UserProfile = userProfile,
             };
         }
+        
         public static UserProfileDto ToDto(this UserProfile userProfile)
         {
             return new UserProfileDto

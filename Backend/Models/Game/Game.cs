@@ -28,7 +28,7 @@ namespace Backend.Models.Game
 
         // Navigation Properties
         public virtual ICollection<GameGenre> GameGenres { get; set; } = new List<GameGenre>();
-        public virtual ICollection<GameAgeRating> AgeRatings { get; set; } = new List<GameAgeRating>();
+        public virtual ICollection<GameAgeRating> GameAgeRatings { get; set; } = new List<GameAgeRating>();
         public virtual ICollection<AltName> AltNames { get; set; } = new List<AltName>();
         public virtual ICollection<Cover> Covers { get; set; } = new List<Cover>();
         public virtual ICollection<Screenshot> Screenshots { get; set; } = new List<Screenshot>();
