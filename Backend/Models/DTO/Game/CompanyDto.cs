@@ -8,6 +8,6 @@ namespace Backend.Models.DTO.Game
         public string? Country { get; set; }
         public string? Description { get; set; }
         public string? Url { get; set; }
-        public string Role { get; set; } = string.Empty; // Developer or Publisher
+        public List<string> Roles { get; set; } = []; // Developer or Publisher
     }
 }

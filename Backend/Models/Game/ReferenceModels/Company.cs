@@ -15,10 +15,11 @@ namespace Backend.Models.Game.ReferenceModels
 
         public string? Description { get; set; }
 
+        [MaxLength(255)]
+        public string? Slug { get; set; }
+
         [MaxLength(500)]
         public string? Url { get; set; }
-
-        public bool Published { get; set; } = false;
 
         public virtual ICollection<GameCompany> GameCompanies { get; set; } = new List<GameCompany>();
     }

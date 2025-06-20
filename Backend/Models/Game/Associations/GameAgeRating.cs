@@ -15,7 +15,7 @@ namespace Backend.Models.Game.Associations
         [ForeignKey("GameId")]
         public virtual Game Game { get; set; } = null!;
         
-        [ForeignKey("GameRatingId")]
+        [ForeignKey("AgeRatingId")]
         public virtual AgeRating AgeRating { get; set; } = null!;
     }
 }

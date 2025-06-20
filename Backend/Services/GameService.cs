@@ -41,7 +41,7 @@ namespace Backend.Services
 
             if (searchParams.PlatformIds?.Count > 0)
             {
-                query = query.Where(g => g.GamePlatforms.Any(gp => searchParams.PlatformIds.Contains(gp.PlatformId)));
+                query = query.Where(g => g.ReleaseDates.Any(gp => searchParams.PlatformIds.Contains(gp.PlatformId)));
             }
 
             if (searchParams.MinRating.HasValue)
@@ -72,7 +72,9 @@ namespace Backend.Services
 
             var games = await query
                 .Include(g => g.GameGenres).ThenInclude(gg => gg.Genre)
-                .Include(g => g.GameAgeRatings).ThenInclude(gar => gar.AgeRating).ThenInclude(ar => ar.RatingOrganization)
+                .Include(g => g.GameAgeRatings).ThenInclude(gar => gar.AgeRating)
+                    .ThenInclude(ar => ar.AgeRatingCategory)
+                    .ThenInclude(arc => arc.RatingOrganization)
                 .Include(g => g.AltNames)
                 .Include(g => g.Covers)
                 .Include(g => g.Screenshots)
@@ -82,7 +84,6 @@ namespace Backend.Services
                 .Include(g => g.GameModes).ThenInclude(gmg => gmg.GameMode)
                 .Include(g => g.GameTypes).ThenInclude(gtg => gtg.GameType)
                 .Include(g => g.GameCompanies).ThenInclude(gc => gc.Company)
-                .Include(g => g.GamePlatforms).ThenInclude(gp => gp.Platform)
                 .Include(g => g.GamePlayerPerspectives).ThenInclude(gpp => gpp.PlayerPerspective)
                 .Skip((searchParams.Page - 1) * searchParams.PageSize)
                 .Take(searchParams.PageSize)
@@ -145,7 +146,9 @@ namespace Backend.Services
         {
             var game = await _context.Games
                 .Include(g => g.GameGenres).ThenInclude(gg => gg.Genre)
-                .Include(g => g.GameAgeRatings).ThenInclude(ar => ar.AgeRating).ThenInclude(ar => ar.RatingOrganization)
+                .Include(g => g.GameAgeRatings).ThenInclude(ar => ar.AgeRating)
+                    .ThenInclude(ar => ar.AgeRatingCategory)
+                    .ThenInclude(arc => arc.RatingOrganization)
                 .Include(g => g.AltNames)
                 .Include(g => g.Covers)
                 .Include(g => g.Screenshots)
@@ -155,8 +158,8 @@ namespace Backend.Services
                 .Include(g => g.GameModes).ThenInclude(gmg => gmg.GameMode)
                 .Include(g => g.GameTypes).ThenInclude(gtg => gtg.GameType)
                 .Include(g => g.GameCompanies).ThenInclude(gc => gc.Company)
-                .Include(g => g.GamePlatforms).ThenInclude(gp => gp.Platform)
-                .Include(g => g.GamePlayerPerspectives).ThenInclude(gpp => gpp.PlayerPerspective)
+                .Include(g => g.GamePlayerPerspectives)
+                    .ThenInclude(gpp => gpp.PlayerPerspective)
                 .FirstOrDefaultAsync(g => g.Id == id);
 
             if (game == null) return null;
@@ -181,7 +184,9 @@ namespace Backend.Services
         {
             var game = await _context.Games
                 .Include(g => g.GameGenres).ThenInclude(gg => gg.Genre)
-                .Include(g => g.GameAgeRatings).ThenInclude(ar => ar.AgeRating).ThenInclude(ar => ar.RatingOrganization)
+                .Include(g => g.GameAgeRatings).ThenInclude(ar => ar.AgeRating)
+                    .ThenInclude(ar => ar.AgeRatingCategory)
+                    .ThenInclude(arc => arc.RatingOrganization)
                 .Include(g => g.AltNames)
                 .Include(g => g.Covers)
                 .Include(g => g.Screenshots)
@@ -191,7 +196,6 @@ namespace Backend.Services
                 .Include(g => g.GameModes).ThenInclude(gmg => gmg.GameMode)
                 .Include(g => g.GameTypes).ThenInclude(gtg => gtg.GameType)
                 .Include(g => g.GameCompanies).ThenInclude(gc => gc.Company)
-                .Include(g => g.GamePlatforms).ThenInclude(gp => gp.Platform)
                 .Include(g => g.GamePlayerPerspectives).ThenInclude(gpp => gpp.PlayerPerspective)
                 .FirstOrDefaultAsync(g => g.Slug == slug);
 

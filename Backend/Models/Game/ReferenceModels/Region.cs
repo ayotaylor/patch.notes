@@ -7,7 +7,7 @@ namespace Backend.Models.Game.ReferenceModels
         public int? IgdbId { get; set; }
         
         [Required, MaxLength(100)]
-        public string RegionName { get; set; } = string.Empty;
+        public string Name { get; set; } = string.Empty;
 
         public virtual ICollection<ReleaseDate> ReleaseDates { get; set; } = new List<ReleaseDate>();
     }

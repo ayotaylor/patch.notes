@@ -22,29 +22,58 @@ namespace Backend.Mapping
                 IgdbRating = game.IgdbRating,
                 Genres = game.GameGenres.Select(g => g.Genre.ToDto()).ToList(),
                 AltNames = game.AltNames.Select(an => an.ToDto()).ToList(),
-                Platforms = game.GamePlatforms.Select(p => p.Platform.ToDto()).ToList(),
-                AgeRatings = game.GameAgeRatings.Select(ar => ar.AgeRating.ToDto()).ToList(),
-                GameTypes = game.GameTypes.Select(gt => gt.GameType.ToDto()).ToList(),
+                Platforms = game.ReleaseDates
+                    .Select(rd => rd.Platform.ToDto()).Distinct().ToList(),
+                AgeRatings = game.GameAgeRatings
+                    .Select(ar => ar.AgeRating.ToDto()).ToList(),
+                GameTypes = game.GameTypes
+                    .Select(gt => gt.GameType.ToDto()).ToList(),
                 Covers = game.Covers.Select(c => c.ToDto()).ToList(),
                 Screenshots = game.Screenshots.Select(s => s.ToDto()).ToList(),
-                ReleaseDates = game.ReleaseDates.Select(rd => rd.ToDto()).ToList(),
-                Franchises = game.GameFranchises.Select(f => f.Franchise.ToDto()).ToList(),
-                GameModes = game.GameModes.Select(gm => gm.GameMode.ToDto()).ToList(),
-                Companies = game.GameCompanies.Select(gc => gc.Company.ToDto()).ToList(),
-                PlayerPerspectives = game.GamePlayerPerspectives.Select(pp => pp.PlayerPerspective.ToDto()).ToList(),
+                ReleaseDates = game.ReleaseDates
+                    .Select(rd => rd.ToDto()).ToList(),
+                Franchises = game.GameFranchises
+                    .Select(f => f.Franchise.ToDto()).ToList(),
+                GameModes = game.GameModes
+                    .Select(gm => gm.GameMode.ToDto()).ToList(),
+                Companies = game.GameCompanies
+                    .Select(gc => gc.Company.ToDto(game.Id)).ToList(),
+                PlayerPerspectives = game.GamePlayerPerspectives
+                    .Select(pp => pp.PlayerPerspective.ToDto()).ToList(),
                 Dlcs = game.DlcGames.Select(d => d.DlcGame.ToDto()).ToList(),
-                Expansions = game.ExpansionGames.Select(e => e.ExpansionGame.ToDto()).ToList(),
+                Expansions = game.ExpansionGames
+                    .Select(e => e.ExpansionGame.ToDto()).ToList(),
                 Ports = game.PortGames.Select(p => p.PortGame.ToDto()).ToList(),
                 Remakes = game.RemakeGames.Select(r => r.RemakeGame.ToDto()).ToList(),
-                Remasters = game.RemasterGames.Select(rm => rm.RemasterGame.ToDto()).ToList(),
+                Remasters = game.RemasterGames
+                    .Select(rm => rm.RemasterGame.ToDto()).ToList(),
                 // TODO: figure out how to handle similar games
-                SimilarGames = game.SimilarGames.Select(sg => sg.Game.ToDto()).ToList(),
+                SimilarGames = game.SimilarGames
+                    .Select(sg => sg.Game.ToDto()).ToList(),
                 LikesCount = game.Likes.Count,
                 FavoritesCount = game.Favorites.Count,
                 // IsLikedByUser = game.Likes.Any(l => l.UserId == null), // assuming UserId is nullable
                 // IsFavoriteByUser = game.Favorites.Any(f => f.User
             };
         }
+
+        // Simple DTO for related games to avoid circular references and deep nesting
+        // public static GameSimpleDto ToSimpleDto(this Backend.Models.Game.Game game)
+        // {
+        //     return new GameSimpleDto
+        //     {
+        //         Id = game.Id,
+        //         IgdbId = game.IgdbId,
+        //         Name = game.Name,
+        //         Slug = game.Slug,
+        //         Summary = game.Summary,
+        //         FirstReleaseDate = game.FirstReleaseDate,
+        //         IgdbRating = game.IgdbRating,
+                
+        //         // Only basic info for related games
+        //         Covers = game.Covers.Take(1).Select(c => c.ToSimpleDto()).ToList() // Just primary cover
+        //     };
+        // }
 
         public static GenreDto ToDto(this Genre genre)
         {
@@ -82,8 +111,8 @@ namespace Backend.Mapping
             return new AgeRatingDto
             {
                 Id = ageRating.Id,
-                Rating = ageRating.Name,
-                RatingOrganization = ageRating.RatingOrganization.ToDto()
+                Name = ageRating.Name,
+                RatingOrganization = ageRating.AgeRatingCategory?.RatingOrganization?.ToDto(),
             };
         }
 
@@ -146,7 +175,7 @@ namespace Backend.Mapping
             return new RegionDto
             {
                 Id = region.Id,
-                RegionName = region.RegionName,
+                Name = region.Name,
             };
         }
 
@@ -170,9 +199,35 @@ namespace Backend.Mapping
                 Name = gameMode.Name
             };
         }
-
+        
         public static CompanyDto ToDto(this Company company)
         {
+            var roles = new List<string>();
+
+            if (company.GameCompanies.Any())
+            {
+                var gameCompanies = company.GameCompanies.FirstOrDefault();
+                if (gameCompanies != null)
+                {
+                    if (gameCompanies.Developer)
+                    {
+                        roles.Add(CompanyRole.Developer.ToString());
+                    }
+                    if (gameCompanies.Publisher)
+                    {
+                        roles.Add(CompanyRole.Publisher.ToString());
+                    }
+                    if (gameCompanies.Porting)
+                    {
+                        roles.Add(CompanyRole.Porting.ToString());
+                    }
+                    if (gameCompanies.Supporting)
+                    {
+                        roles.Add(CompanyRole.Supporting.ToString());
+                    }
+                }
+            }
+            
             return new CompanyDto
             {
                 Id = company.Id,
@@ -181,9 +236,44 @@ namespace Backend.Mapping
                 Country = company.Country,
                 Description = company.Description,
                 Url = company.Url,
-                // TODO: come back to this. how to handle Published?
-                Role = company.Published ?
-                    CompanyRole.Publisher.ToString() : CompanyRole.Developer.ToString()
+                Roles = roles
+            };
+        }
+
+        public static CompanyDto ToDto(this Company company, Guid gameId)
+        {
+            var gameCompany = company.GameCompanies.FirstOrDefault(gc => gc.GameId == gameId);
+            var roles = new List<string>();
+
+            if (gameCompany != null)
+            {
+                if (gameCompany.Developer)
+                {
+                    roles.Add(CompanyRole.Developer.ToString());
+                }
+                if (gameCompany.Publisher)
+                {
+                    roles.Add(CompanyRole.Publisher.ToString());
+                }
+                if (gameCompany.Porting)
+                {
+                    roles.Add(CompanyRole.Porting.ToString());
+                }
+                if (gameCompany.Supporting)
+                {
+                    roles.Add(CompanyRole.Supporting.ToString());
+                }
+            }
+
+            return new CompanyDto
+            {
+                Id = company.Id,
+                IgdbId = company.IgdbId,
+                Name = company.Name,
+                Country = company.Country,
+                Description = company.Description,
+                Url = company.Url,
+                Roles = roles
             };
         }
 

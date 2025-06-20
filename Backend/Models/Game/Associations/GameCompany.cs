@@ -11,9 +11,13 @@ namespace Backend.Models.Game.Associations
         
         [Required]
         public Guid CompanyId { get; set; }
-        
-        [Required]
-        public CompanyRole Role { get; set; }
+
+        public int? IgdbId { get; set; }
+
+        public bool Developer { get; set; } = false;
+        public bool Publisher { get; set; } = false;
+        public bool Porting { get; set; } = false;
+        public bool Supporting { get; set; } = false;
 
         [ForeignKey("GameId")]
         public virtual Game Game { get; set; } = null!;

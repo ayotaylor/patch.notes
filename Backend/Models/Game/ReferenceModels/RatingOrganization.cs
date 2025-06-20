@@ -9,6 +9,6 @@ namespace Backend.Models.Game.ReferenceModels
         [Required, MaxLength(100)]
         public string Name { get; set; } = string.Empty;
 
-        public virtual ICollection<AgeRating> AgeRatings { get; set; } = new List<AgeRating>();
+        public virtual ICollection<AgeRatingCategory> AgeRatingCategory { get; set; } = new List<AgeRatingCategory>();
     }
 }

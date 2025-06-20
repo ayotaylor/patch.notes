@@ -24,6 +24,7 @@ namespace Backend.Data
         public DbSet<Genre> Genres { get; set; }
         public DbSet<RatingOrganization> RatingOrganizations { get; set; }
         public DbSet<AgeRating> AgeRatings { get; set; }
+        public DbSet<AgeRatingCategory> AgeRatingCategories { get; set; }
         public DbSet<Franchise> Franchises { get; set; }
         public DbSet<GameMode> GameModes { get; set; }
         public DbSet<GameType> GameTypes { get; set; }
@@ -43,7 +44,7 @@ namespace Backend.Data
         public DbSet<GameModeGame> GameModeGames { get; set; }
         public DbSet<GameTypeGame> GameTypeGames { get; set; }
         public DbSet<GameCompany> GameCompanies { get; set; }
-        public DbSet<GamePlatform> GamePlatforms { get; set; }
+        // public DbSet<GamePlatform> GamePlatforms { get; set; }
         public DbSet<GamePlayerPerspective> GamePlayerPerspectives { get; set; }
         // Game relationships
         public DbSet<GameDlc> GameDlcs { get; set; }
@@ -101,10 +102,10 @@ namespace Backend.Data
                 .HasKey(gtg => new { gtg.GameId, gtg.GameTypeId });
 
             builder.Entity<GameCompany>()
-                .HasKey(gc => new { gc.GameId, gc.CompanyId, gc.Role });
+                .HasKey(gc => new { gc.GameId, gc.CompanyId });
 
-            builder.Entity<GamePlatform>()
-                .HasKey(gp => new { gp.GameId, gp.PlatformId });
+            // builder.Entity<GamePlatform>()
+            //     .HasKey(gp => new { gp.GameId, gp.PlatformId });
 
             builder.Entity<GamePlayerPerspective>()
                 .HasKey(gpp => new { gpp.GameId, gpp.PlayerPerspectiveId });
@@ -139,6 +140,16 @@ namespace Backend.Data
             builder.Entity<Like>()
                 .HasIndex(l => new { l.UserId, l.GameId })
                 .IsUnique();
+
+            // game company indexes
+            builder.Entity<GameCompany>()
+                .HasIndex(gc => gc.Developer);
+            builder.Entity<GameCompany>()
+                .HasIndex(gc => gc.Publisher);
+            builder.Entity<GameCompany>()
+                .HasIndex(gc => gc.Porting);
+            builder.Entity<GameCompany>()
+                .HasIndex(gc => gc.Supporting);
 
             // Configure game relationship foreign keys
             builder.Entity<GameDlc>()
@@ -222,10 +233,10 @@ namespace Backend.Data
             builder.Entity<ReleaseDate>()
                 .HasIndex(grd => grd.PlatformId);
 
-            // Configure enum conversion
-            builder.Entity<GameCompany>()
-                .Property(gc => gc.Role)
-                .HasConversion<string>();
+            // // Configure enum conversion
+            // builder.Entity<Company>()
+            //     .Property(c => c.Role)
+            //     .HasConversion<string>();
         }
 
         public override int SaveChanges()

@@ -6,6 +6,8 @@ namespace Backend.Models.Game
 {
     public class ReleaseDate : BaseEntity
     {
+        public int? IgdbId { get; set; }
+
         [Required]
         public Guid GameId { get; set; }
 

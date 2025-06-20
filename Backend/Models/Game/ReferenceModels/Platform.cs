@@ -13,7 +13,10 @@ namespace Backend.Models.Game.ReferenceModels
         [Required, MaxLength(150)]
         public string Slug { get; set; } = string.Empty;
 
-        public virtual ICollection<GamePlatform> GamePlatforms { get; set; } = new List<GamePlatform>();
+        // public virtual ICollection<GamePlatform> GamePlatforms { get; set; } = new List<GamePlatform>();
         public virtual ICollection<ReleaseDate> ReleaseDates { get; set; } = new List<ReleaseDate>();
+
+        // Helper property to get games available on this platform
+        public IEnumerable<Game> Games => ReleaseDates.Select(rd => rd.Game).Distinct();
     }
 }
