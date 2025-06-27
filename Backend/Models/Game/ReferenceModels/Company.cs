@@ -3,9 +3,9 @@ namespace Backend.Models.Game.ReferenceModels
     using System.ComponentModel.DataAnnotations;
     using Backend.Models.Game.Associations;
 
-    public class Company : BaseEntity
+    public class Company : BaseEntity, IHasIgdbId
     {
-        public int? IgdbId { get; set; }
+        public int IgdbId { get; set; }
 
         [Required, MaxLength(255)]
         public string Name { get; set; } = string.Empty;

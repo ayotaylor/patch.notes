@@ -3,8 +3,9 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Backend.Models.Game
 {
-    public class AltName : BaseEntity
+    public class AltName : BaseEntity, IHasIgdbId
     {
+        public int IgdbId { get; set; }
         [Required]
         public Guid GameId { get; set; }
         

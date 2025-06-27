@@ -130,6 +130,9 @@ namespace Backend.Migrations
                     b.Property<Guid>("GameId")
                         .HasColumnType("char(36)");
 
+                    b.Property<int>("IgdbId")
+                        .HasColumnType("int");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(255)
@@ -145,7 +148,7 @@ namespace Backend.Migrations
 
                     b.HasIndex("GameId");
 
-                    b.ToTable("GameAltNames");
+                    b.ToTable("AltNames");
                 });
 
             modelBuilder.Entity("Backend.Models.Game.Associations.GameAgeRating", b =>
@@ -231,6 +234,21 @@ namespace Backend.Migrations
                     b.ToTable("GameModeGames");
                 });
 
+            modelBuilder.Entity("Backend.Models.Game.Associations.GamePlatform", b =>
+                {
+                    b.Property<Guid>("GameId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<Guid>("PlatformId")
+                        .HasColumnType("char(36)");
+
+                    b.HasKey("GameId", "PlatformId");
+
+                    b.HasIndex("PlatformId");
+
+                    b.ToTable("GamePlatforms");
+                });
+
             modelBuilder.Entity("Backend.Models.Game.Associations.GamePlayerPerspective", b =>
                 {
                     b.Property<Guid>("GameId")
@@ -264,7 +282,10 @@ namespace Backend.Migrations
                     b.Property<int>("Height")
                         .HasColumnType("int");
 
-                    b.Property<string>("IgdbImageId")
+                    b.Property<int>("IgdbId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("ImageId")
                         .HasMaxLength(100)
                         .HasColumnType("varchar(100)");
 
@@ -286,7 +307,7 @@ namespace Backend.Migrations
 
                     b.HasIndex("GameId");
 
-                    b.ToTable("GameCovers");
+                    b.ToTable("Covers");
                 });
 
             modelBuilder.Entity("Backend.Models.Game.Game", b =>
@@ -304,23 +325,23 @@ namespace Backend.Migrations
                     b.Property<long?>("FirstReleaseDate")
                         .HasColumnType("bigint");
 
+                    b.Property<Guid>("GameTypeId")
+                        .HasColumnType("char(36)");
+
                     b.Property<int>("Hypes")
                         .HasColumnType("int");
 
-                    b.Property<int?>("IgdbId")
+                    b.Property<int>("IgdbId")
                         .HasColumnType("int");
-
-                    b.Property<decimal?>("IgdbRating")
-                        .HasPrecision(4, 1)
-                        .HasColumnType("decimal(4,1)");
 
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(255)
                         .HasColumnType("varchar(255)");
 
-                    b.Property<Guid?>("PlatformId")
-                        .HasColumnType("char(36)");
+                    b.Property<decimal?>("Rating")
+                        .HasPrecision(4, 1)
+                        .HasColumnType("decimal(4,1)");
 
                     b.Property<string>("Slug")
                         .IsRequired()
@@ -341,35 +362,20 @@ namespace Backend.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("GameTypeId");
+
                     b.HasIndex("IgdbId")
                         .IsUnique()
                         .HasFilter("[IgdbId] IS NOT NULL");
 
-                    b.HasIndex("IgdbRating");
-
                     b.HasIndex("Name");
 
-                    b.HasIndex("PlatformId");
+                    b.HasIndex("Rating");
 
                     b.HasIndex("Slug")
                         .IsUnique();
 
                     b.ToTable("Games");
-                });
-
-            modelBuilder.Entity("Backend.Models.Game.GameTypeGame", b =>
-                {
-                    b.Property<Guid>("GameId")
-                        .HasColumnType("char(36)");
-
-                    b.Property<Guid>("GameTypeId")
-                        .HasColumnType("char(36)");
-
-                    b.HasKey("GameId", "GameTypeId");
-
-                    b.HasIndex("GameTypeId");
-
-                    b.ToTable("GameTypeGames");
                 });
 
             modelBuilder.Entity("Backend.Models.Game.ReferenceModels.AgeRating", b =>
@@ -387,7 +393,7 @@ namespace Backend.Migrations
 
                     MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<DateTime>("CreatedAt"));
 
-                    b.Property<int?>("IgdbId")
+                    b.Property<int>("IgdbId")
                         .HasColumnType("int");
 
                     b.Property<string>("Name")
@@ -410,6 +416,9 @@ namespace Backend.Migrations
 
                     b.HasIndex("AgeRatingCategoryId");
 
+                    b.HasIndex("IgdbId")
+                        .IsUnique();
+
                     b.ToTable("AgeRatings");
                 });
 
@@ -425,7 +434,7 @@ namespace Backend.Migrations
 
                     MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<DateTime>("CreatedAt"));
 
-                    b.Property<int?>("IgdbId")
+                    b.Property<int>("IgdbId")
                         .HasColumnType("int");
 
                     b.Property<string>("Rating")
@@ -443,6 +452,9 @@ namespace Backend.Migrations
                     MySqlPropertyBuilderExtensions.UseMySqlComputedColumn(b.Property<DateTime?>("UpdatedAt"));
 
                     b.HasKey("Id");
+
+                    b.HasIndex("IgdbId")
+                        .IsUnique();
 
                     b.HasIndex("RatingOrganizationId");
 
@@ -468,7 +480,7 @@ namespace Backend.Migrations
                     b.Property<string>("Description")
                         .HasColumnType("longtext");
 
-                    b.Property<int?>("IgdbId")
+                    b.Property<int>("IgdbId")
                         .HasColumnType("int");
 
                     b.Property<string>("Name")
@@ -492,6 +504,9 @@ namespace Backend.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("IgdbId")
+                        .IsUnique();
+
                     b.HasIndex("Name");
 
                     b.ToTable("Companies");
@@ -509,7 +524,7 @@ namespace Backend.Migrations
 
                     MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<DateTime>("CreatedAt"));
 
-                    b.Property<int?>("IgdbId")
+                    b.Property<int>("IgdbId")
                         .HasColumnType("int");
 
                     b.Property<string>("Name")
@@ -529,6 +544,9 @@ namespace Backend.Migrations
                     MySqlPropertyBuilderExtensions.UseMySqlComputedColumn(b.Property<DateTime?>("UpdatedAt"));
 
                     b.HasKey("Id");
+
+                    b.HasIndex("IgdbId")
+                        .IsUnique();
 
                     b.ToTable("Franchises");
                 });
@@ -560,7 +578,7 @@ namespace Backend.Migrations
 
                     MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<DateTime>("CreatedAt"));
 
-                    b.Property<int?>("IgdbId")
+                    b.Property<int>("IgdbId")
                         .HasColumnType("int");
 
                     b.Property<string>("Type")
@@ -575,6 +593,9 @@ namespace Backend.Migrations
                     MySqlPropertyBuilderExtensions.UseMySqlComputedColumn(b.Property<DateTime?>("UpdatedAt"));
 
                     b.HasKey("Id");
+
+                    b.HasIndex("IgdbId")
+                        .IsUnique();
 
                     b.ToTable("GameTypes");
                 });
@@ -591,7 +612,7 @@ namespace Backend.Migrations
 
                     MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<DateTime>("CreatedAt"));
 
-                    b.Property<int?>("IgdbId")
+                    b.Property<int>("IgdbId")
                         .HasColumnType("int");
 
                     b.Property<string>("Name")
@@ -611,6 +632,9 @@ namespace Backend.Migrations
                     MySqlPropertyBuilderExtensions.UseMySqlComputedColumn(b.Property<DateTime?>("UpdatedAt"));
 
                     b.HasKey("Id");
+
+                    b.HasIndex("IgdbId")
+                        .IsUnique();
 
                     b.ToTable("Genres");
                 });
@@ -621,13 +645,16 @@ namespace Backend.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("char(36)");
 
+                    b.Property<string>("Abbreviation")
+                        .HasColumnType("longtext");
+
                     b.Property<DateTime>("CreatedAt")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("timestamp");
 
                     MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<DateTime>("CreatedAt"));
 
-                    b.Property<int?>("IgdbId")
+                    b.Property<int>("IgdbId")
                         .HasColumnType("int");
 
                     b.Property<string>("Name")
@@ -647,6 +674,9 @@ namespace Backend.Migrations
                     MySqlPropertyBuilderExtensions.UseMySqlComputedColumn(b.Property<DateTime?>("UpdatedAt"));
 
                     b.HasKey("Id");
+
+                    b.HasIndex("IgdbId")
+                        .IsUnique();
 
                     b.ToTable("Platforms");
                 });
@@ -663,7 +693,7 @@ namespace Backend.Migrations
 
                     MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<DateTime>("CreatedAt"));
 
-                    b.Property<int?>("IgdbId")
+                    b.Property<int>("IgdbId")
                         .HasColumnType("int");
 
                     b.Property<string>("Name")
@@ -684,6 +714,9 @@ namespace Backend.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("IgdbId")
+                        .IsUnique();
+
                     b.ToTable("PlayerPerspectives");
                 });
 
@@ -699,7 +732,7 @@ namespace Backend.Migrations
 
                     MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<DateTime>("CreatedAt"));
 
-                    b.Property<int?>("IgdbId")
+                    b.Property<int>("IgdbId")
                         .HasColumnType("int");
 
                     b.Property<string>("Name")
@@ -715,10 +748,13 @@ namespace Backend.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("IgdbId")
+                        .IsUnique();
+
                     b.ToTable("RatingOrganizations");
                 });
 
-            modelBuilder.Entity("Backend.Models.Game.ReferenceModels.Region", b =>
+            modelBuilder.Entity("Backend.Models.Game.ReferenceModels.ReleaseDateRegion", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -730,13 +766,12 @@ namespace Backend.Migrations
 
                     MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<DateTime>("CreatedAt"));
 
-                    b.Property<int?>("IgdbId")
+                    b.Property<int>("IgdbId")
                         .HasColumnType("int");
 
-                    b.Property<string>("Name")
+                    b.Property<string>("Region")
                         .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("varchar(100)");
+                        .HasColumnType("longtext");
 
                     b.Property<DateTime?>("UpdatedAt")
                         .ValueGeneratedOnAddOrUpdate()
@@ -745,6 +780,9 @@ namespace Backend.Migrations
                     MySqlPropertyBuilderExtensions.UseMySqlComputedColumn(b.Property<DateTime?>("UpdatedAt"));
 
                     b.HasKey("Id");
+
+                    b.HasIndex("IgdbId")
+                        .IsUnique();
 
                     b.ToTable("Regions");
                 });
@@ -851,13 +889,13 @@ namespace Backend.Migrations
 
                     MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<DateTime>("CreatedAt"));
 
-                    b.Property<long>("Date")
-                        .HasColumnType("bigint");
+                    b.Property<DateTime?>("Date")
+                        .HasColumnType("datetime");
 
                     b.Property<Guid>("GameId")
                         .HasColumnType("char(36)");
 
-                    b.Property<int?>("IgdbId")
+                    b.Property<int>("IgdbId")
                         .HasColumnType("int");
 
                     b.Property<Guid>("PlatformId")
@@ -880,7 +918,7 @@ namespace Backend.Migrations
 
                     b.HasIndex("RegionId");
 
-                    b.ToTable("GameReleaseDates");
+                    b.ToTable("ReleaseDates");
                 });
 
             modelBuilder.Entity("Backend.Models.Game.Screenshot", b =>
@@ -901,7 +939,10 @@ namespace Backend.Migrations
                     b.Property<int>("Height")
                         .HasColumnType("int");
 
-                    b.Property<string>("IgdbImageId")
+                    b.Property<int>("IgdbId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("ImageId")
                         .HasMaxLength(100)
                         .HasColumnType("varchar(100)");
 
@@ -923,10 +964,10 @@ namespace Backend.Migrations
 
                     b.HasIndex("GameId");
 
-                    b.ToTable("GameScreenshots");
+                    b.ToTable("Screenshots");
                 });
 
-            modelBuilder.Entity("Backend.Models.Game.Social.Favorite", b =>
+            modelBuilder.Entity("Backend.Models.Social.Favorite", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -963,7 +1004,7 @@ namespace Backend.Migrations
                     b.ToTable("Favorites");
                 });
 
-            modelBuilder.Entity("Backend.Models.Game.Social.Like", b =>
+            modelBuilder.Entity("Backend.Models.Social.Like", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -1009,7 +1050,7 @@ namespace Backend.Migrations
 
                     MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<DateTime>("CreatedAt"));
 
-                    b.Property<int?>("IgdbId")
+                    b.Property<int>("IgdbId")
                         .HasColumnType("int");
 
                     b.Property<string>("Name")
@@ -1029,6 +1070,9 @@ namespace Backend.Migrations
                     MySqlPropertyBuilderExtensions.UseMySqlComputedColumn(b.Property<DateTime?>("UpdatedAt"));
 
                     b.HasKey("Id");
+
+                    b.HasIndex("IgdbId")
+                        .IsUnique();
 
                     b.ToTable("GameModes");
                 });
@@ -1189,7 +1233,7 @@ namespace Backend.Migrations
                         .HasColumnType("varchar(100)");
 
                     b.Property<string>("Email")
-                        .HasColumnType("longtext");
+                        .HasColumnType("varchar(95)");
 
                     b.Property<string>("FirstName")
                         .HasMaxLength(50)
@@ -1222,6 +1266,9 @@ namespace Backend.Migrations
                         .HasColumnType("varchar(95)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("Email")
+                        .IsUnique();
 
                     b.HasIndex("UserId")
                         .IsUnique();
@@ -1316,6 +1363,25 @@ namespace Backend.Migrations
                     b.Navigation("GameMode");
                 });
 
+            modelBuilder.Entity("Backend.Models.Game.Associations.GamePlatform", b =>
+                {
+                    b.HasOne("Backend.Models.Game.Game", "Game")
+                        .WithMany("GamePlatforms")
+                        .HasForeignKey("GameId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Backend.Models.Game.ReferenceModels.Platform", "Platform")
+                        .WithMany("GamePlatforms")
+                        .HasForeignKey("PlatformId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Game");
+
+                    b.Navigation("Platform");
+                });
+
             modelBuilder.Entity("Backend.Models.Game.Associations.GamePlayerPerspective", b =>
                 {
                     b.HasOne("Backend.Models.Game.Game", "Game")
@@ -1348,26 +1414,11 @@ namespace Backend.Migrations
 
             modelBuilder.Entity("Backend.Models.Game.Game", b =>
                 {
-                    b.HasOne("Backend.Models.Game.ReferenceModels.Platform", null)
-                        .WithMany("Games")
-                        .HasForeignKey("PlatformId");
-                });
-
-            modelBuilder.Entity("Backend.Models.Game.GameTypeGame", b =>
-                {
-                    b.HasOne("Backend.Models.Game.Game", "Game")
-                        .WithMany("GameTypes")
-                        .HasForeignKey("GameId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
                     b.HasOne("Backend.Models.Game.ReferenceModels.GameType", "GameType")
-                        .WithMany("GameTypes")
+                        .WithMany("Games")
                         .HasForeignKey("GameTypeId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
-
-                    b.Navigation("Game");
 
                     b.Navigation("GameType");
                 });
@@ -1541,7 +1592,7 @@ namespace Backend.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Backend.Models.Game.ReferenceModels.Region", "Region")
+                    b.HasOne("Backend.Models.Game.ReferenceModels.ReleaseDateRegion", "ReleaseDateRegion")
                         .WithMany("ReleaseDates")
                         .HasForeignKey("RegionId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -1551,7 +1602,7 @@ namespace Backend.Migrations
 
                     b.Navigation("Platform");
 
-                    b.Navigation("Region");
+                    b.Navigation("ReleaseDateRegion");
                 });
 
             modelBuilder.Entity("Backend.Models.Game.Screenshot", b =>
@@ -1565,7 +1616,7 @@ namespace Backend.Migrations
                     b.Navigation("Game");
                 });
 
-            modelBuilder.Entity("Backend.Models.Game.Social.Favorite", b =>
+            modelBuilder.Entity("Backend.Models.Social.Favorite", b =>
                 {
                     b.HasOne("Backend.Models.Game.Game", "Game")
                         .WithMany("Favorites")
@@ -1584,7 +1635,7 @@ namespace Backend.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("Backend.Models.Game.Social.Like", b =>
+            modelBuilder.Entity("Backend.Models.Social.Like", b =>
                 {
                     b.HasOne("Backend.Models.Game.Game", "Game")
                         .WithMany("Likes")
@@ -1692,9 +1743,9 @@ namespace Backend.Migrations
 
                     b.Navigation("GameModes");
 
-                    b.Navigation("GamePlayerPerspectives");
+                    b.Navigation("GamePlatforms");
 
-                    b.Navigation("GameTypes");
+                    b.Navigation("GamePlayerPerspectives");
 
                     b.Navigation("Likes");
 
@@ -1745,7 +1796,7 @@ namespace Backend.Migrations
 
             modelBuilder.Entity("Backend.Models.Game.ReferenceModels.GameType", b =>
                 {
-                    b.Navigation("GameTypes");
+                    b.Navigation("Games");
                 });
 
             modelBuilder.Entity("Backend.Models.Game.ReferenceModels.Genre", b =>
@@ -1755,7 +1806,7 @@ namespace Backend.Migrations
 
             modelBuilder.Entity("Backend.Models.Game.ReferenceModels.Platform", b =>
                 {
-                    b.Navigation("Games");
+                    b.Navigation("GamePlatforms");
 
                     b.Navigation("ReleaseDates");
                 });
@@ -1770,7 +1821,7 @@ namespace Backend.Migrations
                     b.Navigation("AgeRatingCategory");
                 });
 
-            modelBuilder.Entity("Backend.Models.Game.ReferenceModels.Region", b =>
+            modelBuilder.Entity("Backend.Models.Game.ReferenceModels.ReleaseDateRegion", b =>
                 {
                     b.Navigation("ReleaseDates");
                 });

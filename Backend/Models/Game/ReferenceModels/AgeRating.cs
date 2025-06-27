@@ -4,9 +4,9 @@ namespace Backend.Models.Game.ReferenceModels
     using System.ComponentModel.DataAnnotations.Schema;
     using Backend.Models.Game.Associations;
 
-    public class AgeRating : BaseEntity
+    public class AgeRating : BaseEntity, IHasIgdbId
     {
-        public int? IgdbId { get; set; }
+        public int IgdbId { get; set; }
         public Guid AgeRatingCategoryId { get; set; }
         [Required, MaxLength(100)]
         public string Name { get; set; } = string.Empty;

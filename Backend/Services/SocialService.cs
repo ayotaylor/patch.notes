@@ -1,7 +1,7 @@
 using Backend.Data;
 using Backend.Mapping;
 using Backend.Models.DTO.Social;
-using Backend.Models.Game.Social;
+using Backend.Models.Social;
 using Microsoft.EntityFrameworkCore;
 
 namespace Backend.Services

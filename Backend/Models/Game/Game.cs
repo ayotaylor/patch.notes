@@ -3,13 +3,13 @@ using System.ComponentModel.DataAnnotations.Schema;
 using Backend.Models.Game.Associations;
 using Backend.Models.Game.ReferenceModels;
 using Backend.Models.Game.Relationships;
-using Backend.Models.Game.Social;
+using Backend.Models.Social;
 
 namespace Backend.Models.Game
 {
-    public class Game : BaseEntity
+    public class Game : BaseEntity, IHasIgdbId
     {
-        public int? IgdbId { get; set; }
+        public int IgdbId { get; set; }
 
         [Required, MaxLength(255)]
         public string Name { get; set; } = string.Empty;
@@ -24,7 +24,9 @@ namespace Backend.Models.Game
         public int Hypes { get; set; } = 0;
 
         [Column(TypeName = "decimal(4,1)")]
-        public decimal? IgdbRating { get; set; }
+        public decimal? Rating { get; set; }
+
+        public Guid GameTypeId { get; set; } // Foreign key to GameType
 
         // Navigation Properties
         public virtual ICollection<GameGenre> GameGenres { get; set; } = new List<GameGenre>();
@@ -35,9 +37,9 @@ namespace Backend.Models.Game
         public virtual ICollection<ReleaseDate> ReleaseDates { get; set; } = new List<ReleaseDate>();
         public virtual ICollection<GameFranchise> GameFranchises { get; set; } = new List<GameFranchise>();
         public virtual ICollection<GameModeGame> GameModes { get; set; } = new List<GameModeGame>();
-        public virtual ICollection<GameTypeGame> GameTypes { get; set; } = new List<GameTypeGame>();
+        public virtual GameType? GameType { get; set; }
         public virtual ICollection<GameCompany> GameCompanies { get; set; } = new List<GameCompany>();
-        //public virtual ICollection<GamePlatform> GamePlatforms { get; set; } = new List<GamePlatform>();
+        public virtual ICollection<GamePlatform> GamePlatforms { get; set; } = new List<GamePlatform>();
         public virtual ICollection<GamePlayerPerspective> GamePlayerPerspectives { get; set; } = new List<GamePlayerPerspective>();
 
         // Game Relationships

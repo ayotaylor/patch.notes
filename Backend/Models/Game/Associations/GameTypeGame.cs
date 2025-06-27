@@ -1,5 +1,6 @@
 namespace Backend.Models.Game
 {
+    using System.Collections.Generic;
     using System.ComponentModel.DataAnnotations;
     using System.ComponentModel.DataAnnotations.Schema;
     using Backend.Models.Game.ReferenceModels;

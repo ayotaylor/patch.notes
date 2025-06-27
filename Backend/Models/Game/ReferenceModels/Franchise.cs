@@ -2,9 +2,9 @@ namespace Backend.Models.Game.ReferenceModels
 {
     using System.ComponentModel.DataAnnotations;
 
-    public class Franchise : BaseEntity
+    public class Franchise : BaseEntity, IHasIgdbId
     {
-        public int? IgdbId { get; set; }
+        public int IgdbId { get; set; }
         
         [Required, MaxLength(255)]
         public string Name { get; set; } = string.Empty;

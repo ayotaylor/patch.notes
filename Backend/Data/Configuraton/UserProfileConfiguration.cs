@@ -15,6 +15,7 @@ namespace Backend.Data.Configuration
 
             // add index for better performance
             builder.HasIndex(e => e.UserId).IsUnique();
+            builder.HasIndex(e => e.Email).IsUnique();
         }
     }
 }

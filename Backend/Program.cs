@@ -22,6 +22,17 @@ builder.Services.AddScoped<IUserProfileService, UserProfileService>();
 builder.Services.AddScoped<IGameService, GameService>();
 builder.Services.AddScoped<ISocialService, SocialService>();
 
+// add igdb import service -- TODO: to be removed later
+// get igdb settings from configuration
+builder.Services.Configure<IgdbSettings>(
+        builder.Configuration.GetSection(IgdbSettings.SectionName));
+// Register HttpClient with typed client
+// builder.Services.AddHttpClient<IgdbImportService>(client =>
+// {
+//     client.Timeout = TimeSpan.FromMinutes(5); // Adjust timeout as needed
+// });
+// builder.Services.AddScoped<IgdbImportService>();
+
 builder.Services.AddControllers();
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
@@ -33,7 +44,7 @@ builder.Services.AddOpenApi();
 // TODO: add connection string in cofnigguration
 var mySqlConnectionString = builder.Configuration.GetConnectionString("mysqldb");
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseMySql(mySqlConnectionString,new MySqlServerVersion(new Version())));
+    options.UseMySql(mySqlConnectionString, new MySqlServerVersion(new Version())));
 
 // add identity services
 builder.Services.AddIdentity<User, IdentityRole>()
@@ -65,7 +76,7 @@ builder.Services.AddAuthentication(options =>
 })
 .AddJwtBearer(options =>
 {
-    options.RequireHttpsMetadata = !builder.Environment.IsDevelopment();;
+    options.RequireHttpsMetadata = !builder.Environment.IsDevelopment(); ;
     options.SaveToken = true;
     options.TokenValidationParameters = new TokenValidationParameters
     {

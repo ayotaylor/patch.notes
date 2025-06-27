@@ -19,15 +19,14 @@ namespace Backend.Mapping
                 Summary = game.Summary,
                 FirstReleaseDate = game.FirstReleaseDate,
                 Hypes = game.Hypes,
-                IgdbRating = game.IgdbRating,
+                IgdbRating = game.Rating,
                 Genres = game.GameGenres.Select(g => g.Genre.ToDto()).ToList(),
                 AltNames = game.AltNames.Select(an => an.ToDto()).ToList(),
                 Platforms = game.ReleaseDates
                     .Select(rd => rd.Platform.ToDto()).Distinct().ToList(),
                 AgeRatings = game.GameAgeRatings
                     .Select(ar => ar.AgeRating.ToDto()).ToList(),
-                GameTypes = game.GameTypes
-                    .Select(gt => gt.GameType.ToDto()).ToList(),
+                GameType = game.GameType.ToDto(),
                 Covers = game.Covers.Select(c => c.ToDto()).ToList(),
                 Screenshots = game.Screenshots.Select(s => s.ToDto()).ToList(),
                 ReleaseDates = game.ReleaseDates
@@ -140,7 +139,7 @@ namespace Backend.Mapping
             return new GameCoverDto
             {
                 Id = cover.Id,
-                IgdbImageId = cover.IgdbImageId,
+                IgdbImageId = cover.ImageId,
                 Url = cover.Url,
                 Width = cover.Width,
                 Height = cover.Height
@@ -152,7 +151,7 @@ namespace Backend.Mapping
             return new GameScreenshotDto
             {
                 Id = screenshot.Id,
-                IgdbImageId = screenshot.IgdbImageId,
+                IgdbImageId = screenshot.ImageId,
                 Url = screenshot.Url,
                 Width = screenshot.Width,
                 Height = screenshot.Height
@@ -166,16 +165,16 @@ namespace Backend.Mapping
                 Id = releaseDate.Id,
                 Platform = releaseDate.Platform.ToDto(),
                 Date = releaseDate.Date,
-                Region = releaseDate.Region.ToDto(),
+                Region = releaseDate.ReleaseDateRegion.ToDto(),
             };
         }
 
-        public static RegionDto ToDto(this Region region)
+        public static RegionDto ToDto(this ReleaseDateRegion region)
         {
             return new RegionDto
             {
                 Id = region.Id,
-                Name = region.Name,
+                Name = region.Region,
             };
         }
 

@@ -1,5 +1,5 @@
 using Backend.Models.DTO.Social;
-using Backend.Models.Game.Social;
+using Backend.Models.Social;
 
 namespace Backend.Mapping
 {

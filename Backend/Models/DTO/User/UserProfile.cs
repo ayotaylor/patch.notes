@@ -1,6 +1,6 @@
 using Backend.Models;
 using Backend.Models.Auth;
-using Backend.Models.Game.Social;
+using Backend.Models.Social;
 
 public class UserProfile : BaseEntity
 {

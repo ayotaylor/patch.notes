@@ -46,19 +46,19 @@ namespace Backend.Services
 
             if (searchParams.MinRating.HasValue)
             {
-                query = query.Where(g => g.IgdbRating >= searchParams.MinRating);
+                query = query.Where(g => g.Rating >= searchParams.MinRating);
             }
 
             if (searchParams.MaxRating.HasValue)
             {
-                query = query.Where(g => g.IgdbRating <= searchParams.MaxRating);
+                query = query.Where(g => g.Rating <= searchParams.MaxRating);
             }
 
             // Apply sorting
             query = searchParams.SortBy?.ToLower() switch
             {
                 "rating" => searchParams.SortOrder?.ToLower() == "desc" ?
-                    query.OrderByDescending(g => g.IgdbRating) : query.OrderBy(g => g.IgdbRating),
+                    query.OrderByDescending(g => g.Rating) : query.OrderBy(g => g.Rating),
                 "hypes" => searchParams.SortOrder?.ToLower() == "desc" ?
                     query.OrderByDescending(g => g.Hypes) : query.OrderBy(g => g.Hypes),
                 "release_date" => searchParams.SortOrder?.ToLower() == "desc" ?
@@ -79,10 +79,10 @@ namespace Backend.Services
                 .Include(g => g.Covers)
                 .Include(g => g.Screenshots)
                 .Include(g => g.ReleaseDates).ThenInclude(rd => rd.Platform)
-                .Include(g => g.ReleaseDates).ThenInclude(rd => rd.Region)
+                .Include(g => g.ReleaseDates).ThenInclude(rd => rd.ReleaseDateRegion)
                 .Include(g => g.GameFranchises).ThenInclude(gf => gf.Franchise)
                 .Include(g => g.GameModes).ThenInclude(gmg => gmg.GameMode)
-                .Include(g => g.GameTypes).ThenInclude(gtg => gtg.GameType)
+                .Include(g => g.GameType)//.ThenInclude(gtg => gtg.GameType)
                 .Include(g => g.GameCompanies).ThenInclude(gc => gc.Company)
                 .Include(g => g.GamePlayerPerspectives).ThenInclude(gpp => gpp.PlayerPerspective)
                 .Skip((searchParams.Page - 1) * searchParams.PageSize)
@@ -153,10 +153,10 @@ namespace Backend.Services
                 .Include(g => g.Covers)
                 .Include(g => g.Screenshots)
                 .Include(g => g.ReleaseDates).ThenInclude(rd => rd.Platform)
-                .Include(g => g.ReleaseDates).ThenInclude(rd => rd.Region)
+                .Include(g => g.ReleaseDates).ThenInclude(rd => rd.ReleaseDateRegion)
                 .Include(g => g.GameFranchises).ThenInclude(gf => gf.Franchise)
                 .Include(g => g.GameModes).ThenInclude(gmg => gmg.GameMode)
-                .Include(g => g.GameTypes).ThenInclude(gtg => gtg.GameType)
+                .Include(g => g.GameType)//.ThenInclude(gtg => gtg.GameType)
                 .Include(g => g.GameCompanies).ThenInclude(gc => gc.Company)
                 .Include(g => g.GamePlayerPerspectives)
                     .ThenInclude(gpp => gpp.PlayerPerspective)
@@ -191,10 +191,10 @@ namespace Backend.Services
                 .Include(g => g.Covers)
                 .Include(g => g.Screenshots)
                 .Include(g => g.ReleaseDates).ThenInclude(rd => rd.Platform)
-                .Include(g => g.ReleaseDates).ThenInclude(rd => rd.Region)
+                .Include(g => g.ReleaseDates).ThenInclude(rd => rd.ReleaseDateRegion)
                 .Include(g => g.GameFranchises).ThenInclude(gf => gf.Franchise)
                 .Include(g => g.GameModes).ThenInclude(gmg => gmg.GameMode)
-                .Include(g => g.GameTypes).ThenInclude(gtg => gtg.GameType)
+                .Include(g => g.GameType)//.ThenInclude(gtg => gtg.GameType)
                 .Include(g => g.GameCompanies).ThenInclude(gc => gc.Company)
                 .Include(g => g.GamePlayerPerspectives).ThenInclude(gpp => gpp.PlayerPerspective)
                 .FirstOrDefaultAsync(g => g.Slug == slug);
@@ -392,7 +392,7 @@ namespace Backend.Services
                 .Include(g => g.GameGenres).ThenInclude(gg => gg.Genre)
                 .Include(g => g.Covers)
                 .OrderByDescending(g => g.Hypes)
-                .ThenByDescending(g => g.IgdbRating)
+                .ThenByDescending(g => g.Rating)
                 .Take(limit)
                 .ToListAsync();
 
@@ -432,7 +432,7 @@ namespace Backend.Services
                 .Include(g => g.GameGenres).ThenInclude(gg => gg.Genre)
                 .Include(g => g.Covers)
                 .OrderByDescending(g => g.Hypes)
-                .ThenByDescending(g => g.IgdbRating)
+                .ThenByDescending(g => g.Rating)
                 .Take(limit)
                 .ToListAsync();
 

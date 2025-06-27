@@ -7,8 +7,8 @@ using Game.Models.ReferenceModels;
 using Backend.Models.Game;
 using Backend.Models.Game.Associations;
 using Backend.Models.Game.Relationships;
-using Backend.Models.Game.Social;
 using Backend.Models;
+using Backend.Models.Social;
 
 namespace Backend.Data
 {
@@ -31,20 +31,20 @@ namespace Backend.Data
         public DbSet<Company> Companies { get; set; }
         public DbSet<Platform> Platforms { get; set; }
         public DbSet<PlayerPerspective> PlayerPerspectives { get; set; }
-        public DbSet<Region> Regions { get; set; }
+        public DbSet<ReleaseDateRegion> Regions { get; set; }
         // Game-specific data
-        public DbSet<AltName> GameAltNames { get; set; }
-        public DbSet<Cover> GameCovers { get; set; }
-        public DbSet<Screenshot> GameScreenshots { get; set; }
-        public DbSet<ReleaseDate> GameReleaseDates { get; set; }
+        public DbSet<AltName> AltNames { get; set; }
+        public DbSet<Cover> Covers { get; set; }
+        public DbSet<Screenshot> Screenshots { get; set; }
+        public DbSet<ReleaseDate> ReleaseDates { get; set; }
         // Junction tables
         public DbSet<GameAgeRating> GameAgeRatings { get; set; }
         public DbSet<GameGenre> GameGenres { get; set; }
         public DbSet<GameFranchise> GameFranchises { get; set; }
         public DbSet<GameModeGame> GameModeGames { get; set; }
-        public DbSet<GameTypeGame> GameTypeGames { get; set; }
+        // public DbSet<GameTypeGame> GameTypeGames { get; set; }
         public DbSet<GameCompany> GameCompanies { get; set; }
-        // public DbSet<GamePlatform> GamePlatforms { get; set; }
+        public DbSet<GamePlatform> GamePlatforms { get; set; }
         public DbSet<GamePlayerPerspective> GamePlayerPerspectives { get; set; }
         // Game relationships
         public DbSet<GameDlc> GameDlcs { get; set; }
@@ -98,14 +98,14 @@ namespace Backend.Data
             builder.Entity<GameModeGame>()
                 .HasKey(gmg => new { gmg.GameId, gmg.GameModeId });
 
-            builder.Entity<GameTypeGame>()
-                .HasKey(gtg => new { gtg.GameId, gtg.GameTypeId });
+            // builder.Entity<GameTypeGame>()
+            //     .HasKey(gtg => new { gtg.GameId, gtg.GameTypeId });
 
             builder.Entity<GameCompany>()
                 .HasKey(gc => new { gc.GameId, gc.CompanyId });
 
-            // builder.Entity<GamePlatform>()
-            //     .HasKey(gp => new { gp.GameId, gp.PlatformId });
+            builder.Entity<GamePlatform>()
+                .HasKey(gp => new { gp.GameId, gp.PlatformId });
 
             builder.Entity<GamePlayerPerspective>()
                 .HasKey(gpp => new { gpp.GameId, gpp.PlayerPerspectiveId });
@@ -232,6 +232,41 @@ namespace Backend.Data
 
             builder.Entity<ReleaseDate>()
                 .HasIndex(grd => grd.PlatformId);
+
+            // configure unique constraints for reference models
+            builder.Entity<Genre>()
+                .HasIndex(g => g.IgdbId)
+                .IsUnique();
+            builder.Entity<RatingOrganization>()
+                .HasIndex(ro => ro.IgdbId)
+                .IsUnique();
+            builder.Entity<AgeRatingCategory>()
+                .HasIndex(arc => arc.IgdbId)
+                .IsUnique();
+            builder.Entity<AgeRating>()
+                .HasIndex(ar => ar.IgdbId)
+                .IsUnique();
+            builder.Entity<Franchise>()
+                .HasIndex(f => f.IgdbId)
+                .IsUnique();
+            builder.Entity<GameMode>()
+                .HasIndex(gm => gm.IgdbId)
+                .IsUnique();
+            builder.Entity<GameType>()
+                .HasIndex(gt => gt.IgdbId)
+                .IsUnique();
+            builder.Entity<Company>()
+                .HasIndex(c => c.IgdbId)
+                .IsUnique();
+            builder.Entity<Platform>()
+                .HasIndex(p => p.IgdbId)
+                .IsUnique();
+            builder.Entity<PlayerPerspective>()
+                .HasIndex(pp => pp.IgdbId)
+                .IsUnique();
+            builder.Entity<ReleaseDateRegion>()
+                .HasIndex(r => r.IgdbId)
+                .IsUnique();    
 
             // // Configure enum conversion
             // builder.Entity<Company>()

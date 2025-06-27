@@ -22,7 +22,7 @@ namespace Backend.Models.DTO.Game
         public List<GameScreenshotDto> Screenshots { get; set; } = new();
         public List<FranchiseDto> Franchises { get; set; } = new();
         public List<GameModeDto> GameModes { get; set; } = new();
-        public List<GameTypeDto> GameTypes { get; set; } = new();
+        public GameTypeDto GameType { get; set; } = new();
         public List<CompanyDto> Companies { get; set; } = new();
         public List<PlatformDto> Platforms { get; set; } = new();
         public List<PlayerPerspectiveDto> PlayerPerspectives { get; set; } = new();

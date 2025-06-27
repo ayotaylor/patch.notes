@@ -13,10 +13,14 @@ namespace Backend.Data.Configuration
 
             // Configure indexes for performance
             builder.HasIndex(g => g.Name);
-            builder.HasIndex(g => g.IgdbRating);
+            builder.HasIndex(g => g.Rating);
             // Configure decimal precision
-            builder.Property(g => g.IgdbRating)
+            builder.Property(g => g.Rating)
                 .HasPrecision(4, 1);
+            builder.HasOne(g => g.GameType)
+                .WithMany(gt => gt.Games)
+                .HasForeignKey(g => g.GameTypeId)
+                .OnDelete(DeleteBehavior.Restrict); // Prevent cascade delete
 
             //builder.HasIndex(g => g.Hypes);
         }

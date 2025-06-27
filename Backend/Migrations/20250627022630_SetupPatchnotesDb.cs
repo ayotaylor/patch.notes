@@ -7,7 +7,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace Backend.Migrations
 {
     /// <inheritdoc />
-    public partial class CreateDBTables : Migration
+    public partial class SetupPatchnotesDb : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -83,7 +83,7 @@ namespace Backend.Migrations
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "char(36)", nullable: false, collation: "ascii_general_ci"),
-                    IgdbId = table.Column<int>(type: "int", nullable: true),
+                    IgdbId = table.Column<int>(type: "int", nullable: false),
                     Name = table.Column<string>(type: "varchar(255)", maxLength: 255, nullable: false)
                         .Annotation("MySql:CharSet", "utf8mb4"),
                     Country = table.Column<string>(type: "varchar(100)", maxLength: 100, nullable: true)
@@ -110,7 +110,7 @@ namespace Backend.Migrations
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "char(36)", nullable: false, collation: "ascii_general_ci"),
-                    IgdbId = table.Column<int>(type: "int", nullable: true),
+                    IgdbId = table.Column<int>(type: "int", nullable: false),
                     Name = table.Column<string>(type: "varchar(255)", maxLength: 255, nullable: false)
                         .Annotation("MySql:CharSet", "utf8mb4"),
                     Slug = table.Column<string>(type: "varchar(255)", maxLength: 255, nullable: false)
@@ -131,7 +131,7 @@ namespace Backend.Migrations
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "char(36)", nullable: false, collation: "ascii_general_ci"),
-                    IgdbId = table.Column<int>(type: "int", nullable: true),
+                    IgdbId = table.Column<int>(type: "int", nullable: false),
                     Name = table.Column<string>(type: "varchar(100)", maxLength: 100, nullable: false)
                         .Annotation("MySql:CharSet", "utf8mb4"),
                     Slug = table.Column<string>(type: "varchar(150)", maxLength: 150, nullable: false)
@@ -152,7 +152,7 @@ namespace Backend.Migrations
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "char(36)", nullable: false, collation: "ascii_general_ci"),
-                    IgdbId = table.Column<int>(type: "int", nullable: true),
+                    IgdbId = table.Column<int>(type: "int", nullable: false),
                     Type = table.Column<string>(type: "varchar(100)", maxLength: 100, nullable: false)
                         .Annotation("MySql:CharSet", "utf8mb4"),
                     CreatedAt = table.Column<DateTime>(type: "timestamp", nullable: false)
@@ -171,7 +171,7 @@ namespace Backend.Migrations
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "char(36)", nullable: false, collation: "ascii_general_ci"),
-                    IgdbId = table.Column<int>(type: "int", nullable: true),
+                    IgdbId = table.Column<int>(type: "int", nullable: false),
                     Name = table.Column<string>(type: "varchar(100)", maxLength: 100, nullable: false)
                         .Annotation("MySql:CharSet", "utf8mb4"),
                     Slug = table.Column<string>(type: "varchar(150)", maxLength: 150, nullable: false)
@@ -192,10 +192,12 @@ namespace Backend.Migrations
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "char(36)", nullable: false, collation: "ascii_general_ci"),
-                    IgdbId = table.Column<int>(type: "int", nullable: true),
+                    IgdbId = table.Column<int>(type: "int", nullable: false),
                     Name = table.Column<string>(type: "varchar(100)", maxLength: 100, nullable: false)
                         .Annotation("MySql:CharSet", "utf8mb4"),
                     Slug = table.Column<string>(type: "varchar(150)", maxLength: 150, nullable: false)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    Abbreviation = table.Column<string>(type: "longtext", nullable: true)
                         .Annotation("MySql:CharSet", "utf8mb4"),
                     CreatedAt = table.Column<DateTime>(type: "timestamp", nullable: false)
                         .Annotation("MySql:ValueGenerationStrategy", MySqlValueGenerationStrategy.IdentityColumn),
@@ -213,7 +215,7 @@ namespace Backend.Migrations
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "char(36)", nullable: false, collation: "ascii_general_ci"),
-                    IgdbId = table.Column<int>(type: "int", nullable: true),
+                    IgdbId = table.Column<int>(type: "int", nullable: false),
                     Name = table.Column<string>(type: "varchar(100)", maxLength: 100, nullable: false)
                         .Annotation("MySql:CharSet", "utf8mb4"),
                     Slug = table.Column<string>(type: "varchar(150)", maxLength: 150, nullable: false)
@@ -234,7 +236,7 @@ namespace Backend.Migrations
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "char(36)", nullable: false, collation: "ascii_general_ci"),
-                    IgdbId = table.Column<int>(type: "int", nullable: true),
+                    IgdbId = table.Column<int>(type: "int", nullable: false),
                     Name = table.Column<string>(type: "varchar(100)", maxLength: 100, nullable: false)
                         .Annotation("MySql:CharSet", "utf8mb4"),
                     CreatedAt = table.Column<DateTime>(type: "timestamp", nullable: false)
@@ -253,8 +255,8 @@ namespace Backend.Migrations
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "char(36)", nullable: false, collation: "ascii_general_ci"),
-                    IgdbId = table.Column<int>(type: "int", nullable: true),
-                    Name = table.Column<string>(type: "varchar(100)", maxLength: 100, nullable: false)
+                    IgdbId = table.Column<int>(type: "int", nullable: false),
+                    Region = table.Column<string>(type: "longtext", nullable: false)
                         .Annotation("MySql:CharSet", "utf8mb4"),
                     CreatedAt = table.Column<DateTime>(type: "timestamp", nullable: false)
                         .Annotation("MySql:ValueGenerationStrategy", MySqlValueGenerationStrategy.IdentityColumn),
@@ -414,7 +416,7 @@ namespace Backend.Migrations
                     DateOfBirth = table.Column<DateTime>(type: "datetime", nullable: true),
                     PhoneNumber = table.Column<string>(type: "longtext", nullable: true)
                         .Annotation("MySql:CharSet", "utf8mb4"),
-                    Email = table.Column<string>(type: "longtext", nullable: true)
+                    Email = table.Column<string>(type: "varchar(95)", nullable: true)
                         .Annotation("MySql:CharSet", "utf8mb4"),
                     IsProfileUpdated = table.Column<bool>(type: "tinyint(1)", nullable: false),
                     IsPublic = table.Column<bool>(type: "tinyint(1)", nullable: false),
@@ -440,7 +442,7 @@ namespace Backend.Migrations
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "char(36)", nullable: false, collation: "ascii_general_ci"),
-                    IgdbId = table.Column<int>(type: "int", nullable: true),
+                    IgdbId = table.Column<int>(type: "int", nullable: false),
                     Name = table.Column<string>(type: "varchar(255)", maxLength: 255, nullable: false)
                         .Annotation("MySql:CharSet", "utf8mb4"),
                     Slug = table.Column<string>(type: "varchar(255)", maxLength: 255, nullable: false)
@@ -451,8 +453,8 @@ namespace Backend.Migrations
                         .Annotation("MySql:CharSet", "utf8mb4"),
                     FirstReleaseDate = table.Column<long>(type: "bigint", nullable: true),
                     Hypes = table.Column<int>(type: "int", nullable: false),
-                    IgdbRating = table.Column<decimal>(type: "decimal(4,1)", precision: 4, scale: 1, nullable: true),
-                    PlatformId = table.Column<Guid>(type: "char(36)", nullable: true, collation: "ascii_general_ci"),
+                    Rating = table.Column<decimal>(type: "decimal(4,1)", precision: 4, scale: 1, nullable: true),
+                    GameTypeId = table.Column<Guid>(type: "char(36)", nullable: false, collation: "ascii_general_ci"),
                     CreatedAt = table.Column<DateTime>(type: "timestamp", nullable: false)
                         .Annotation("MySql:ValueGenerationStrategy", MySqlValueGenerationStrategy.IdentityColumn),
                     UpdatedAt = table.Column<DateTime>(type: "timestamp", nullable: true)
@@ -462,10 +464,11 @@ namespace Backend.Migrations
                 {
                     table.PrimaryKey("PK_Games", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_Games_Platforms_PlatformId",
-                        column: x => x.PlatformId,
-                        principalTable: "Platforms",
-                        principalColumn: "Id");
+                        name: "FK_Games_GameTypes_GameTypeId",
+                        column: x => x.GameTypeId,
+                        principalTable: "GameTypes",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
                 })
                 .Annotation("MySql:CharSet", "utf8mb4");
 
@@ -474,7 +477,7 @@ namespace Backend.Migrations
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "char(36)", nullable: false, collation: "ascii_general_ci"),
-                    IgdbId = table.Column<int>(type: "int", nullable: true),
+                    IgdbId = table.Column<int>(type: "int", nullable: false),
                     RatingOrganizationId = table.Column<Guid>(type: "char(36)", nullable: false, collation: "ascii_general_ci"),
                     Rating = table.Column<string>(type: "varchar(100)", maxLength: 100, nullable: false)
                         .Annotation("MySql:CharSet", "utf8mb4"),
@@ -490,6 +493,64 @@ namespace Backend.Migrations
                         name: "FK_AgeRatingCategories_RatingOrganizations_RatingOrganizationId",
                         column: x => x.RatingOrganizationId,
                         principalTable: "RatingOrganizations",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                })
+                .Annotation("MySql:CharSet", "utf8mb4");
+
+            migrationBuilder.CreateTable(
+                name: "AltNames",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "char(36)", nullable: false, collation: "ascii_general_ci"),
+                    IgdbId = table.Column<int>(type: "int", nullable: false),
+                    GameId = table.Column<Guid>(type: "char(36)", nullable: false, collation: "ascii_general_ci"),
+                    Name = table.Column<string>(type: "varchar(255)", maxLength: 255, nullable: false)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    Comment = table.Column<string>(type: "longtext", nullable: true)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    CreatedAt = table.Column<DateTime>(type: "timestamp", nullable: false)
+                        .Annotation("MySql:ValueGenerationStrategy", MySqlValueGenerationStrategy.IdentityColumn),
+                    UpdatedAt = table.Column<DateTime>(type: "timestamp", nullable: true)
+                        .Annotation("MySql:ValueGenerationStrategy", MySqlValueGenerationStrategy.ComputedColumn)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_AltNames", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_AltNames_Games_GameId",
+                        column: x => x.GameId,
+                        principalTable: "Games",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                })
+                .Annotation("MySql:CharSet", "utf8mb4");
+
+            migrationBuilder.CreateTable(
+                name: "Covers",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "char(36)", nullable: false, collation: "ascii_general_ci"),
+                    IgdbId = table.Column<int>(type: "int", nullable: false),
+                    GameId = table.Column<Guid>(type: "char(36)", nullable: false, collation: "ascii_general_ci"),
+                    Url = table.Column<string>(type: "varchar(500)", maxLength: 500, nullable: false)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    ImageId = table.Column<string>(type: "varchar(100)", maxLength: 100, nullable: true)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    Height = table.Column<int>(type: "int", nullable: false),
+                    Width = table.Column<int>(type: "int", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "timestamp", nullable: false)
+                        .Annotation("MySql:ValueGenerationStrategy", MySqlValueGenerationStrategy.IdentityColumn),
+                    UpdatedAt = table.Column<DateTime>(type: "timestamp", nullable: true)
+                        .Annotation("MySql:ValueGenerationStrategy", MySqlValueGenerationStrategy.ComputedColumn)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Covers", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Covers_Games_GameId",
+                        column: x => x.GameId,
+                        principalTable: "Games",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 })
@@ -527,33 +588,6 @@ namespace Backend.Migrations
                 .Annotation("MySql:CharSet", "utf8mb4");
 
             migrationBuilder.CreateTable(
-                name: "GameAltNames",
-                columns: table => new
-                {
-                    Id = table.Column<Guid>(type: "char(36)", nullable: false, collation: "ascii_general_ci"),
-                    GameId = table.Column<Guid>(type: "char(36)", nullable: false, collation: "ascii_general_ci"),
-                    Name = table.Column<string>(type: "varchar(255)", maxLength: 255, nullable: false)
-                        .Annotation("MySql:CharSet", "utf8mb4"),
-                    Comment = table.Column<string>(type: "longtext", nullable: true)
-                        .Annotation("MySql:CharSet", "utf8mb4"),
-                    CreatedAt = table.Column<DateTime>(type: "timestamp", nullable: false)
-                        .Annotation("MySql:ValueGenerationStrategy", MySqlValueGenerationStrategy.IdentityColumn),
-                    UpdatedAt = table.Column<DateTime>(type: "timestamp", nullable: true)
-                        .Annotation("MySql:ValueGenerationStrategy", MySqlValueGenerationStrategy.ComputedColumn)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_GameAltNames", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_GameAltNames_Games_GameId",
-                        column: x => x.GameId,
-                        principalTable: "Games",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                })
-                .Annotation("MySql:CharSet", "utf8mb4");
-
-            migrationBuilder.CreateTable(
                 name: "GameCompanies",
                 columns: table => new
                 {
@@ -576,35 +610,6 @@ namespace Backend.Migrations
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
                         name: "FK_GameCompanies_Games_GameId",
-                        column: x => x.GameId,
-                        principalTable: "Games",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                })
-                .Annotation("MySql:CharSet", "utf8mb4");
-
-            migrationBuilder.CreateTable(
-                name: "GameCovers",
-                columns: table => new
-                {
-                    Id = table.Column<Guid>(type: "char(36)", nullable: false, collation: "ascii_general_ci"),
-                    GameId = table.Column<Guid>(type: "char(36)", nullable: false, collation: "ascii_general_ci"),
-                    Url = table.Column<string>(type: "varchar(500)", maxLength: 500, nullable: false)
-                        .Annotation("MySql:CharSet", "utf8mb4"),
-                    IgdbImageId = table.Column<string>(type: "varchar(100)", maxLength: 100, nullable: true)
-                        .Annotation("MySql:CharSet", "utf8mb4"),
-                    Height = table.Column<int>(type: "int", nullable: false),
-                    Width = table.Column<int>(type: "int", nullable: false),
-                    CreatedAt = table.Column<DateTime>(type: "timestamp", nullable: false)
-                        .Annotation("MySql:ValueGenerationStrategy", MySqlValueGenerationStrategy.IdentityColumn),
-                    UpdatedAt = table.Column<DateTime>(type: "timestamp", nullable: true)
-                        .Annotation("MySql:ValueGenerationStrategy", MySqlValueGenerationStrategy.ComputedColumn)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_GameCovers", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_GameCovers_Games_GameId",
                         column: x => x.GameId,
                         principalTable: "Games",
                         principalColumn: "Id",
@@ -738,6 +743,31 @@ namespace Backend.Migrations
                 .Annotation("MySql:CharSet", "utf8mb4");
 
             migrationBuilder.CreateTable(
+                name: "GamePlatforms",
+                columns: table => new
+                {
+                    GameId = table.Column<Guid>(type: "char(36)", nullable: false, collation: "ascii_general_ci"),
+                    PlatformId = table.Column<Guid>(type: "char(36)", nullable: false, collation: "ascii_general_ci")
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_GamePlatforms", x => new { x.GameId, x.PlatformId });
+                    table.ForeignKey(
+                        name: "FK_GamePlatforms_Games_GameId",
+                        column: x => x.GameId,
+                        principalTable: "Games",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_GamePlatforms_Platforms_PlatformId",
+                        column: x => x.PlatformId,
+                        principalTable: "Platforms",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                })
+                .Annotation("MySql:CharSet", "utf8mb4");
+
+            migrationBuilder.CreateTable(
                 name: "GamePlayerPerspectives",
                 columns: table => new
                 {
@@ -784,45 +814,6 @@ namespace Backend.Migrations
                         principalTable: "Games",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
-                })
-                .Annotation("MySql:CharSet", "utf8mb4");
-
-            migrationBuilder.CreateTable(
-                name: "GameReleaseDates",
-                columns: table => new
-                {
-                    Id = table.Column<Guid>(type: "char(36)", nullable: false, collation: "ascii_general_ci"),
-                    IgdbId = table.Column<int>(type: "int", nullable: true),
-                    GameId = table.Column<Guid>(type: "char(36)", nullable: false, collation: "ascii_general_ci"),
-                    PlatformId = table.Column<Guid>(type: "char(36)", nullable: false, collation: "ascii_general_ci"),
-                    RegionId = table.Column<Guid>(type: "char(36)", nullable: false, collation: "ascii_general_ci"),
-                    Date = table.Column<long>(type: "bigint", nullable: false),
-                    CreatedAt = table.Column<DateTime>(type: "timestamp", nullable: false)
-                        .Annotation("MySql:ValueGenerationStrategy", MySqlValueGenerationStrategy.IdentityColumn),
-                    UpdatedAt = table.Column<DateTime>(type: "timestamp", nullable: true)
-                        .Annotation("MySql:ValueGenerationStrategy", MySqlValueGenerationStrategy.ComputedColumn)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_GameReleaseDates", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_GameReleaseDates_Games_GameId",
-                        column: x => x.GameId,
-                        principalTable: "Games",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_GameReleaseDates_Platforms_PlatformId",
-                        column: x => x.PlatformId,
-                        principalTable: "Platforms",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_GameReleaseDates_Regions_RegionId",
-                        column: x => x.RegionId,
-                        principalTable: "Regions",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
                 })
                 .Annotation("MySql:CharSet", "utf8mb4");
 
@@ -877,60 +868,6 @@ namespace Backend.Migrations
                 .Annotation("MySql:CharSet", "utf8mb4");
 
             migrationBuilder.CreateTable(
-                name: "GameScreenshots",
-                columns: table => new
-                {
-                    Id = table.Column<Guid>(type: "char(36)", nullable: false, collation: "ascii_general_ci"),
-                    GameId = table.Column<Guid>(type: "char(36)", nullable: false, collation: "ascii_general_ci"),
-                    Url = table.Column<string>(type: "varchar(500)", maxLength: 500, nullable: false)
-                        .Annotation("MySql:CharSet", "utf8mb4"),
-                    IgdbImageId = table.Column<string>(type: "varchar(100)", maxLength: 100, nullable: true)
-                        .Annotation("MySql:CharSet", "utf8mb4"),
-                    Height = table.Column<int>(type: "int", nullable: false),
-                    Width = table.Column<int>(type: "int", nullable: false),
-                    CreatedAt = table.Column<DateTime>(type: "timestamp", nullable: false)
-                        .Annotation("MySql:ValueGenerationStrategy", MySqlValueGenerationStrategy.IdentityColumn),
-                    UpdatedAt = table.Column<DateTime>(type: "timestamp", nullable: true)
-                        .Annotation("MySql:ValueGenerationStrategy", MySqlValueGenerationStrategy.ComputedColumn)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_GameScreenshots", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_GameScreenshots_Games_GameId",
-                        column: x => x.GameId,
-                        principalTable: "Games",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                })
-                .Annotation("MySql:CharSet", "utf8mb4");
-
-            migrationBuilder.CreateTable(
-                name: "GameTypeGames",
-                columns: table => new
-                {
-                    GameId = table.Column<Guid>(type: "char(36)", nullable: false, collation: "ascii_general_ci"),
-                    GameTypeId = table.Column<Guid>(type: "char(36)", nullable: false, collation: "ascii_general_ci")
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_GameTypeGames", x => new { x.GameId, x.GameTypeId });
-                    table.ForeignKey(
-                        name: "FK_GameTypeGames_GameTypes_GameTypeId",
-                        column: x => x.GameTypeId,
-                        principalTable: "GameTypes",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_GameTypeGames_Games_GameId",
-                        column: x => x.GameId,
-                        principalTable: "Games",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                })
-                .Annotation("MySql:CharSet", "utf8mb4");
-
-            migrationBuilder.CreateTable(
                 name: "Likes",
                 columns: table => new
                 {
@@ -955,6 +892,75 @@ namespace Backend.Migrations
                         name: "FK_Likes_UserProfiles_UserId",
                         column: x => x.UserId,
                         principalTable: "UserProfiles",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                })
+                .Annotation("MySql:CharSet", "utf8mb4");
+
+            migrationBuilder.CreateTable(
+                name: "ReleaseDates",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "char(36)", nullable: false, collation: "ascii_general_ci"),
+                    IgdbId = table.Column<int>(type: "int", nullable: false),
+                    GameId = table.Column<Guid>(type: "char(36)", nullable: false, collation: "ascii_general_ci"),
+                    PlatformId = table.Column<Guid>(type: "char(36)", nullable: false, collation: "ascii_general_ci"),
+                    RegionId = table.Column<Guid>(type: "char(36)", nullable: false, collation: "ascii_general_ci"),
+                    Date = table.Column<DateTime>(type: "datetime", nullable: true),
+                    CreatedAt = table.Column<DateTime>(type: "timestamp", nullable: false)
+                        .Annotation("MySql:ValueGenerationStrategy", MySqlValueGenerationStrategy.IdentityColumn),
+                    UpdatedAt = table.Column<DateTime>(type: "timestamp", nullable: true)
+                        .Annotation("MySql:ValueGenerationStrategy", MySqlValueGenerationStrategy.ComputedColumn)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ReleaseDates", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_ReleaseDates_Games_GameId",
+                        column: x => x.GameId,
+                        principalTable: "Games",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_ReleaseDates_Platforms_PlatformId",
+                        column: x => x.PlatformId,
+                        principalTable: "Platforms",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_ReleaseDates_Regions_RegionId",
+                        column: x => x.RegionId,
+                        principalTable: "Regions",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                })
+                .Annotation("MySql:CharSet", "utf8mb4");
+
+            migrationBuilder.CreateTable(
+                name: "Screenshots",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "char(36)", nullable: false, collation: "ascii_general_ci"),
+                    IgdbId = table.Column<int>(type: "int", nullable: false),
+                    GameId = table.Column<Guid>(type: "char(36)", nullable: false, collation: "ascii_general_ci"),
+                    Url = table.Column<string>(type: "varchar(500)", maxLength: 500, nullable: false)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    ImageId = table.Column<string>(type: "varchar(100)", maxLength: 100, nullable: true)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    Height = table.Column<int>(type: "int", nullable: false),
+                    Width = table.Column<int>(type: "int", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "timestamp", nullable: false)
+                        .Annotation("MySql:ValueGenerationStrategy", MySqlValueGenerationStrategy.IdentityColumn),
+                    UpdatedAt = table.Column<DateTime>(type: "timestamp", nullable: true)
+                        .Annotation("MySql:ValueGenerationStrategy", MySqlValueGenerationStrategy.ComputedColumn)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Screenshots", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Screenshots_Games_GameId",
+                        column: x => x.GameId,
+                        principalTable: "Games",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 })
@@ -990,7 +996,7 @@ namespace Backend.Migrations
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "char(36)", nullable: false, collation: "ascii_general_ci"),
-                    IgdbId = table.Column<int>(type: "int", nullable: true),
+                    IgdbId = table.Column<int>(type: "int", nullable: false),
                     AgeRatingCategoryId = table.Column<Guid>(type: "char(36)", nullable: false, collation: "ascii_general_ci"),
                     Name = table.Column<string>(type: "varchar(100)", maxLength: 100, nullable: false)
                         .Annotation("MySql:CharSet", "utf8mb4"),
@@ -1039,6 +1045,12 @@ namespace Backend.Migrations
                 .Annotation("MySql:CharSet", "utf8mb4");
 
             migrationBuilder.CreateIndex(
+                name: "IX_AgeRatingCategories_IgdbId",
+                table: "AgeRatingCategories",
+                column: "IgdbId",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
                 name: "IX_AgeRatingCategories_RatingOrganizationId",
                 table: "AgeRatingCategories",
                 column: "RatingOrganizationId");
@@ -1047,6 +1059,17 @@ namespace Backend.Migrations
                 name: "IX_AgeRatings_AgeRatingCategoryId",
                 table: "AgeRatings",
                 column: "AgeRatingCategoryId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_AgeRatings_IgdbId",
+                table: "AgeRatings",
+                column: "IgdbId",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_AltNames_GameId",
+                table: "AltNames",
+                column: "GameId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_AspNetRoleClaims_RoleId",
@@ -1097,9 +1120,20 @@ namespace Backend.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
+                name: "IX_Companies_IgdbId",
+                table: "Companies",
+                column: "IgdbId",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Companies_Name",
                 table: "Companies",
                 column: "Name");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Covers_GameId",
+                table: "Covers",
+                column: "GameId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Favorites_GameId",
@@ -1113,14 +1147,15 @@ namespace Backend.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
+                name: "IX_Franchises_IgdbId",
+                table: "Franchises",
+                column: "IgdbId",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
                 name: "IX_GameAgeRatings_AgeRatingId",
                 table: "GameAgeRatings",
                 column: "AgeRatingId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_GameAltNames_GameId",
-                table: "GameAltNames",
-                column: "GameId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_GameCompanies_CompanyId",
@@ -1148,11 +1183,6 @@ namespace Backend.Migrations
                 column: "Supporting");
 
             migrationBuilder.CreateIndex(
-                name: "IX_GameCovers_GameId",
-                table: "GameCovers",
-                column: "GameId");
-
-            migrationBuilder.CreateIndex(
                 name: "IX_GameDlcs_DlcGameId",
                 table: "GameDlcs",
                 column: "DlcGameId");
@@ -1178,6 +1208,17 @@ namespace Backend.Migrations
                 column: "GameModeId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_GameModes_IgdbId",
+                table: "GameModes",
+                column: "IgdbId",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_GamePlatforms_PlatformId",
+                table: "GamePlatforms",
+                column: "PlatformId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_GamePlayerPerspectives_PlayerPerspectiveId",
                 table: "GamePlayerPerspectives",
                 column: "PlayerPerspectiveId");
@@ -1186,21 +1227,6 @@ namespace Backend.Migrations
                 name: "IX_GamePorts_PortGameId",
                 table: "GamePorts",
                 column: "PortGameId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_GameReleaseDates_GameId",
-                table: "GameReleaseDates",
-                column: "GameId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_GameReleaseDates_PlatformId",
-                table: "GameReleaseDates",
-                column: "PlatformId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_GameReleaseDates_RegionId",
-                table: "GameReleaseDates",
-                column: "RegionId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_GameRemakes_RemakeGameId",
@@ -1213,6 +1239,11 @@ namespace Backend.Migrations
                 column: "RemasterGameId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_Games_GameTypeId",
+                table: "Games",
+                column: "GameTypeId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Games_IgdbId",
                 table: "Games",
                 column: "IgdbId",
@@ -1220,19 +1251,14 @@ namespace Backend.Migrations
                 filter: "[IgdbId] IS NOT NULL");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Games_IgdbRating",
-                table: "Games",
-                column: "IgdbRating");
-
-            migrationBuilder.CreateIndex(
                 name: "IX_Games_Name",
                 table: "Games",
                 column: "Name");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Games_PlatformId",
+                name: "IX_Games_Rating",
                 table: "Games",
-                column: "PlatformId");
+                column: "Rating");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Games_Slug",
@@ -1241,14 +1267,16 @@ namespace Backend.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
-                name: "IX_GameScreenshots_GameId",
-                table: "GameScreenshots",
-                column: "GameId");
+                name: "IX_GameTypes_IgdbId",
+                table: "GameTypes",
+                column: "IgdbId",
+                unique: true);
 
             migrationBuilder.CreateIndex(
-                name: "IX_GameTypeGames_GameTypeId",
-                table: "GameTypeGames",
-                column: "GameTypeId");
+                name: "IX_Genres_IgdbId",
+                table: "Genres",
+                column: "IgdbId",
+                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_Likes_GameId",
@@ -1262,9 +1290,59 @@ namespace Backend.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
+                name: "IX_Platforms_IgdbId",
+                table: "Platforms",
+                column: "IgdbId",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_PlayerPerspectives_IgdbId",
+                table: "PlayerPerspectives",
+                column: "IgdbId",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_RatingOrganizations_IgdbId",
+                table: "RatingOrganizations",
+                column: "IgdbId",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Regions_IgdbId",
+                table: "Regions",
+                column: "IgdbId",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ReleaseDates_GameId",
+                table: "ReleaseDates",
+                column: "GameId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ReleaseDates_PlatformId",
+                table: "ReleaseDates",
+                column: "PlatformId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ReleaseDates_RegionId",
+                table: "ReleaseDates",
+                column: "RegionId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Screenshots_GameId",
+                table: "Screenshots",
+                column: "GameId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_SimilarGames_SimilarGameId",
                 table: "SimilarGames",
                 column: "SimilarGameId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_UserProfiles_Email",
+                table: "UserProfiles",
+                column: "Email",
+                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_UserProfiles_UserId",
@@ -1276,6 +1354,9 @@ namespace Backend.Migrations
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.DropTable(
+                name: "AltNames");
+
             migrationBuilder.DropTable(
                 name: "AspNetRoleClaims");
 
@@ -1292,19 +1373,16 @@ namespace Backend.Migrations
                 name: "AspNetUserTokens");
 
             migrationBuilder.DropTable(
+                name: "Covers");
+
+            migrationBuilder.DropTable(
                 name: "Favorites");
 
             migrationBuilder.DropTable(
                 name: "GameAgeRatings");
 
             migrationBuilder.DropTable(
-                name: "GameAltNames");
-
-            migrationBuilder.DropTable(
                 name: "GameCompanies");
-
-            migrationBuilder.DropTable(
-                name: "GameCovers");
 
             migrationBuilder.DropTable(
                 name: "GameDlcs");
@@ -1322,13 +1400,13 @@ namespace Backend.Migrations
                 name: "GameModeGames");
 
             migrationBuilder.DropTable(
+                name: "GamePlatforms");
+
+            migrationBuilder.DropTable(
                 name: "GamePlayerPerspectives");
 
             migrationBuilder.DropTable(
                 name: "GamePorts");
-
-            migrationBuilder.DropTable(
-                name: "GameReleaseDates");
 
             migrationBuilder.DropTable(
                 name: "GameRemakes");
@@ -1337,13 +1415,13 @@ namespace Backend.Migrations
                 name: "GameRemasters");
 
             migrationBuilder.DropTable(
-                name: "GameScreenshots");
-
-            migrationBuilder.DropTable(
-                name: "GameTypeGames");
-
-            migrationBuilder.DropTable(
                 name: "Likes");
+
+            migrationBuilder.DropTable(
+                name: "ReleaseDates");
+
+            migrationBuilder.DropTable(
+                name: "Screenshots");
 
             migrationBuilder.DropTable(
                 name: "SimilarGames");
@@ -1370,13 +1448,13 @@ namespace Backend.Migrations
                 name: "PlayerPerspectives");
 
             migrationBuilder.DropTable(
-                name: "Regions");
-
-            migrationBuilder.DropTable(
-                name: "GameTypes");
-
-            migrationBuilder.DropTable(
                 name: "UserProfiles");
+
+            migrationBuilder.DropTable(
+                name: "Platforms");
+
+            migrationBuilder.DropTable(
+                name: "Regions");
 
             migrationBuilder.DropTable(
                 name: "Games");
@@ -1388,7 +1466,7 @@ namespace Backend.Migrations
                 name: "AspNetUsers");
 
             migrationBuilder.DropTable(
-                name: "Platforms");
+                name: "GameTypes");
 
             migrationBuilder.DropTable(
                 name: "RatingOrganizations");

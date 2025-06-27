@@ -3,9 +3,9 @@ using Backend.Models.Game.Associations;
 
 namespace Backend.Models.Game.ReferenceModels
 {
-    public class Genre : BaseEntity
+    public class Genre : BaseEntity, IHasIgdbId
 {
-    public int? IgdbId { get; set; }
+    public int IgdbId { get; set; }
 
     [Required, MaxLength(100)]
     public string Name { get; set; } = string.Empty;

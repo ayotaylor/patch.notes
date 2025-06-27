@@ -15,8 +15,10 @@ public class IgdbGame : IHasId
     public IgdbCover? Cover { get; set; }
     public List<IgdbScreenshot>? Screenshots { get; set; }
     public List<IgdbReleaseDate>? ReleaseDates { get; set; }
+    //public IgdbFranchise? Franchise { get; set; }
     public List<IgdbFranchise>? Franchises { get; set; }
     public List<IgdbGameMode>? GameModes { get; set; }
+    public IgdbGameType? GameType { get; set; }
     public List<IgdbInvolvedCompany>? InvolvedCompanies { get; set; }
     public List<IgdbPlatform>? Platforms { get; set; }
     public List<IgdbPlayerPerspective>? PlayerPerspectives { get; set; }
@@ -30,69 +32,61 @@ public class IgdbGame : IHasId
     public List<int>? SimilarGames { get; set; }
 }
 
-public class IgdbPlayerPerspective
+public class IgdbAgeRating: IHasId
+{
+    public int Id { get; set; }
+    public IgdbAgeRatingCategory? RatingCategory { get; set; } 
+}
+
+public class IgdbAgeRatingCategory: IHasId
+{
+    public int Id { get; set; }
+    public string? Rating { get; set; }
+    public IgdbAgeRatingOrganization? Organization { get; set; }
+}
+
+public class IgdbAgeRatingOrganization : IHasId
 {
     public int Id { get; set; }
     public string? Name { get; set; }
-    public string? Slug { get; set; }
 }
 
-public class IgdbGameMode
+public class IgdbAlternativeName : IHasId
 {
     public int Id { get; set; }
-    public string? Name { get; set; }
-    public string? Slug { get; set; }
-}
-
-public class IgdbFranchise
-{
-    public int Id { get; set; }
-    public List<int>? GameIds { get; set; } // not sure if this is needed
-    public string? Name { get; set; }
-    public string? Slug { get; set; }
-}
-
-public class IgdbScreenshot
-{
-    public int Id { get; set; }
-    public int GameId { get; set; }
-    public string? ImageId { get; set; }
-    public string? Url { get; set; }
-    public int Height { get; set; }
-    public int Width { get; set; }
-}
-
-public class IgdbCover
-{
-    public int Id { get; set; }
-    public int GameId { get; set; }
-    public string? ImageId { get; set; }
-    public string? Url { get; set; }
-    public int Height { get; set; }
-    public int Width { get; set; }
-}
-
-public class IgdbAlternativeName
-{
-    public int Id { get; set; }
-    public string? GameId { get; set; }
+    public int Game { get; set; }
     public string? Name { get; set; }
     public string? Comment { get; set; }
 }
 
-public class IgdbAgeRating
+public class IgdbCover : IHasId
 {
     public int Id { get; set; }
-    public Guid RatingOrganizationId { get; set; }
-    public string RatingCategory { get; set; } = string.Empty;
-
+    public int Game { get; set; }
+    public string? ImageId { get; set; }
+    public string? Url { get; set; }
+    public int Height { get; set; }
+    public int Width { get; set; }
 }
 
-public class IgdbGenre : IHasId
+public class IgdbScreenshot : IHasId
 {
     public int Id { get; set; }
-    public string Name { get; set; } = "";
-    public string? Slug { get; set; }
+    public int Game { get; set; }
+    public string? ImageId { get; set; }
+    public string? Url { get; set; }
+    public int Height { get; set; }
+    public int Width { get; set; }
+}
+
+public class IgdbReleaseDate : IHasId
+{
+    public int Id { get; set; }
+    public long? Date { get; set; }
+    public int Game { get; set; }
+    // public string? Human { get; set; }
+    public IgdbPlatform? Platform { get; set; }
+    public IgdbRegion? ReleaseRegion { get; set; }
 }
 
 public class IgdbPlatform : IHasId
@@ -103,13 +97,58 @@ public class IgdbPlatform : IHasId
     public string? Slug { get; set; }
 }
 
+public class IgdbRegion : IHasId
+{
+    public int Id { get; set; }
+    public string? Region { get; set; }
+}
+
+public class IgdbPlayerPerspective : IHasId
+{
+    public int Id { get; set; }
+    public string? Name { get; set; }
+    public string? Slug { get; set; }
+}
+
+public class IgdbGameMode : IHasId
+{
+    public int Id { get; set; }
+    public string? Name { get; set; }
+    public string? Slug { get; set; }
+}
+
+public class IgdbGameType : IHasId
+{
+    public int Id { get; set; }
+    public string? Type { get; set; }
+}
+
+
+public class IgdbFranchise : IHasId
+{
+    public int Id { get; set; }
+    public string? Name { get; set; }
+    public string? Slug { get; set; }
+}
+
+public class IgdbGenre : IHasId
+{
+    public int Id { get; set; }
+    public string Name { get; set; } = "";
+    public string? Slug { get; set; }
+}
+
 public class IgdbCompany : IHasId
 {
     public int Id { get; set; }
     public string Name { get; set; } = "";
+    public int? Country { get; set; }  // ISO 3166-1 country code
+    public string? Description { get; set; }
+    public string? Slug { get; set; }
+    public string? Url { get; set; }
 }
 
-public class IgdbInvolvedCompany
+public class IgdbInvolvedCompany : IHasId
 {
     public int Id { get; set; }
     public IgdbCompany? Company { get; set; }
@@ -117,12 +156,4 @@ public class IgdbInvolvedCompany
     public bool? Publisher { get; set; }
     public bool? Porting { get; set; }
     public bool? Supporting { get; set; }
-}
-
-public class IgdbReleaseDate
-{
-    public int Id { get; set; }
-    public long? Date { get; set; }
-    public string? Human { get; set; }
-    public IgdbPlatform? Platform { get; set; }
 }
