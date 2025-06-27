@@ -201,7 +201,7 @@
 import {computed} from 'vue'
 import { useRouter } from 'vue-router'
 import { useToast } from 'vue-toastification'
-import { useAuthStore } from '@/stores/authStore'
+import { useAuthStore } from '@/stores/auth'
 import { formatUserName, formatDate, formatProvider } from '@/utils/authUtils'
 
 const router = useRouter()

@@ -1,6 +1,6 @@
 import axios from "axios";
 import { getStoredToken, clearAuthData } from "@/utils/authUtils";
-import { useAuthStore } from "@/stores/authStore";
+import { useAuthStore } from "@/stores/auth";
 
 // Create axios instance with base configuration
 const apiClient = axios.create({
@@ -30,12 +30,14 @@ apiClient.interceptors.request.use(
 apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401) {
+    const authStore = useAuthStore();
+    if (error.response?.status === 401 && !authStore.loggedOutViaInterceptor) {
       // Token expired or invalid
+      authStore.clearAuthState(); // Clear store state
+      authStore.setLoggedOutViaInterceptor(true); // Set flag to prevent router conflicts
       console.log("Token expired/invalid - clearing auth data");
       clearAuthData();
-      const authStore = useAuthStore();
-      authStore.clearAuthState(); // Cl ear store state
+      
       //console.error("Unauthorized access - redirecting to login");
       // Redirect to login page
       // Note: This will not work in a non-browser environment like Node.js

@@ -135,7 +135,7 @@
 <script setup>
 import { ref, reactive, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { useAuthStore } from '@/stores/authStore' // Adjust import path as needed
+import { useAuthStore } from '@/stores/auth' // Adjust import path as needed
 import { useToast } from 'vue-toastification'
 
 // Router and stores

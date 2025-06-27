@@ -19,7 +19,7 @@
 </template>
 
 <script setup>
-import { useAuthStore } from '@/stores/authStore'
+import { useAuthStore } from '@/stores/auth'
 import UserDropdown from '@/components/UserDropDown.vue'
 
 const authStore = useAuthStore()

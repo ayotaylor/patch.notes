@@ -155,7 +155,7 @@ export const useAuthStore = defineStore("auth", () => {
         await logout();
         return false;
       }
-      lastTokenValidation.value = Date.now();
+      setLastTokenValidation(Date.now());
       return true;
     } catch (error) {
       console.error("Token validation error:", error);
@@ -165,12 +165,12 @@ export const useAuthStore = defineStore("auth", () => {
   }
 
   function loadUserFromStorage() {
-    const userStr = getStoredUser();
-    const tokenStr = getStoredToken();
-    if (userStr && token) {
+    const storedUser = getStoredUser();
+    const storedToken = getStoredToken();
+    if (storedUser && token) {
       try {
-        user.value = userStr;
-        token.value = tokenStr;
+        user.value = storedUser;
+        token.value = storedToken;
         loggedOutViaInterceptor.value = false; // Reset flag
       } catch (error) {
         console.error("Error parsing user data:", error);

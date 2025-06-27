@@ -95,6 +95,7 @@ namespace Backend.Mapping
         }
 
         // reflection-based method to update UserProfile from UpdateUserProfileDto
+        // TODO: consider rewriting this method to be apply to all updatable DTOs
         public static void updateUserProfile(this UpdateUserProfileDto updateDto, UserProfile userProfile)
         {
             var dtoProperties = updateDto.GetType().GetProperties();
@@ -117,7 +118,7 @@ namespace Backend.Mapping
                         // Set the value only if the property is writable and types match
                         entityProperty.SetValue(userProfile, dtoValue);
                     }
-                    
+
                 }
             }
         }

@@ -98,7 +98,8 @@ public class UserProfileService : IUserProfileService
             UserId = userId,
             DisplayName = user?.UserName ?? "User",
             CreatedAt = DateTime.UtcNow,
-            UpdatedAt = DateTime.UtcNow
+            UpdatedAt = DateTime.UtcNow,
+            IsProfileUpdated = false,
         };
 
         _context.UserProfiles.Add(profile);

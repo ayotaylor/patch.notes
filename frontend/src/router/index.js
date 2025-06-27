@@ -1,5 +1,5 @@
 import { createRouter, createWebHistory } from "vue-router";
-import { useAuthStore } from "@/stores/authStore";
+import { useAuthStore } from "@/stores/auth";
 import { getStoredToken, clearAuthData } from "@/utils/authUtils";
 import CompleteProfile from "@/components/CompleteProfile.vue";
 
@@ -54,7 +54,7 @@ const routes = [
     meta: {
       requiresAuth: true,
       validateToken: "cache",
-      title: "Complete Your Profile - AuthApp",
+      title: "Complete Your Profile - Patch Notes",
     },
   }
   //   {
@@ -132,9 +132,18 @@ router.beforeEach(async (to, from, next) => {
     return next();
   }
 
-  // Load user from storage if not already loaded
+  // Load user from storage if not already loaded and has a valid token
   if (!authStore.isAuthenticated && token) {
     authStore.loadUserFromStorage();
+  }
+
+  // Route-specific logic
+  if (to.meta.requiresAuth && !authStore.isAuthenticated) {
+    return next("/login");
+  }
+
+  if (to.meta.requiresGuest && authStore.isAuthenticated) {
+    return next("/dashboard");
   }
 
   // Only validate token for protected routes and if not recently validated
@@ -148,7 +157,7 @@ router.beforeEach(async (to, from, next) => {
       } else if (validationStrategy === "cache") {
         const lastValidation = authStore.lastTokenValidation;
         const now = Date.now();
-        const validationThreshold = 5 * 60 * 1000; // 5 minutes in milliseconds
+        const validationThreshold = 5 * 60 * 1000; // 5 minutes in milliseconds TODO: maybe get from config
 
         // Only call backend if token hasn't been validated recently
         if (!lastValidation || now - lastValidation > validationThreshold) {
@@ -168,15 +177,6 @@ router.beforeEach(async (to, from, next) => {
       authStore.clearAuth();
       return next("/login");
     }
-  }
-
-  // Route-specific logic
-  if (to.meta.requiresAuth && !authStore.isAuthenticated) {
-    return next("/login");
-  }
-
-  if (to.meta.requiresGuest && authStore.isAuthenticated) {
-    return next("/dashboard");
   }
 
   next();
