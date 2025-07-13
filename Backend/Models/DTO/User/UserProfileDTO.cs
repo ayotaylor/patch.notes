@@ -11,4 +11,6 @@ public class UserProfileDto
     public string Email { get; set; } // From Identity User
     public DateTime CreatedAt { get; set; }
     public DateTime? UpdatedAt { get; set; }
+
+    public bool IsProfileUpdated { get; set; } = false;
 }

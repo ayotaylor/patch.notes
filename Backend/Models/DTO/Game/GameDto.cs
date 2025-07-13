@@ -2,7 +2,6 @@ namespace Backend.Models.DTO.Game
 {
     public class GameDto
     {
-        public Guid Id { get; set; }
         public int? IgdbId { get; set; }
         public string Name { get; set; } = string.Empty;
         public string Slug { get; set; } = string.Empty;
@@ -12,7 +11,7 @@ namespace Backend.Models.DTO.Game
         public int Hypes { get; set; }
         public decimal? IgdbRating { get; set; }
         public DateTime CreatedAt { get; set; }
-        public DateTime UpdatedAt { get; set; }
+         public DateTime UpdatedAt { get; set; }
 
         // Related data
         public List<GenreDto> Genres { get; set; } = new();

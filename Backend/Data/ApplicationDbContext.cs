@@ -224,9 +224,9 @@ namespace Backend.Data
                 .HasForeignKey(sg => sg.SimilarGameId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            builder.Entity<Company>()
-            .HasIndex(c => c.Name);
-
+            builder.Entity<Cover>()
+                .HasIndex(c => c.IgdbId);
+            
             builder.Entity<ReleaseDate>()
                 .HasIndex(grd => grd.GameId);
 
@@ -237,6 +237,8 @@ namespace Backend.Data
             builder.Entity<Genre>()
                 .HasIndex(g => g.IgdbId)
                 .IsUnique();
+            builder.Entity<Genre>()
+                .HasIndex(c => c.Slug);
             builder.Entity<RatingOrganization>()
                 .HasIndex(ro => ro.IgdbId)
                 .IsUnique();
@@ -246,6 +248,8 @@ namespace Backend.Data
             builder.Entity<AgeRating>()
                 .HasIndex(ar => ar.IgdbId)
                 .IsUnique();
+            builder.Entity<Franchise>()
+                .HasIndex(f => f.Slug);
             builder.Entity<Franchise>()
                 .HasIndex(f => f.IgdbId)
                 .IsUnique();
@@ -261,6 +265,8 @@ namespace Backend.Data
             builder.Entity<Platform>()
                 .HasIndex(p => p.IgdbId)
                 .IsUnique();
+            builder.Entity<Platform>()
+                .HasIndex(p => p.Slug);
             builder.Entity<PlayerPerspective>()
                 .HasIndex(pp => pp.IgdbId)
                 .IsUnique();

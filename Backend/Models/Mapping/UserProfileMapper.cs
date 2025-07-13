@@ -45,6 +45,7 @@ namespace Backend.Mapping
                 CreatedAt = userProfile.CreatedAt,
                 UpdatedAt = userProfile.UpdatedAt,
                 Email = userProfile.Email,
+                IsProfileUpdated = userProfile.IsProfileUpdated,
             };
         }
 

@@ -1,6 +1,6 @@
 import axios from "axios";
 import { getStoredToken, clearAuthData } from "@/utils/authUtils";
-import { useAuthStore } from "@/stores/auth";
+import { useAuthStore } from "@/stores/authStore";
 
 // Create axios instance with base configuration
 const apiClient = axios.create({

@@ -25,15 +25,8 @@
                     <i class="fas fa-envelope me-1"></i>
                     Email Address
                   </label>
-                  <input
-                    type="email"
-                    class="form-control form-control-lg"
-                    id="email"
-                    v-model="loginForm.email"
-                    placeholder="Enter your email"
-                    required
-                    :disabled="loading"
-                  >
+                  <input type="email" class="form-control form-control-lg" id="email" v-model="loginForm.email"
+                    placeholder="Enter your email" required :disabled="loading">
                 </div>
 
                 <div class="mb-4">
@@ -41,22 +34,11 @@
                     <i class="fas fa-lock me-1"></i>
                     Password
                   </label>
-                  <input
-                    type="password"
-                    class="form-control form-control-lg"
-                    id="password"
-                    v-model="loginForm.password"
-                    placeholder="Enter your password"
-                    required
-                    :disabled="loading"
-                  >
+                  <input type="password" class="form-control form-control-lg" id="password" v-model="loginForm.password"
+                    placeholder="Enter your password" required :disabled="loading">
                 </div>
 
-                <button
-                  type="submit"
-                  class="btn btn-primary btn-lg w-100 mb-3"
-                  :disabled="loading"
-                >
+                <button type="submit" class="btn btn-primary btn-lg w-100 mb-3" :disabled="loading">
                   <span v-if="loading" class="spinner-border spinner-border-sm me-2"></span>
                   <i v-else class="fas fa-sign-in-alt me-2"></i>
                   Sign In
@@ -72,20 +54,13 @@
 
               <!-- Social Login Buttons -->
               <div class="d-grid gap-2 mb-4">
-                <button
-                  class="btn btn-outline-danger btn-lg social-btn"
-                  @click="loginWithGoogle"
-                  :disabled="loading"
-                >
+                <button class="btn btn-outline-danger btn-lg social-btn" @click="loginWithGoogle" :disabled="loading">
                   <i class="fab fa-google me-2"></i>
                   Continue with Google
                 </button>
 
-                <button
-                  class="btn btn-outline-primary btn-lg social-btn"
-                  @click="loginWithFacebook"
-                  :disabled="loading"
-                >
+                <button class="btn btn-outline-primary btn-lg social-btn" @click="loginWithFacebook"
+                  :disabled="loading">
                   <i class="fab fa-facebook-f me-2"></i>
                   Continue with Facebook
                 </button>
@@ -111,12 +86,14 @@
 <script setup>
 import { ref } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { useAuthStore } from '@/stores/auth'
+import { useAuthStore } from '@/stores/authStore'
+import { useProfileStore } from '@/stores/profileStore'
 import { useToast } from 'vue-toastification'
 
 const router = useRouter()
 const route = useRoute()
 const authStore = useAuthStore()
+const profileStore = useProfileStore()
 const toast = useToast()
 
 const loginForm = ref({
@@ -134,19 +111,25 @@ const login = async () => {
     const response = await authStore.login(loginForm.value)
 
     if (response.success) {
-      toast.success('Login successful!')
+      const profileResponse = await profileStore.fetchProfile();
+      if (profileResponse) {
+        toast.success('Login successful!')
 
-      let isProfileUpdated = authStore.user.isProfileUpdated
+        let isProfileUpdated = profileResponse.isProfileUpdated
 
-      if (isProfileUpdated !== null && !isProfileUpdated) {
-        // Redirect to profile update page if profile is not updated
-        router.push('/complete-profile')
+        if (isProfileUpdated !== null && !isProfileUpdated) {
+          // Redirect to profile update page if profile is not updated
+          router.push('/complete-profile')
+          return
+        }
+        // Redirect to intended route or dashboard
+        const redirect = route.query.redirect || '/dashboard'
+        router.push(redirect)
+      } else {
+        error.value = profileResponse.message || 'Failed to fetch user profile'
+        toast.error(error.value)
         return
       }
-
-      // Redirect to intended route or dashboard
-      const redirect = route.query.redirect || '/dashboard'
-      router.push(redirect)
     } else {
       error.value = response.message
     }
@@ -210,7 +193,7 @@ const loginWithFacebook = async () => {
 
 .social-btn:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
 .form-control:focus {

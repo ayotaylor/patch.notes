@@ -41,6 +41,44 @@ export const useAuthStore = defineStore("auth", () => {
     );
   });
 
+  const getUserProfile = computed(() => {
+    if (!user.value) return null;
+    return {
+      id: user.value.id,
+      email: user.value.email,
+      firstName: user.value.firstName || "",
+      lastName: user.value.lastName || "",
+      dispayName: userFullName.value,
+      profileImageUrl: user.value.profile?.imageUrl || null,
+      bio: user.value.profile?.bio || "",
+    }
+  });
+
+  // update user profile in state and localStorage
+  const updateUserProfile = (profileData) => {
+    if (user.value) {
+      // update user object
+      if (profileData.firstName) {
+        user.value.firstName = profileData.firstName;
+      }
+      if (profileData.lastName) {
+        user.value.lastName = profileData.lastName;
+      }
+      if (profileData.email) {
+        user.value.email = profileData.email;
+      }
+
+      // update profile object
+      if (!user.value.profile) {
+        user.value.profile = {};
+      }
+      Object.assign(user.value.profile, profileData);
+
+      // update localStorage
+      setAuthData(token.value, user.value);
+    }
+  };
+
   const router = useRouter();
   const toast = useToast();
 
@@ -92,8 +130,8 @@ export const useAuthStore = defineStore("auth", () => {
       const response = await authService.updateProfile(profileData);
       // Update user state
       // TODO: might not be necessary if response.profile is the same as user.value.profile
-      updateUserProfileState(response.profile);  
-      
+      updateUserProfileState(response.profile);
+
       // TODO: maybe update last token validation time if needed
 
       return { success: true, data: response };
@@ -229,11 +267,13 @@ export const useAuthStore = defineStore("auth", () => {
     // getters
     isAuthenticated,
     userFullName,
+    getUserProfile,
     // actions
     register,
     login,
     updateProfile,
     updateUserProfileState,
+    updateUserProfile,  // TODO: consider removing this if not needed. logic might be redundant
     logout,
     validateToken,
     loadUserFromStorage,

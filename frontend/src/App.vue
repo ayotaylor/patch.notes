@@ -17,7 +17,7 @@
 <script setup>
 import { computed, onMounted, onUnmounted, ref } from 'vue';
 import { useRoute } from 'vue-router';
-import { useAuthStore } from '@/stores/auth';
+import { useAuthStore } from '@/stores/authStore';
 import AppNavbar from '@/components/AppNavBar.vue';
 import LoadingOverlay from '@/components/LoadingOverlay.vue';
 

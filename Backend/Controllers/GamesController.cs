@@ -1,11 +1,8 @@
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Backend.Services;
 
 using System.Security.Claims;
-using Backend.Models.DTO;
 using Backend.Models.DTO.Response;
-using Backend.Models.Game.Relationships;
 using Backend.Models.DTO.Game;
 
 namespace Backend.Controllers
@@ -23,7 +20,7 @@ namespace Backend.Controllers
             _logger = logger;
         }
 
-        [HttpGet]
+        [HttpGet("search")]
         public async Task<ActionResult<ApiResponse<PagedResponse<GameDto>>>> GetGames(
             [FromQuery] GameSearchParams searchParams)
         {
@@ -59,13 +56,14 @@ namespace Backend.Controllers
             }
         }
 
-        [HttpGet("{id:guid}")]
-        public async Task<ActionResult<ApiResponse<GameDto>>> GetGame(Guid id)
+        [HttpGet("{id:int}")]
+        public async Task<ActionResult<ApiResponse<GameDto>>> GetGame(int id)
         {
             try
             {
                 var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-                var game = await _gameService.GetGameByIdAsync(Guid.Parse(id.ToString()), Guid.Parse(userId));
+                var game = await _gameService.GetGameByIdAsync(id,
+                    userId != null ? Guid.Parse(userId) : Guid.Empty);
                 if (game == null)
                 {
                     return NotFound(new ApiResponse<GameDto>
@@ -92,13 +90,14 @@ namespace Backend.Controllers
             }
         }
 
-        [HttpGet("slug/{slug}")]
+        [HttpGet("{slug}")]
         public async Task<ActionResult<ApiResponse<GameDto>>> GetGameBySlug(string slug)
         {
             try
             {
                 var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-                var game = await _gameService.GetGameBySlugAsync(slug, Guid.Parse(userId));
+                var game = await _gameService.GetGameBySlugAsync(slug, 
+                    userId != null ? Guid.Parse(userId) : Guid.Empty);
                 if (game == null)
                 {
                     return NotFound(new ApiResponse<GameDto>
@@ -125,14 +124,14 @@ namespace Backend.Controllers
             }
         }
 
-        [HttpGet("{id:guid}/similar")]
-        public async Task<ActionResult<ApiResponse<List<GameDto>>>> GetSimilarGames(Guid id)
+        [HttpGet("{id:int}/similar")]
+        public async Task<ActionResult<ApiResponse<List<GameDto>>>> GetSimilarGames(int id)
         {
             try
             {
                 var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
                 var similarGames = await _gameService.GetSimilarGamesAsync(id);
-                if (similarGames == null || !similarGames.Any())
+                if (similarGames == null || similarGames.Count <= 0)
                 {
                     return NotFound(new ApiResponse<List<GameDto>>
                     {
@@ -158,8 +157,8 @@ namespace Backend.Controllers
             }
         }
 
-        [HttpGet("franchise/{franchiseId:guid}")]
-        public async Task<ActionResult<ApiResponse<List<GameDto>>>> GetGamesByFranchise(Guid franchiseId)
+        [HttpGet("franchise/{franchiseId:int}")]
+        public async Task<ActionResult<ApiResponse<List<GameDto>>>> GetGamesByFranchise(int franchiseId)
         {
             try
             {
@@ -224,8 +223,8 @@ namespace Backend.Controllers
             }
         }
 
-        [HttpGet("genre/{genreId:guid}")]
-        public async Task<ActionResult<ApiResponse<List<GameDto>>>> GetGamesByGenre(Guid genreId, [FromQuery] int limit = 20)
+        [HttpGet("genre/{genreId:int}")]
+        public async Task<ActionResult<ApiResponse<List<GameDto>>>> GetGamesByGenre(int genreId, [FromQuery] int limit = 20)
         {
             try
             {

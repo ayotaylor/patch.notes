@@ -1,5 +1,5 @@
 import { createRouter, createWebHistory } from "vue-router";
-import { useAuthStore } from "@/stores/auth";
+import { useAuthStore } from "@/stores/authStore";
 import { getStoredToken, clearAuthData } from "@/utils/authUtils";
 import CompleteProfile from "@/components/CompleteProfile.vue";
 
@@ -8,7 +8,8 @@ import CompleteProfile from "@/components/CompleteProfile.vue";
 const LoginComponent = () => import("@/components/LoginComponent.vue");
 const RegisterComponent = () => import("@/components/RegisterComponent.vue");
 const DashboardComponent = () => import("@/components/DashboardComponent.vue");
-//const ProfileComponent = () => import("@/components/ProfileComponent.vue");
+const ProfileComponent = () => import("@/components/ProfileComponent.vue");
+const GameDetailsComponent = () => import("@/components/GameDetailsComponent.vue");
 // const ForgotPassword = () => import('@/views/ForgotPassword.vue')
 // const ResetPassword = () => import('@/views/ResetPassword.vue')
 
@@ -56,17 +57,42 @@ const routes = [
       validateToken: "cache",
       title: "Complete Your Profile - Patch Notes",
     },
-  }
-  //   {
-  //     path: "/profile",
-  //     name: "Profile",
-  //     component: () => ProfileComponent,
-  //     meta: {
-  //       requiresAuth: true,
-  //       validateToken: "cache",
-  //       title: "Profile - AuthApp",
-  //     },
-  //   },
+  },
+  {
+    path: "/profile",
+    name: "MyProfile",
+    component: () => ProfileComponent,
+    meta: {
+      requiresAuth: true,
+      validateToken: "cache",
+      title: "Profile - Patch Notes",
+    },
+  },
+  {
+    path: "/profile/:userId",
+    name: "UserProfile",
+    component: () => ProfileComponent,
+    meta: {
+      requiresAuth: false,
+      validateToken: "never",
+      title: "Profile - Patch Notes",
+    },
+  },
+  {
+    path: "/games/:identifier",
+    name: "GameDetails",
+    component: () => GameDetailsComponent,
+    props: route => ({
+      gameId: !isNaN(route.params.identifier) ? route.params.identifier : null,
+      slug: isNaN(route.params.identifier) ? route.params.identifier : null
+    }),
+    meta: {
+      requiresAuth: false,  
+      validateToken: "never",
+      title: "Game Details - Patch Notes",
+    },
+  },
+
   //   {
   //     path: "/:pathMatch(.*)*",
   //     name: "NotFound",

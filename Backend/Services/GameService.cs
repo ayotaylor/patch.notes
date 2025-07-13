@@ -1,7 +1,9 @@
+using System.Threading.Tasks;
 using Backend.Data;
 using Backend.Mapping;
 using Backend.Models.DTO.Game;
 using Backend.Models.DTO.Response;
+using Backend.Models.Helpers;
 using Microsoft.EntityFrameworkCore;
 
 // TODO: refactor class to remove repeated code and improve readability
@@ -25,13 +27,13 @@ namespace Backend.Services
         {
             var query = _context.Games.AsQueryable();
 
-            // Apply search filters
+            // // Apply search filters BEFORE includes to reduce data fetching
             // search by name or summary TODO: maybe remove summary from search
             if (!string.IsNullOrEmpty(searchParams.Search))
             {
-                query = query.Where(g => g.Name.Contains(searchParams.Search)
-                                       || g.Summary != null
-                                       && g.Summary.Contains(searchParams.Search));
+                query = query.Where(g => g.Name.Contains(searchParams.Search));
+                //    || g.Summary != null
+                //    && g.Summary.Contains(searchParams.Search));
             }
 
             if (searchParams.GenreIds?.Count > 0)
@@ -67,10 +69,36 @@ namespace Backend.Services
                     query.OrderByDescending(g => g.Name) : query.OrderBy(g => g.Name)
             };
 
+            // OPTIMIZATION 1: Get total count from filtered query (before includes)
             var totalCount = await query.CountAsync();
             var totalPages = (int)Math.Ceiling(totalCount / (double)searchParams.PageSize);
 
+            // OPTIMIZATION 2: Apply pagination BEFORE includes to reduce data loading
+            var pagedGameIds = await query
+                .Skip((searchParams.Page - 1) * searchParams.PageSize)
+                .Take(searchParams.PageSize)
+                .Select(g => g.Id)
+                .ToListAsync();
+
+            if (pagedGameIds.Count <= 0)
+            {
+                return new PagedResponse<GameDto>
+                {
+                    Data = new List<GameDto>(),
+                    Page = searchParams.Page,
+                    PageSize = searchParams.PageSize,
+                    TotalCount = totalCount,
+                    TotalPages = totalPages,
+                    HasNextPage = searchParams.Page < totalPages,
+                    HasPreviousPage = searchParams.Page > 1
+                };
+            }
+
+            // OPTIMIZATION 3: Load games with includes only for the paged results
+            // TODO: need to optimize includes further by only including necessary data
             var games = await query
+                .Where(g => pagedGameIds.Contains(g.Id))
+                .AsSplitQuery()
                 .Include(g => g.GameGenres).ThenInclude(gg => gg.Genre)
                 .Include(g => g.GameAgeRatings).ThenInclude(gar => gar.AgeRating)
                     .ThenInclude(ar => ar.AgeRatingCategory)
@@ -89,46 +117,25 @@ namespace Backend.Services
                 .Take(searchParams.PageSize)
                 .ToListAsync();
 
-            var gameDtos = new List<GameDto>();
-            if (games != null && games.Count > 0)
+            // OPTIMIZATION 4: Batch load user interactions and counts in parallel
+            var (userInteractions, counts) = await LoadUserDataAndCountsAsync(pagedGameIds, userId);
+
+            // OPTIMIZATION 5: Preserve original sort order from the query
+            var gameDict = games.ToDictionary(g => g.Id);
+            var orderedGames = pagedGameIds.Select(id => gameDict[id]).ToList();
+
+            // Map games to DTOs and apply user interactions and counts
+            var gameDtos = orderedGames.Select(game =>
             {
-                var gameIds = games.Select(g => g.Id).ToList();
-                var userLikes = userId.HasValue
-                    ? await _context.Likes
-                        .Where(l => l.UserId == userId && gameIds.Contains(l.GameId))
-                        .Select(l => l.GameId)
-                        .ToListAsync()
-                    : new List<Guid>();
-
-                var userFavorites = userId.HasValue
-                    ? await _context.Favorites
-                        .Where(f => f.UserId == userId && gameIds.Contains(f.GameId))
-                        .Select(f => f.GameId)
-                        .ToListAsync()
-                    : new List<Guid>();
-
-                var likesCount = await _context.Likes
-                    .Where(l => gameIds.Contains(l.GameId))
-                    .GroupBy(l => l.GameId)
-                    .Select(g => new { GameId = g.Key, Count = g.Count() })
-                    .ToDictionaryAsync(g => g.GameId, g => g.Count);
-
-                var favoritesCount = await _context.Favorites
-                    .Where(f => gameIds.Contains(f.GameId))
-                    .GroupBy(f => f.GameId)
-                    .Select(g => new { GameId = g.Key, Count = g.Count() })
-                    .ToDictionaryAsync(g => g.GameId, g => g.Count);
-
-                foreach (var game in games)
-                {
-                    var gameDto = GameMapper.ToDto(game);
-                    gameDto.IsLikedByUser = userLikes.Contains(game.Id);
-                    gameDto.IsFavoriteByUser = userFavorites.Contains(game.Id);
-                    gameDto.LikesCount = likesCount.TryGetValue(game.Id, out var likeCount) ? likeCount : 0;
-                    gameDto.FavoritesCount = favoritesCount.TryGetValue(game.Id, out var favoriteCount) ? favoriteCount : 0;
-                    gameDtos.Add(gameDto);
-                }
-            }
+                var gameDto = GameMapper.ToDto(game);
+                gameDto.IsLikedByUser = userInteractions.UserLikes.Contains(game.Id);
+                gameDto.IsFavoriteByUser = userInteractions.UserFavorites.Contains(game.Id);
+                gameDto.LikesCount = counts.LikesCount.TryGetValue(game.Id,
+                    out var likeCount) ? likeCount : 0;
+                gameDto.FavoritesCount = counts.FavoritesCount.TryGetValue(game.Id,
+                    out var favoriteCount) ? favoriteCount : 0;
+                return gameDto;
+            }).ToList();
 
             return new PagedResponse<GameDto>
             {
@@ -142,9 +149,49 @@ namespace Backend.Services
             };
         }
 
-        public async Task<GameDto?> GetGameByIdAsync(Guid id, Guid? userId = null)
+        // OPTIMIZATION 6: Extract user interactions and counts loading into separate method
+        private async Task<(UserInteractions userInteractions, GameCounts counts)> LoadUserDataAndCountsAsync(
+            List<Guid> gameIds, Guid? userId)
+        {
+            // OPTION 1: Single query approach - Load all data in one go
+            var allLikes = await _context.Likes
+                .Where(l => gameIds.Contains(l.GameId))
+                .Select(l => new { l.GameId, l.UserId })
+                .ToListAsync();
+
+            var allFavorites = await _context.Favorites
+                .Where(f => gameIds.Contains(f.GameId))
+                .Select(f => new { f.GameId, f.UserId })
+                .ToListAsync();
+
+            // Process in memory (fast since we only have page-sized data)
+            var userLikes = userId.HasValue
+                ? new HashSet<Guid>(allLikes.Where(l => l.UserId == userId).Select(l => l.GameId))
+                : new HashSet<Guid>();
+
+            var userFavorites = userId.HasValue
+                ? new HashSet<Guid>(allFavorites.Where(f => f.UserId == userId).Select(f => f.GameId))
+                : new HashSet<Guid>();
+
+            var likesCount = allLikes
+                .GroupBy(l => l.GameId)
+                .ToDictionary(g => g.Key, g => g.Count());
+
+            var favoritesCount = allFavorites
+                .GroupBy(f => f.GameId)
+                .ToDictionary(g => g.Key, g => g.Count());
+
+            return (
+                new UserInteractions { UserLikes = userLikes, UserFavorites = userFavorites },
+                new GameCounts { LikesCount = likesCount, FavoritesCount = favoritesCount }
+            );
+        }
+
+        public async Task<GameDto?> GetGameByIdAsync(int id, Guid? userId = null)
         {
             var game = await _context.Games
+                .Where(g => g.IgdbId == id)
+                .AsSplitQuery()
                 .Include(g => g.GameGenres).ThenInclude(gg => gg.Genre)
                 .Include(g => g.GameAgeRatings).ThenInclude(ar => ar.AgeRating)
                     .ThenInclude(ar => ar.AgeRatingCategory)
@@ -160,13 +207,13 @@ namespace Backend.Services
                 .Include(g => g.GameCompanies).ThenInclude(gc => gc.Company)
                 .Include(g => g.GamePlayerPerspectives)
                     .ThenInclude(gpp => gpp.PlayerPerspective)
-                .FirstOrDefaultAsync(g => g.Id == id);
+                .FirstOrDefaultAsync(g => g.IgdbId == id);
 
             if (game == null) return null;
 
             var gameDto = GameMapper.ToDto(game);
 
-            if (userId.HasValue)
+            if (userId != Guid.Empty && userId.HasValue)
             {
                 gameDto.IsLikedByUser = await _context.Likes
                     .AnyAsync(l => l.UserId == userId && l.GameId == game.Id);
@@ -183,6 +230,8 @@ namespace Backend.Services
         public async Task<GameDto?> GetGameBySlugAsync(string slug, Guid? userId = null)
         {
             var game = await _context.Games
+                .Where(g => g.Slug == slug)
+                .AsSplitQuery()
                 .Include(g => g.GameGenres).ThenInclude(gg => gg.Genre)
                 .Include(g => g.GameAgeRatings).ThenInclude(ar => ar.AgeRating)
                     .ThenInclude(ar => ar.AgeRatingCategory)
@@ -203,7 +252,7 @@ namespace Backend.Services
 
             var gameDto = GameMapper.ToDto(game);
 
-            if (userId.HasValue)
+            if (userId != Guid.Empty && userId.HasValue)
             {
                 gameDto.IsLikedByUser = await _context.Likes
                     .AnyAsync(l => l.UserId == userId && l.GameId == game.Id);
@@ -215,6 +264,194 @@ namespace Backend.Services
             gameDto.FavoritesCount = await _context.Favorites.CountAsync(f => f.GameId == game.Id);
 
             return gameDto;
+        }
+
+        public async Task<bool> DeleteGameAsync(int id)
+        {
+            var game = await _context.Games
+                .Where(g => g.IgdbId == id)
+                .FirstOrDefaultAsync();
+            if (game == null) return false;
+
+            _context.Games.Remove(game);
+            await _context.SaveChangesAsync();
+            return true;
+        }
+
+        public async Task<List<GameDto>> GetSimilarGamesAsync(int gameId, int limit = 10)
+        {
+            var gameIdFromIgdbId = await _context.Games
+                .Where(g => g.IgdbId == gameId)
+                .Select(g => g.Id)
+                .FirstOrDefaultAsync();
+
+            var similarGameIds = await _context.SimilarGames
+                .Where(sg => gameIdFromIgdbId == sg.GameId)
+                .Select(sg => sg.SimilarGameId)
+                .Take(limit)
+                .ToListAsync();
+
+            // TODO: decide what to return in the game object
+            var games = await _context.Games
+                .Where(g => similarGameIds.Contains(g.Id))
+                .Include(g => g.GameGenres).ThenInclude(gg => gg.Genre)
+                .Include(g => g.Covers)
+                .ToListAsync();
+
+            var gameDtos = new List<GameDto>();
+            if (games != null && games.Count > 0)
+            {
+                var gameIds = games.Select(g => g.Id).ToList();
+
+                var likesCount = await _context.Likes
+                    .Where(l => gameIds.Contains(l.GameId))
+                    .GroupBy(l => l.GameId)
+                    .Select(g => new { GameId = g.Key, Count = g.Count() })
+                    .ToDictionaryAsync(g => g.GameId, g => g.Count);
+
+                var favoritesCount = await _context.Favorites
+                    .Where(f => gameIds.Contains(f.GameId))
+                    .GroupBy(f => f.GameId)
+                    .Select(g => new { GameId = g.Key, Count = g.Count() })
+                    .ToDictionaryAsync(g => g.GameId, g => g.Count);
+
+
+                foreach (var game in games)
+                {
+                    var gameDto = GameMapper.ToDto(game);
+                    gameDto.LikesCount = likesCount.TryGetValue(game.Id, out var likeCount) ? likeCount : 0;
+                    gameDto.FavoritesCount = favoritesCount.TryGetValue(game.Id, out var favoriteCount) ? favoriteCount : 0;
+                    gameDtos.Add(gameDto);
+                }
+            }
+
+            return gameDtos;
+        }
+
+        public async Task<List<GameDto>> GetGamesByFranchiseAsync(int franchiseId)
+        {
+            var franchiseIdFromIgdbId = await _context.Franchises
+                .Where(f => f.IgdbId == franchiseId)
+                .Select(f => f.Id)
+                .FirstOrDefaultAsync();
+
+            var games = await _context.Games
+                .Where(g => g.GameFranchises.Any(gf => gf.FranchiseId == franchiseIdFromIgdbId))
+                .Include(g => g.GameGenres).ThenInclude(gg => gg.Genre)
+                .Include(g => g.Covers)
+                .OrderBy(g => g.FirstReleaseDate)
+                .ToListAsync();
+
+            var gameDtos = new List<GameDto>();
+            if (games != null && games.Count > 0)
+            {
+                var gameIds = games.Select(g => g.Id).ToList();
+
+                var likesCount = await _context.Likes
+                    .Where(l => gameIds.Contains(l.GameId))
+                    .GroupBy(l => l.GameId)
+                    .Select(g => new { GameId = g.Key, Count = g.Count() })
+                    .ToDictionaryAsync(g => g.GameId, g => g.Count);
+
+                var favoritesCount = await _context.Favorites
+                    .Where(f => gameIds.Contains(f.GameId))
+                    .GroupBy(f => f.GameId)
+                    .Select(g => new { GameId = g.Key, Count = g.Count() })
+                    .ToDictionaryAsync(g => g.GameId, g => g.Count);
+
+
+                foreach (var game in games)
+                {
+                    var gameDto = GameMapper.ToDto(game);
+                    gameDto.LikesCount = likesCount.TryGetValue(game.Id, out var likeCount) ? likeCount : 0;
+                    gameDto.FavoritesCount = favoritesCount.TryGetValue(game.Id, out var favoriteCount) ? favoriteCount : 0;
+                    gameDtos.Add(gameDto);
+                }
+            }
+
+            return gameDtos;
+        }
+
+        public async Task<List<GameDto>> GetPopularGamesAsync(int limit = 20)
+        {
+            var games = await _context.Games
+                .OrderByDescending(g => g.Hypes)
+                .ThenByDescending(g => g.Rating)
+                .Take(limit)
+                .ToListAsync();
+
+            var gameDtos = new List<GameDto>();
+            if (games != null && games.Count > 0)
+            {
+                var gameIds = games.Select(g => g.Id).ToList();
+
+                var likesCount = await _context.Likes
+                    .Where(l => gameIds.Contains(l.GameId))
+                    .GroupBy(l => l.GameId)
+                    .Select(g => new { GameId = g.Key, Count = g.Count() })
+                    .ToDictionaryAsync(g => g.GameId, g => g.Count);
+
+                var favoritesCount = await _context.Favorites
+                    .Where(f => gameIds.Contains(f.GameId))
+                    .GroupBy(f => f.GameId)
+                    .Select(g => new { GameId = g.Key, Count = g.Count() })
+                    .ToDictionaryAsync(g => g.GameId, g => g.Count);
+
+                foreach (var game in games)
+                {
+                    var gameDto = GameMapper.ToDto(game);
+                    gameDto.LikesCount = likesCount.TryGetValue(game.Id, out var likeCount) ? likeCount : 0;
+                    gameDto.FavoritesCount = favoritesCount.TryGetValue(game.Id, out var favoriteCount) ? favoriteCount : 0;
+                    gameDtos.Add(gameDto);
+                }
+            }
+
+            return gameDtos;
+        }
+
+        public async Task<List<GameDto>> GetGamesByGenreAsync(int genreId, int limit = 20)
+        {
+            var genreIdFromIgdbId = await _context.Genres
+                .Where(g => g.IgdbId == genreId)
+                .Select(g => g.Id)
+                .FirstOrDefaultAsync();
+
+            var games = await _context.Games
+                .Where(g => g.GameGenres.Any(gg => genreIdFromIgdbId == gg.GenreId))
+                .Include(g => g.GameGenres).ThenInclude(gg => gg.Genre)
+                .Include(g => g.Covers)
+                .OrderByDescending(g => g.Hypes)
+                .ThenByDescending(g => g.Rating)
+                .Take(limit)
+                .ToListAsync();
+
+            var gameDtos = new List<GameDto>();
+            if (games != null && games.Count > 0)
+            {
+                var gameIds = games.Select(g => g.Id).ToList();
+
+                var likesCount = await _context.Likes
+                    .Where(l => gameIds.Contains(l.GameId))
+                    .GroupBy(l => l.GameId)
+                    .Select(g => new { GameId = g.Key, Count = g.Count() })
+                    .ToDictionaryAsync(g => g.GameId, g => g.Count);
+
+                var favoritesCount = await _context.Favorites
+                    .Where(f => gameIds.Contains(f.GameId))
+                    .GroupBy(f => f.GameId)
+                    .Select(g => new { GameId = g.Key, Count = g.Count() })
+                    .ToDictionaryAsync(g => g.GameId, g => g.Count);
+
+                foreach (var game in games)
+                {
+                    var gameDto = GameMapper.ToDto(game);
+                    gameDto.LikesCount = likesCount.TryGetValue(game.Id, out var likeCount) ? likeCount : 0;
+                    gameDto.FavoritesCount = favoritesCount.TryGetValue(game.Id, out var favoriteCount) ? favoriteCount : 0;
+                    gameDtos.Add(gameDto);
+                }
+            }
+
+            return gameDtos;
         }
 
         // public async Task<GameDto> CreateGameAsync(CreateGameDto createGameDto)
@@ -292,177 +529,5 @@ namespace Backend.Services
 
         //     return await GetGameByIdAsync(id);
         // }
-
-        public async Task<bool> DeleteGameAsync(Guid id)
-        {
-            var game = await _context.Games.FindAsync(id);
-            if (game == null) return false;
-
-            _context.Games.Remove(game);
-            await _context.SaveChangesAsync();
-            return true;
-        }
-
-        public async Task<List<GameDto>> GetSimilarGamesAsync(Guid gameId, int limit = 10)
-        {
-            var similarGameIds = await _context.SimilarGames
-                .Where(sg => sg.GameId == gameId)
-                .Select(sg => sg.SimilarGameId)
-                .Take(limit)
-                .ToListAsync();
-
-            var games = await _context.Games
-                .Where(g => similarGameIds.Contains(g.Id))
-                .Include(g => g.GameGenres).ThenInclude(gg => gg.Genre)
-                .Include(g => g.Covers)
-                .ToListAsync();
-
-            var gameDtos = new List<GameDto>();
-            if (games != null && games.Count > 0)
-            {
-                var gameIds = games.Select(g => g.Id).ToList();
-
-                var likesCount = await _context.Likes
-                    .Where(l => gameIds.Contains(l.GameId))
-                    .GroupBy(l => l.GameId)
-                    .Select(g => new { GameId = g.Key, Count = g.Count() })
-                    .ToDictionaryAsync(g => g.GameId, g => g.Count);
-
-                var favoritesCount = await _context.Favorites
-                    .Where(f => gameIds.Contains(f.GameId))
-                    .GroupBy(f => f.GameId)
-                    .Select(g => new { GameId = g.Key, Count = g.Count() })
-                    .ToDictionaryAsync(g => g.GameId, g => g.Count);
-
-
-                foreach (var game in games)
-                {
-                    var gameDto = GameMapper.ToDto(game);
-                    gameDto.LikesCount = likesCount.TryGetValue(game.Id, out var likeCount) ? likeCount : 0;
-                    gameDto.FavoritesCount = favoritesCount.TryGetValue(game.Id, out var favoriteCount) ? favoriteCount : 0;
-                    gameDtos.Add(gameDto);
-                }
-            }
-
-            return gameDtos;
-        }
-
-        public async Task<List<GameDto>> GetGamesByFranchiseAsync(Guid franchiseId)
-        {
-            var games = await _context.Games
-                .Where(g => g.GameFranchises.Any(gf => gf.FranchiseId == franchiseId))
-                .Include(g => g.GameGenres).ThenInclude(gg => gg.Genre)
-                .Include(g => g.Covers)
-                .OrderBy(g => g.FirstReleaseDate)
-                .ToListAsync();
-
-            var gameDtos = new List<GameDto>();
-            if (games != null && games.Count > 0)
-            {
-                var gameIds = games.Select(g => g.Id).ToList();
-
-                var likesCount = await _context.Likes
-                    .Where(l => gameIds.Contains(l.GameId))
-                    .GroupBy(l => l.GameId)
-                    .Select(g => new { GameId = g.Key, Count = g.Count() })
-                    .ToDictionaryAsync(g => g.GameId, g => g.Count);
-
-                var favoritesCount = await _context.Favorites
-                    .Where(f => gameIds.Contains(f.GameId))
-                    .GroupBy(f => f.GameId)
-                    .Select(g => new { GameId = g.Key, Count = g.Count() })
-                    .ToDictionaryAsync(g => g.GameId, g => g.Count);
-
-
-                foreach (var game in games)
-                {
-                    var gameDto = GameMapper.ToDto(game);
-                    gameDto.LikesCount = likesCount.TryGetValue(game.Id, out var likeCount) ? likeCount : 0;
-                    gameDto.FavoritesCount = favoritesCount.TryGetValue(game.Id, out var favoriteCount) ? favoriteCount : 0;
-                    gameDtos.Add(gameDto);
-                }
-            }
-
-            return gameDtos;
-        }
-
-        public async Task<List<GameDto>> GetPopularGamesAsync(int limit = 20)
-        {
-            var games = await _context.Games
-                .Include(g => g.GameGenres).ThenInclude(gg => gg.Genre)
-                .Include(g => g.Covers)
-                .OrderByDescending(g => g.Hypes)
-                .ThenByDescending(g => g.Rating)
-                .Take(limit)
-                .ToListAsync();
-
-            var gameDtos = new List<GameDto>();
-            if (games != null && games.Count > 0)
-            {
-                var gameIds = games.Select(g => g.Id).ToList();
-
-                var likesCount = await _context.Likes
-                    .Where(l => gameIds.Contains(l.GameId))
-                    .GroupBy(l => l.GameId)
-                    .Select(g => new { GameId = g.Key, Count = g.Count() })
-                    .ToDictionaryAsync(g => g.GameId, g => g.Count);
-
-                var favoritesCount = await _context.Favorites
-                    .Where(f => gameIds.Contains(f.GameId))
-                    .GroupBy(f => f.GameId)
-                    .Select(g => new { GameId = g.Key, Count = g.Count() })
-                    .ToDictionaryAsync(g => g.GameId, g => g.Count);
-
-                foreach (var game in games)
-                {
-                    var gameDto = GameMapper.ToDto(game);
-                    gameDto.LikesCount = likesCount.TryGetValue(game.Id, out var likeCount) ? likeCount : 0;
-                    gameDto.FavoritesCount = favoritesCount.TryGetValue(game.Id, out var favoriteCount) ? favoriteCount : 0;
-                    gameDtos.Add(gameDto);
-                }
-            }
-
-            return gameDtos;
-        }
-
-        public async Task<List<GameDto>> GetGamesByGenreAsync(Guid genreId, int limit = 20)
-        {
-            var games = await _context.Games
-                .Where(g => g.GameGenres.Any(gg => gg.GenreId == genreId))
-                .Include(g => g.GameGenres).ThenInclude(gg => gg.Genre)
-                .Include(g => g.Covers)
-                .OrderByDescending(g => g.Hypes)
-                .ThenByDescending(g => g.Rating)
-                .Take(limit)
-                .ToListAsync();
-
-            var gameDtos = new List<GameDto>();
-            if (games != null && games.Count > 0)
-            {
-                var gameIds = games.Select(g => g.Id).ToList();
-
-                var likesCount = await _context.Likes
-                    .Where(l => gameIds.Contains(l.GameId))
-                    .GroupBy(l => l.GameId)
-                    .Select(g => new { GameId = g.Key, Count = g.Count() })
-                    .ToDictionaryAsync(g => g.GameId, g => g.Count);
-
-                var favoritesCount = await _context.Favorites
-                    .Where(f => gameIds.Contains(f.GameId))
-                    .GroupBy(f => f.GameId)
-                    .Select(g => new { GameId = g.Key, Count = g.Count() })
-                    .ToDictionaryAsync(g => g.GameId, g => g.Count);
-
-                foreach (var game in games)
-                {
-                    var gameDto = GameMapper.ToDto(game);
-                    gameDto.LikesCount = likesCount.TryGetValue(game.Id, out var likeCount) ? likeCount : 0;
-                    gameDto.FavoritesCount = favoritesCount.TryGetValue(game.Id, out var favoriteCount) ? favoriteCount : 0;
-                    gameDtos.Add(gameDto);
-                }
-            }
-
-            return gameDtos;
-        }
     }
 }

@@ -11,7 +11,6 @@ namespace Backend.Mapping
         {
             return new GameDto
             {
-                Id = game.Id,
                 IgdbId = game.IgdbId,
                 Name = game.Name,
                 Slug = game.Slug,
@@ -78,7 +77,6 @@ namespace Backend.Mapping
         {
             return new GenreDto
             {
-                Id = genre.Id,
                 IgdbId = genre.IgdbId,
                 Name = genre.Name,
                 Slug = genre.Slug
@@ -89,7 +87,6 @@ namespace Backend.Mapping
         {
             return new AltNameDto
             {
-                Id = altName.Id,
                 Name = altName.Name
             };
         }
@@ -98,7 +95,6 @@ namespace Backend.Mapping
         {
             return new PlatformDto
             {
-                Id = platform.Id,
                 IgdbId = platform.IgdbId,
                 Name = platform.Name,
                 Slug = platform.Slug
@@ -109,7 +105,6 @@ namespace Backend.Mapping
         {
             return new AgeRatingDto
             {
-                Id = ageRating.Id,
                 Name = ageRating.Name,
                 RatingOrganization = ageRating.AgeRatingCategory?.RatingOrganization?.ToDto(),
             };
@@ -119,7 +114,6 @@ namespace Backend.Mapping
         {
             return new GameTypeDto
             {
-                Id = gameType.Id,
                 IgdbId = gameType.IgdbId,
                 Type = gameType.Type
             };
@@ -129,7 +123,6 @@ namespace Backend.Mapping
         {
             return new RatingOrganizationDto
             {
-                Id = ratingOrganization.Id,
                 Name = ratingOrganization.Name
             };
         }
@@ -138,8 +131,7 @@ namespace Backend.Mapping
         {
             return new GameCoverDto
             {
-                Id = cover.Id,
-                IgdbImageId = cover.ImageId,
+                ImageId = cover.ImageId,
                 Url = cover.Url,
                 Width = cover.Width,
                 Height = cover.Height
@@ -150,8 +142,7 @@ namespace Backend.Mapping
         {
             return new GameScreenshotDto
             {
-                Id = screenshot.Id,
-                IgdbImageId = screenshot.ImageId,
+                ImageId = screenshot.ImageId,
                 Url = screenshot.Url,
                 Width = screenshot.Width,
                 Height = screenshot.Height
@@ -162,7 +153,6 @@ namespace Backend.Mapping
         {
             return new ReleaseDateDto
             {
-                Id = releaseDate.Id,
                 Platform = releaseDate.Platform.ToDto(),
                 Date = releaseDate.Date,
                 Region = releaseDate.ReleaseDateRegion.ToDto(),
@@ -173,7 +163,6 @@ namespace Backend.Mapping
         {
             return new RegionDto
             {
-                Id = region.Id,
                 Name = region.Region,
             };
         }
@@ -182,7 +171,6 @@ namespace Backend.Mapping
         {
             return new FranchiseDto
             {
-                Id = franchise.Id,
                 IgdbId = franchise.IgdbId,
                 Name = franchise.Name,
                 Slug = franchise.Slug
@@ -193,9 +181,9 @@ namespace Backend.Mapping
         {
             return new GameModeDto
             {
-                Id = gameMode.Id,
                 IgdbId = gameMode.IgdbId,
-                Name = gameMode.Name
+                Name = gameMode.Name,
+                Slug = gameMode.Slug
             };
         }
         
@@ -203,7 +191,7 @@ namespace Backend.Mapping
         {
             var roles = new List<string>();
 
-            if (company.GameCompanies.Any())
+            if (company.GameCompanies.Count > 0)
             {
                 var gameCompanies = company.GameCompanies.FirstOrDefault();
                 if (gameCompanies != null)
@@ -229,7 +217,6 @@ namespace Backend.Mapping
             
             return new CompanyDto
             {
-                Id = company.Id,
                 IgdbId = company.IgdbId,
                 Name = company.Name,
                 Country = company.Country,
@@ -266,7 +253,6 @@ namespace Backend.Mapping
 
             return new CompanyDto
             {
-                Id = company.Id,
                 IgdbId = company.IgdbId,
                 Name = company.Name,
                 Country = company.Country,
@@ -280,7 +266,6 @@ namespace Backend.Mapping
         {
             return new PlayerPerspectiveDto
             {
-                Id = playerPerspective.Id,
                 IgdbId = playerPerspective.IgdbId,
                 Name = playerPerspective.Name,
                 Slug = playerPerspective.Slug
