@@ -81,7 +81,7 @@
                 >
                   <GameCard
                     :game="game"
-                    @click="viewGameDetails(game.id)"
+                    @click="() => viewGameDetails(game.id)"
                     @add-to-library="addToLibrary"
                   />
                 </div>
@@ -136,7 +136,7 @@
               <div
                 v-for="(game, index) in popularGames.slice(0, 5)"
                 :key="game.id"
-                @click="viewGameDetails(game.id)"
+                @click="() => viewGameDetails(game.id)"
                 class="list-group-item list-group-item-action border-0 py-3 cursor-pointer"
               >
                 <div class="d-flex align-items-center">
@@ -229,7 +229,7 @@
                 class="col-6"
               >
                 <div
-                  @click="viewGameDetails(game.id)"
+                  @click="() => viewGameDetails(game.id)"
                   class="card border-0 bg-light cursor-pointer game-hover-card"
                 >
                   <img
@@ -363,7 +363,19 @@ const searchGames = async () => {
 }
 
 const viewGameDetails = (gameId) => {
-  router.push(`/games/${gameId}`)
+  console.log('Navigating to game:', gameId)
+
+  // Ensure we have a valid ID
+  if (!gameId) {
+    console.error('No game ID provided for navigation')
+    return
+  }
+
+  // Navigate using router.push with proper identifier
+  router.push({
+    name: 'GameDetails',
+    params: { identifier: String(gameId) }
+  })
 }
 
 // TODO: Implement this function to add game to user's library
@@ -371,7 +383,7 @@ const addToLibrary = async (game) => {
   try {
     // In a real app, you'd call an API to add the game to user's library
     // await userLibraryService.addGame(game.id)
-    
+
     userLibrary.value.add(game.id)
     toast.success(`Added "${game.name}" to your library!`)
   } catch (err) {
@@ -499,15 +511,15 @@ onMounted(async () => {
   .container-fluid {
     padding: 1rem;
   }
-  
+
   .card-body {
     padding: 1.5rem !important;
   }
-  
+
   .input-group-lg {
     flex-direction: column;
   }
-  
+
   .input-group-lg .btn {
     border-radius: 0.375rem !important;
     margin-top: 0.5rem;

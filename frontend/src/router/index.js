@@ -61,7 +61,7 @@ const routes = [
   {
     path: "/profile",
     name: "MyProfile",
-    component: () => ProfileComponent,
+    component: ProfileComponent,
     meta: {
       requiresAuth: true,
       validateToken: "cache",
@@ -71,7 +71,7 @@ const routes = [
   {
     path: "/profile/:userId",
     name: "UserProfile",
-    component: () => ProfileComponent,
+    component: ProfileComponent,
     meta: {
       requiresAuth: false,
       validateToken: "never",
@@ -81,13 +81,26 @@ const routes = [
   {
     path: "/games/:identifier",
     name: "GameDetails",
-    component: () => GameDetailsComponent,
-    props: route => ({
-      gameId: !isNaN(route.params.identifier) ? route.params.identifier : null,
-      slug: isNaN(route.params.identifier) ? route.params.identifier : null
-    }),
+    component: GameDetailsComponent,
+    props: (route) => {
+      const identifier = route.params.identifier;
+      console.log("Router props for identifier:", identifier);
+
+      // Check if identifier is numeric (ID) or string (slug)
+      if (!isNaN(identifier) && !isNaN(parseFloat(identifier))) {
+        return {
+          gameId: identifier,
+          slug: null,
+        };
+      } else {
+        return {
+          gameId: null,
+          slug: identifier,
+        };
+      }
+    },
     meta: {
-      requiresAuth: false,  
+      requiresAuth: false,
       validateToken: "never",
       title: "Game Details - Patch Notes",
     },

@@ -1,13 +1,18 @@
 <template>
-    <div @click="$emit('click', game)" class="card border-0 shadow-sm cursor-pointer game-card"
+    <div @click="$emit('click', game.id)" class="card border-0 shadow-sm cursor-pointer game-card"
         :class="{ 'in-library': isInLibrary }">
         <!-- Game Image -->
         <div class="position-relative">
-            <img :src="game.cover ? game.cover.imageUrl : '/default-game.png'" :alt="game.name" class="card-img-top"
-                style="height: 200px; object-fit: cover;">
+            <img
+                :src="game.primaryImageUrl"
+                :alt="game.name"
+                class="card-img-top"
+                style="height: 200px; object-fit: cover;"
+                loading="lazy"
+            >
 
             <!-- Rating Badge -->
-            <div v-if="game.rating" class="position-absolute top-0 start-0 m-2">
+            <div v-if="game.rating > 0" class="position-absolute top-0 start-0 m-2">
                 <span class="badge bg-dark bg-opacity-75 d-flex align-items-center">
                     <i class="fas fa-star text-warning me-1"></i>
                     {{ game.rating }}/5
@@ -15,9 +20,17 @@
             </div>
 
             <!-- Price Badge -->
-            <div v-if="game.price !== undefined" class="position-absolute top-0 end-0 m-2">
+            <div v-if="showPrice && game.price !== undefined" class="position-absolute top-0 end-0 m-2">
                 <span class="badge" :class="game.price === 0 ? 'bg-success' : 'bg-primary'">
                     {{ game.price === 0 ? 'Free' : `$${game.price}` }}
+                </span>
+            </div>
+
+            <!-- New Release Badge -->
+            <div v-if="game.isNewRelease" class="position-absolute top-0 end-0 m-2" :class="{ 'mt-5': showPrice }">
+                <span class="badge bg-warning text-dark">
+                    <i class="fas fa-star me-1"></i>
+                    New
                 </span>
             </div>
 
@@ -39,53 +52,69 @@
 
             <!-- Game Info -->
             <div class="mb-2">
-                <p v-if="game.genres" class="small text-muted mb-1">
+                <p v-if="game.allGenres !== 'Unknown'" class="small text-muted mb-1">
                     <i class="fas fa-tag me-1"></i>
-                    Genres: {{ game.genres.map(genre => genre.name).join(', ') }}
+                    {{ game.allGenres }}
                 </p>
-                <p v-if="game.developers" class="small text-muted mb-1">
+                <p v-if="game.allDevelopers !== 'Unknown'" class="small text-muted mb-1">
                     <i class="fas fa-code me-1"></i>
-                    Developers: {{ game.developers.map(developer => developer.name).join(', ') }}
+                    {{ game.allDevelopers }}
                 </p>
-                <p v-if="game.firstReleaseDate" class="small text-muted mb-1">
+                <p v-if="game.shortReleaseDate !== 'TBA'" class="small text-muted mb-1">
                     <i class="fas fa-calendar me-1"></i>
-                    {{ formatDate(game.firstReleaseDate) }}
+                    {{ game.shortReleaseDate }}
                 </p>
             </div>
 
             <!-- Description -->
-            <p v-if="game.summary" class="card-text small text-muted mb-3" style="height: 2.4em; overflow: hidden;">
-                {{ game.summary }}
+            <p v-if="game.summary && showDescription" class="card-text small text-muted mb-3 description-text">
+                {{ truncatedSummary }}
             </p>
 
             <!-- Game Stats -->
             <div v-if="showStats" class="d-flex justify-content-between align-items-center mb-3 small">
-                <span v-if="game.players" class="text-muted">
-                    <i class="fas fa-users me-1"></i>
-                    {{ game.players }}
+                <span v-if="game.platforms?.length" class="text-muted">
+                    <i class="fas fa-gamepad me-1"></i>
+                    {{ platformsText }}
                 </span>
-                <span v-if="game.size" class="text-muted">
-                    <i class="fas fa-download me-1"></i>
-                    {{ game.size }}
+                <span v-if="game.hypes > 0" class="text-muted">
+                    <i class="fas fa-fire me-1"></i>
+                    {{ game.hypes }}
                 </span>
-                <span v-if="game.playTime" class="text-muted">
-                    <i class="fas fa-clock me-1"></i>
-                    {{ game.playTime }}
+                <span v-if="game.likes > 0" class="text-muted">
+                    <i class="fas fa-heart me-1"></i>
+                    {{ game.likes }}
                 </span>
             </div>
 
             <!-- Action Buttons -->
             <div class="d-flex gap-2">
-                <button @click.stop="$emit('add-to-library', game)" :disabled="isInLibrary"
-                    class="btn btn-sm flex-grow-1" :class="isInLibrary ? 'btn-success' : 'btn-primary'">
+                <button
+                    @click.stop="$emit('add-to-library', game)"
+                    :disabled="isInLibrary"
+                    class="btn btn-sm flex-grow-1"
+                    :class="isInLibrary ? 'btn-success' : 'btn-primary'"
+                >
                     <i class="fas" :class="isInLibrary ? 'fa-check' : 'fa-plus'"></i>
                     {{ isInLibrary ? 'Added' : 'Add to Library' }}
                 </button>
 
-                <button @click.stop="$emit('add-to-wishlist', game)" class="btn btn-sm btn-outline-secondary"
+                <button
+                    @click.stop="$emit('add-to-wishlist', game)"
+                    class="btn btn-sm btn-outline-secondary"
                     :class="{ 'active': isInWishlist }"
-                    :title="isInWishlist ? 'Remove from Wishlist' : 'Add to Wishlist'">
+                    :title="isInWishlist ? 'Remove from Wishlist' : 'Add to Wishlist'"
+                >
                     <i class="fas fa-heart" :class="{ 'text-danger': isInWishlist }"></i>
+                </button>
+
+                <button
+                    v-if="showMoreActions"
+                    @click.stop="$emit('show-details', game)"
+                    class="btn btn-sm btn-outline-info"
+                    title="Quick Details"
+                >
+                    <i class="fas fa-info"></i>
                 </button>
             </div>
         </div>
@@ -93,10 +122,11 @@
 </template>
 
 <script setup>
-import { Game } from '@/models/Game';
-import { defineProps, defineEmits } from 'vue';
+import { computed, defineProps, defineEmits } from 'vue'
+import { Game } from '@/models/Game'
+
 // Props
-defineProps({
+const props = defineProps({
     game: {
         type: Game,
         required: true
@@ -112,22 +142,47 @@ defineProps({
     showStats: {
         type: Boolean,
         default: true
+    },
+    showDescription: {
+        type: Boolean,
+        default: true
+    },
+    showPrice: {
+        type: Boolean,
+        default: false
+    },
+    showMoreActions: {
+        type: Boolean,
+        default: false
+    },
+    descriptionLimit: {
+        type: Number,
+        default: 100
     }
 })
 
 // Emits
-defineEmits(['click', 'add-to-library', 'add-to-wishlist'])
+defineEmits(['click', 'add-to-library', 'add-to-wishlist', 'show-details'])
 
-// Methods
-const formatDate = (dateString) => {
-    if (!dateString) return 'TBA'
-    //const date = new Date(dateString)
-    return dateString.toLocaleDateString('en-US', {
-        month: 'short',
-        day: 'numeric',
-        year: 'numeric'
-    })
-}
+// Computed properties
+const truncatedSummary = computed(() => {
+    if (!props.game.summary) return ''
+
+    const summary = props.game.summary
+    if (summary.length <= props.descriptionLimit) return summary
+
+    return summary.substring(0, props.descriptionLimit).trim() + '...'
+})
+
+const platformsText = computed(() => {
+    const platforms = props.game.platforms
+    if (!platforms || platforms.length === 0) return ''
+
+    if (platforms.length === 1) return platforms[0].name
+    if (platforms.length === 2) return platforms.map(p => p.name).join(', ')
+
+    return `${platforms[0].name} +${platforms.length - 1}`
+})
 </script>
 
 <style scoped>
