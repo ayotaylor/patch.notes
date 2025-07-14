@@ -5,6 +5,7 @@ using Backend.Models.DTO.Game;
 using Backend.Models.DTO.Response;
 using Backend.Models.Helpers;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 // TODO: refactor class to remove repeated code and improve readability
 // TODO: refactor this service to use a repository pattern or 
@@ -372,18 +373,47 @@ namespace Backend.Services
             return gameDtos;
         }
 
+        // TODO: maybe take only necessary fields...no full object or igdbid(usually used for filtering//search)
         public async Task<List<GameDto>> GetPopularGamesAsync(int limit = 20)
         {
-            var games = await _context.Games
+            var popularGameIds = await _context.Games
+                .Where(g => g.Hypes > 0 && g.Rating > 0)
                 .OrderByDescending(g => g.Hypes)
                 .ThenByDescending(g => g.Rating)
                 .Take(limit)
+                .Select(g => g.Id)
                 .ToListAsync();
 
-            var gameDtos = new List<GameDto>();
-            if (games != null && games.Count > 0)
+            if (popularGameIds == null || popularGameIds.Count <= 0)
             {
-                var gameIds = games.Select(g => g.Id).ToList();
+                return new List<GameDto>();
+            }
+
+            var games = await _context.Games
+                .Where(g => popularGameIds.Contains(g.Id)) // Filter out games with no hypes/ratings
+                .AsSplitQuery()
+                .Include(g => g.GameGenres).ThenInclude(gg => gg.Genre)
+                .Include(g => g.GameAgeRatings).ThenInclude(ar => ar.AgeRating)
+                    .ThenInclude(ar => ar.AgeRatingCategory)
+                    .ThenInclude(arc => arc.RatingOrganization)
+                .Include(g => g.AltNames)
+                .Include(g => g.Covers)
+                .Include(g => g.Screenshots)
+                .Include(g => g.ReleaseDates).ThenInclude(rd => rd.Platform)
+                .Include(g => g.ReleaseDates).ThenInclude(rd => rd.ReleaseDateRegion)
+                .Include(g => g.GameFranchises).ThenInclude(gf => gf.Franchise)
+                .Include(g => g.GameModes).ThenInclude(gmg => gmg.GameMode)
+                .Include(g => g.GameType)
+                .Include(g => g.GameCompanies).ThenInclude(gc => gc.Company)
+                .Include(g => g.GamePlayerPerspectives).ThenInclude(gpp => gpp.PlayerPerspective)
+                .ToListAsync();
+
+            var orderedGames = popularGameIds.Join(games, id => id, game => game.Id, (id, game) => game).ToList();
+
+            var gameDtos = new List<GameDto>();
+            if (orderedGames != null && orderedGames.Count > 0)
+            {
+                var gameIds = orderedGames.Select(g => g.Id).ToList();
 
                 var likesCount = await _context.Likes
                     .Where(l => gameIds.Contains(l.GameId))
@@ -397,7 +427,75 @@ namespace Backend.Services
                     .Select(g => new { GameId = g.Key, Count = g.Count() })
                     .ToDictionaryAsync(g => g.GameId, g => g.Count);
 
-                foreach (var game in games)
+                foreach (var game in orderedGames)
+                {
+                    var gameDto = GameMapper.ToDto(game);
+                    gameDto.LikesCount = likesCount.TryGetValue(game.Id, out var likeCount) ? likeCount : 0;
+                    gameDto.FavoritesCount = favoritesCount.TryGetValue(game.Id, out var favoriteCount) ? favoriteCount : 0;
+                    gameDtos.Add(gameDto);
+                }
+            }
+
+            return gameDtos;
+        }
+
+        // TODO: get games from the last three months. need to implement a better method of getting new games
+        public async Task<List<GameDto>> GetNewGamesAsync(int limit = 20)
+        {
+            var today = new DateTimeOffset(DateTime.Now).ToUnixTimeSeconds();
+            var threeMonthsAgo = new DateTimeOffset(DateTime.Now.AddMonths(-3)).ToUnixTimeSeconds();
+            var newGameIds = await _context.Games
+                .Where(g => g.FirstReleaseDate <= today && g.FirstReleaseDate >= threeMonthsAgo)
+                .OrderByDescending(g => g.Hypes)
+                .ThenByDescending(g => g.Rating)
+                .Take(limit)
+                .Select(g => g.Id)
+                .ToListAsync();
+
+            if (newGameIds == null || newGameIds.Count <= 0)
+            {
+                return new List<GameDto>();
+            }
+
+            var games = await _context.Games
+                .Where(g => newGameIds.Contains(g.Id)) // Filter out games with no hypes/ratings
+                .AsSplitQuery()
+                .Include(g => g.GameGenres).ThenInclude(gg => gg.Genre)
+                .Include(g => g.GameAgeRatings).ThenInclude(ar => ar.AgeRating)
+                    .ThenInclude(ar => ar.AgeRatingCategory)
+                    .ThenInclude(arc => arc.RatingOrganization)
+                .Include(g => g.AltNames)
+                .Include(g => g.Covers)
+                .Include(g => g.Screenshots)
+                .Include(g => g.ReleaseDates).ThenInclude(rd => rd.Platform)
+                .Include(g => g.ReleaseDates).ThenInclude(rd => rd.ReleaseDateRegion)
+                .Include(g => g.GameFranchises).ThenInclude(gf => gf.Franchise)
+                .Include(g => g.GameModes).ThenInclude(gmg => gmg.GameMode)
+                .Include(g => g.GameType)
+                .Include(g => g.GameCompanies).ThenInclude(gc => gc.Company)
+                .Include(g => g.GamePlayerPerspectives).ThenInclude(gpp => gpp.PlayerPerspective)
+                .ToListAsync();
+
+            var orderedGames = newGameIds.Join(games, id => id, game => game.Id, (id, game) => game).ToList();
+
+            var gameDtos = new List<GameDto>();
+            if (orderedGames != null && orderedGames.Count > 0)
+            {
+                var gameIds = orderedGames.Select(g => g.Id).ToList();
+
+                var likesCount = await _context.Likes
+                    .Where(l => gameIds.Contains(l.GameId))
+                    .GroupBy(l => l.GameId)
+                    .Select(g => new { GameId = g.Key, Count = g.Count() })
+                    .ToDictionaryAsync(g => g.GameId, g => g.Count);
+
+                var favoritesCount = await _context.Favorites
+                    .Where(f => gameIds.Contains(f.GameId))
+                    .GroupBy(f => f.GameId)
+                    .Select(g => new { GameId = g.Key, Count = g.Count() })
+                    .ToDictionaryAsync(g => g.GameId, g => g.Count);
+
+                foreach (var game in orderedGames)
                 {
                     var gameDto = GameMapper.ToDto(game);
                     gameDto.LikesCount = likesCount.TryGetValue(game.Id, out var likeCount) ? likeCount : 0;

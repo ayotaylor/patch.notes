@@ -164,7 +164,7 @@ namespace Backend.Controllers
             {
                 var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
                 var games = await _gameService.GetGamesByFranchiseAsync(franchiseId);
-                if (games == null || !games.Any())
+                if (games == null || games.Count <= 0)
                 {
                     return NotFound(new ApiResponse<List<GameDto>>
                     {
@@ -192,12 +192,15 @@ namespace Backend.Controllers
         }
 
         [HttpGet("popular")]
-        public async Task<ActionResult<ApiResponse<List<GameDto>>>> GetPopularGames()
+        public async Task<ActionResult<ApiResponse<List<GameDto>>>> GetPopularGames(
+            [FromQuery] String limit)
         {
             try
             {
-                var popularGames = await _gameService.GetPopularGamesAsync();
-                if (popularGames == null || !popularGames.Any())
+                var popularGames = await _gameService.GetPopularGamesAsync(
+                        Int32.TryParse(limit, out int popularGamesLimit) ?
+                            popularGamesLimit : 20);
+                if (popularGames == null || popularGames.Count <= 0)
                 {
                     return NotFound(new ApiResponse<List<GameDto>>
                     {
@@ -209,6 +212,41 @@ namespace Backend.Controllers
                 {
                     Success = true,
                     Data = popularGames
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error fetching popular games");
+                return StatusCode(500, new ApiResponse<List<GameDto>>
+                {
+                    Success = false,
+                    Message = "An error occurred while fetching popular games",
+                    Errors = [ex.Message]
+                });
+            }
+        }
+
+        [HttpGet("new")]
+        public async Task<ActionResult<ApiResponse<List<GameDto>>>> GetNewGames(
+            [FromQuery] String limit)
+        {
+            try
+            {
+                var newGames = await _gameService.GetNewGamesAsync(
+                        Int32.TryParse(limit, out int gamesLimit) ?
+                            gamesLimit : 20);
+                if (newGames == null || newGames.Count <= 0)
+                {
+                    return NotFound(new ApiResponse<List<GameDto>>
+                    {
+                        Success = false,
+                        Message = "No popular games found"
+                    });
+                }
+                return Ok(new ApiResponse<List<GameDto>>
+                {
+                    Success = true,
+                    Data = newGames
                 });
             }
             catch (Exception ex)

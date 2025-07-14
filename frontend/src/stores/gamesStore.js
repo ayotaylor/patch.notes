@@ -339,6 +339,51 @@ export const useGamesStore = defineStore("games", () => {
     }
   };
 
+    const fetchNewGames = async (limit = 10, force = false) => {
+      const cacheKey = `new_games_${limit}`;
+
+      if (!force && newGames.value.length > 0 && isCacheValid(cacheKey)) {
+        return newGames.value;
+      }
+
+      try {
+        loading.value = true;
+        error.value = null;
+
+        const results = await gamesService.getNewGames(limit)
+
+        if (!Array.isArray(results)) {
+          console.error('fetchNewGames: Expected array but got:', typeof results);
+          return [];
+        }
+
+        const gameInstances = [];
+
+        for (const gameItem of results) {
+          try {
+            const gameInstance = createGame(gameItem);
+            if (gameInstance && gameInstance.id) {
+              cacheGame(gameInstance);
+              gameInstances.push(gameInstance);
+            }
+          } catch (gameError) {
+            console.error('fetchNewGames: Error creating game instance:', gameError);
+          }
+      }
+
+      newGames.value = gameInstances;
+      cacheTimestamps.value.set(cacheKey, Date.now());
+
+      return gameInstances;
+    } catch (err) {
+      console.error("fetchSimilarGames: Error:", err);
+      error.value = err.message;
+      return [];
+    } finally {
+      loading.value = false;
+    }
+  };
+
   // Cache management
   const clearSearchResults = () => {
     searchResults.value = [];
@@ -372,6 +417,7 @@ export const useGamesStore = defineStore("games", () => {
     searchGames,
     fetchPopularGames,
     fetchSimilarGames,
+    fetchNewGames,
 
     // Cache management
     clearSearchResults,

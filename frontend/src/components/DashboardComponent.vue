@@ -150,7 +150,7 @@
                   <!-- Game Image -->
                   <div class="me-3">
                     <img
-                      :src="game.imageUrl || '/default-game.png'"
+                      :src="game.primaryImageUrl || '/default-game.png'"
                       :alt="game.name"
                       class="rounded"
                       style="width: 50px; height: 50px; object-fit: cover;"
@@ -161,15 +161,15 @@
                   <div class="flex-grow-1">
                     <h6 class="mb-1 fw-semibold">{{ game.name }}</h6>
                     <div class="d-flex align-items-center gap-3 small text-muted">
-                      <span v-if="game.genre">
-                        <i class="fas fa-tag me-1"></i>{{ game.genre }}
+                      <span v-if="game.allGenres">
+                        <i class="fas fa-tag me-1"></i>{{ game.primaryGenre }}
                       </span>
                       <span v-if="game.rating">
                         <i class="fas fa-star text-warning me-1"></i>{{ game.rating }}/5
                       </span>
-                      <span v-if="game.players">
+                      <!-- <span v-if="game.players">
                         <i class="fas fa-users me-1"></i>{{ game.players }}
-                      </span>
+                      </span> -->
                     </div>
                   </div>
 
@@ -233,18 +233,18 @@
                   class="card border-0 bg-light cursor-pointer game-hover-card"
                 >
                   <img
-                    :src="game.imageUrl || '/default-game.png'"
+                    :src="game.primaryImageUrl || '/default-game.png'"
                     :alt="game.name"
                     class="card-img-top"
                     style="height: 120px; object-fit: cover;"
                   >
                   <div class="card-body p-2">
                     <h6 class="card-title mb-1 fw-semibold small">{{ game.name }}</h6>
-                    <p class="card-text small text-muted mb-2">{{ game.genre }}</p>
+                    <p class="card-text small text-muted mb-2">{{ game.primaryGenre }}</p>
                     <div class="d-flex justify-content-between align-items-center">
                       <small class="text-muted">
                         <i class="fas fa-calendar me-1"></i>
-                        {{ formatReleaseDate(game.releaseDate) }}
+                        {{ formatReleaseDate(game.firstReleaseDate) }}
                       </small>
                       <button
                         @click.stop="addToLibrary(game)"
@@ -466,8 +466,8 @@ onMounted(async () => {
   try {
     // Load initial data
     await Promise.all([
-      //gamesStore.fetchPopularGames(10),
-      //gamesStore.fetchNewGames(8),
+      gamesStore.fetchPopularGames(10),
+      gamesStore.fetchNewGames(8),
       loadUserStats()
     ])
   } catch (err) {

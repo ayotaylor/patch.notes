@@ -13,6 +13,8 @@ namespace Backend.Data.Configuration
 
             // Configure indexes for performance
             builder.HasIndex(g => g.Name);
+            builder.HasIndex(g => new { g.Hypes, g.Rating });
+            builder.HasIndex(g => g.Hypes);
             builder.HasIndex(g => g.Rating);
             // Configure decimal precision
             builder.Property(g => g.Rating)

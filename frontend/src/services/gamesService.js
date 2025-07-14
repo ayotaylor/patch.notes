@@ -21,9 +21,6 @@ export const gamesService = {
         error.response?.data?.message || "Failed to search games"
       );
     }
-    // const { get } = useApi()
-    // const response = await get(`/api/games/search?q=${encodeURIComponent(query)}`)
-    // return response.games || []
   },
 
   // Get popular games
@@ -33,15 +30,12 @@ export const gamesService = {
         throw new Error("Limit must be a positive number");
       }
       const response = await apiClient.get(`/games/popular?limit=${limit}`);
-      return response.data || [];
+      return response.data.data || [];
     } catch (error) {
       throw new Error(
         error.response?.data?.message || "Failed to fetch popular games"
       );
     }
-    // const { get } = useApi()
-    // const response = await get(`/api/games/popular?limit=${limit}`)
-    // return response.games || []
   },
 
   // Get game details
@@ -146,6 +140,21 @@ export const gamesService = {
     } catch (error) {
       throw new Error(
         error.response?.data?.message || "Failed to fetch similar games"
+      );
+    }
+  },
+
+  // Get popular games
+  async getNewGames(limit = 10) {
+    try {
+      if (typeof limit !== "number" || limit <= 0) {
+        throw new Error("Limit must be a positive number");
+      }
+      const response = await apiClient.get(`/games/new?limit=${limit}`);
+      return response.data.data || [];
+    } catch (error) {
+      throw new Error(
+        error.response?.data?.message || "Failed to fetch new games"
       );
     }
   },

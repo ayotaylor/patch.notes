@@ -12,6 +12,7 @@ namespace Backend.Services
         Task<List<GameDto>> GetSimilarGamesAsync(int gameId, int limit = 10);
         Task<List<GameDto>> GetGamesByFranchiseAsync(int franchiseId);
         Task<List<GameDto>> GetPopularGamesAsync(int limit = 20);
+        Task<List<GameDto>> GetNewGamesAsync(int limit = 20);
         Task<List<GameDto>> GetGamesByGenreAsync(int genreId, int limit = 20);
     }
 }

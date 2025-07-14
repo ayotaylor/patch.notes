@@ -112,6 +112,8 @@ namespace Backend.Mapping
 
         public static GameTypeDto ToDto(this GameType gameType)
         {
+            ArgumentNullException.ThrowIfNull(gameType);
+
             return new GameTypeDto
             {
                 IgdbId = gameType.IgdbId,

@@ -37,7 +37,7 @@ namespace Backend.Models.Game
         public virtual ICollection<ReleaseDate> ReleaseDates { get; set; } = new List<ReleaseDate>();
         public virtual ICollection<GameFranchise> GameFranchises { get; set; } = new List<GameFranchise>();
         public virtual ICollection<GameModeGame> GameModes { get; set; } = new List<GameModeGame>();
-        public virtual GameType? GameType { get; set; }
+        public virtual GameType GameType { get; set; } = new GameType();
         public virtual ICollection<GameCompany> GameCompanies { get; set; } = new List<GameCompany>();
         public virtual ICollection<GamePlatform> GamePlatforms { get; set; } = new List<GamePlatform>();
         public virtual ICollection<GamePlayerPerspective> GamePlayerPerspectives { get; set; } = new List<GamePlayerPerspective>();
