@@ -158,4 +158,58 @@ export const gamesService = {
       );
     }
   },
+
+  async removeFromFavorites(userId, gameId) {
+    try {
+      if (
+        !userId ||
+        (typeof userId !== "string" && typeof userId !== "number")
+      ) {
+        throw new Error("Game ID must be a non-empty string or number");
+      }
+      if (
+        !gameId ||
+        (typeof gameId !== "string" && typeof gameId !== "number")
+      ) {
+        throw new Error("Game ID must be a non-empty string or number");
+      }
+      const body = {
+        userId: userId,
+        gameId: gameId
+      }
+      const response = await apiClient.post(`/social/favorites`, body);
+      return response.data;
+    } catch (error) {
+      throw new Error(
+        error.response?.data?.message || "Failed to remove from favorites"
+      );
+    }
+  },
+
+  async addToFavorites(userId, gameId) {
+    try {
+      if (
+        !userId ||
+        (typeof userId !== "string" && typeof userId !== "number")
+      ) {
+        throw new Error("Game ID must be a non-empty string or number");
+      }
+      if (
+        !gameId ||
+        (typeof gameId !== "string" && typeof gameId !== "number")
+      ) {
+        throw new Error("Game ID must be a non-empty string or number");
+      }
+      const body = {
+        userId: userId,
+        gameId: gameId
+      }
+      const response = await apiClient.delete(`/social/favorites`, body);
+      return response.data;
+    } catch (error) {
+      throw new Error(
+        error.response?.data?.message || "Failed to add to favorites"
+      );
+    }
+  },
 };

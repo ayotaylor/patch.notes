@@ -2,6 +2,7 @@ using System.Threading.Tasks;
 using Backend.Data;
 using Backend.Mapping;
 using Backend.Models.DTO.Game;
+using Backend.Models.DTO.Request;
 using Backend.Models.DTO.Response;
 using Backend.Models.Helpers;
 using Microsoft.EntityFrameworkCore;

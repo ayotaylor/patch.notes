@@ -9,9 +9,8 @@ namespace Backend.Mapping
         {
             return new FavoriteDto
             {
-                Id = favorite.Id,
                 UserId = favorite.UserId,
-                GameId = favorite.GameId,
+                //GameId = favorite.GameId,
                 Game = favorite.Game?.ToDto(),
             };
         }
@@ -20,9 +19,8 @@ namespace Backend.Mapping
         {
             return new LikeDto
             {
-                Id = like.Id,
                 UserId = like.UserId,
-                GameId = like.GameId,
+                //GameId = like.GameId,
                 Game = like.Game?.ToDto(),
             };
         }

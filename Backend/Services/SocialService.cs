@@ -1,5 +1,6 @@
 using Backend.Data;
 using Backend.Mapping;
+using Backend.Models.DTO.Game;
 using Backend.Models.DTO.Social;
 using Backend.Models.Social;
 using Microsoft.EntityFrameworkCore;
@@ -17,35 +18,25 @@ namespace Backend.Services
             _logger = logger;
         }
 
-        public async Task<List<FavoriteDto>> GetUserFavoritesAsync(Guid userId, int page = 1, int pageSize = 20)
+        public async Task<List<GameDto>> GetUserFavoritesAsync(Guid userId, int page = 1, int pageSize = 5)
         {
-            var favorites = await _context.Favorites
+            var favoriteGameIds = await _context.Favorites
                 .Where(f => f.UserId == userId)
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
-                .Select(f => new FavoriteDto
-                {
-                    GameId = f.GameId,
-                    UserId = f.UserId,
-                    AddedAt = f.AddedAt
-                })
+                .Select(f => f.GameId)
                 .ToListAsync();
 
             var games = await _context.Games
-                .Where(g => favorites.Select(f => f.GameId).Contains(g.Id))
+                .Where(g => favoriteGameIds.Contains(g.Id))
                 .ToListAsync();
-            
-            var favoritesDto = new List<FavoriteDto>();
-            if (favorites != null && favorites.Count > 0)
+
+            var favoritesDto = new List<GameDto>();
+            if (games != null && games.Count > 0)
             {
-                foreach (var favorite in favorites)
+                foreach (var game in games)
                 {
-                    var game = games.FirstOrDefault(g => g.Id == favorite.GameId);
-                    if (game != null)
-                    {
-                        favorite.Game = game.ToDto();
-                    }
-                    favoritesDto.Add(favorite);
+                    favoritesDto.Add(game.ToDto());
                 }
 
                 _logger.LogInformation("Retrieved {Count} favorites for user {UserId}", favoritesDto.Count, userId);
@@ -58,10 +49,15 @@ namespace Backend.Services
             return favoritesDto;
         }
 
-        public async Task<bool> AddToFavoritesAsync(Guid userId, Guid gameId)
+        public async Task<bool> AddToFavoritesAsync(Guid userId, int gameId)
         {
+            var favoriteGameId = await _context.Games
+                .Where(g => g.IgdbId == gameId)
+                .Select(g => g.Id)
+                .FirstOrDefaultAsync();
+
             var existingFavorite = await _context.Favorites
-                .FirstOrDefaultAsync(f => f.UserId == userId && f.GameId == gameId);
+                .FirstOrDefaultAsync(f => f.UserId == userId && f.GameId == favoriteGameId);
 
             if (existingFavorite != null)
             {
@@ -72,7 +68,7 @@ namespace Backend.Services
             var favorite = new Favorite
             {
                 UserId = userId,
-                GameId = gameId,
+                GameId = favoriteGameId,
                 AddedAt = DateTime.UtcNow
             };
 
@@ -83,10 +79,15 @@ namespace Backend.Services
             return true;
         }
 
-        public async Task<bool> RemoveFromFavoritesAsync(Guid userId, Guid gameId)
+        public async Task<bool> RemoveFromFavoritesAsync(Guid userId, int gameId)
         {
+            var favoriteGameId = await _context.Games
+                .Where(g => g.IgdbId == gameId)
+                .Select(g => g.Id)
+                .FirstOrDefaultAsync();
+
             var favorite = await _context.Favorites
-                .FirstOrDefaultAsync(f => f.UserId == userId && f.GameId == gameId);
+                .FirstOrDefaultAsync(f => f.UserId == userId && f.GameId == favoriteGameId);
 
             if (favorite == null)
             {
@@ -101,54 +102,60 @@ namespace Backend.Services
             return true;
         }
 
-        public async Task<bool> IsGameFavoriteAsync(Guid userId, Guid gameId)
+        public async Task<bool> IsGameFavoriteAsync(Guid userId, int gameId)
         {
+            var favoriteGameId = await _context.Games
+                .Where(g => g.IgdbId == gameId)
+                .Select(g => g.Id)
+                .FirstOrDefaultAsync();
+
             var isFavorite = await _context.Favorites
-                .AnyAsync(f => f.UserId == userId && f.GameId == gameId);
+                .AnyAsync(f => f.UserId == userId && f.GameId == favoriteGameId);
 
             _logger.LogInformation("Game {GameId} is {Status} favorite for user {UserId}", 
                 gameId, isFavorite ? "a" : "not a", userId);
             return isFavorite;
         }
 
-        public async Task<List<LikeDto>> GetUserLikesAsync(Guid userId, int page = 1, int pageSize = 20)
+        public async Task<List<GameDto>> GetUserLikesAsync(Guid userId, int page = 1, int pageSize = 20)
         {
-            // Implementation for fetching user likes
-            var likes = await _context.Likes
-                .Where(l => l.UserId == userId)
+            var likedGameIds = await _context.Likes
+                .Where(f => f.UserId == userId)
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
-                .Select(l => new LikeDto
-                {
-                    GameId = l.GameId,
-                    UserId = l.UserId,
-                })
+                .Select(f => f.GameId)
                 .ToListAsync();
 
             var games = await _context.Games
-                .Where(g => likes.Select(l => l.GameId).Contains(g.Id))
+                .Where(g => likedGameIds.Contains(g.Id))
                 .ToListAsync();
 
-            var likesDto = new List<LikeDto>();
-            if (likes != null && likes.Count > 0)
+            var gameLikes = new List<GameDto>();
+            if (games != null && games.Count > 0)
             {
-                foreach (var like in likes)
+                foreach (var game in games)
                 {
-                    var game = games.FirstOrDefault(g => g.Id == like.GameId);
-                    if (game != null)
-                    {
-                        like.Game = game.ToDto();
-                    }
-                    likesDto.Add(like);
+                    gameLikes.Add(game.ToDto());
                 }
+                _logger.LogInformation("Retrieved {Count} favorites for user {UserId}", gameLikes.Count, userId);
             }
-            return likesDto;
+            else
+            {
+                _logger.LogInformation("No favorites found for user {UserId}", userId);
+            }
+
+            return gameLikes;
         }
 
-        public async Task<bool> LikeGameAsync(Guid userId, Guid gameId)
+        public async Task<bool> LikeGameAsync(Guid userId, int gameId)
         {
+            var likedGameId = await _context.Games
+                .Where(g => g.IgdbId == gameId)
+                .Select(g => g.Id)
+                .FirstOrDefaultAsync();
+
             var existingLike = await _context.Likes
-                .FirstOrDefaultAsync(l => l.UserId == userId && l.GameId == gameId);
+                .FirstOrDefaultAsync(l => l.UserId == userId && l.GameId == likedGameId);
 
             if (existingLike != null)
             {
@@ -159,7 +166,7 @@ namespace Backend.Services
             var like = new Like
             {
                 UserId = userId,
-                GameId = gameId,
+                GameId = likedGameId,
             };
 
             _context.Likes.Add(like);
@@ -169,10 +176,15 @@ namespace Backend.Services
             return true;
         }
 
-        public async Task<bool> UnlikeGameAsync(Guid userId, Guid gameId)
+        public async Task<bool> UnlikeGameAsync(Guid userId, int gameId)
         {
+            var likedGameId = await _context.Games
+                .Where(g => g.IgdbId == gameId)
+                .Select(g => g.Id)
+                .FirstOrDefaultAsync();
+
             var like = await _context.Likes
-                .FirstOrDefaultAsync(l => l.UserId == userId && l.GameId == gameId);
+                .FirstOrDefaultAsync(l => l.UserId == userId && l.GameId == likedGameId);
 
             if (like == null)
             {
@@ -187,29 +199,44 @@ namespace Backend.Services
             return true;
         }
 
-        public async Task<bool> IsGameLikedAsync(Guid userId, Guid gameId)
+        public async Task<bool> IsGameLikedAsync(Guid userId, int gameId)
         {
+            var likedGameId = await _context.Games
+                .Where(g => g.IgdbId == gameId)
+                .Select(g => g.Id)
+                .FirstOrDefaultAsync();
+
             var isLiked = await _context.Likes
-                .AnyAsync(l => l.UserId == userId && l.GameId == gameId);
+                .AnyAsync(l => l.UserId == userId && l.GameId == likedGameId);
 
             _logger.LogInformation("Game {GameId} is {Status} liked by user {UserId}", 
                 gameId, isLiked ? "a" : "not a", userId);
             return isLiked;
         }
 
-        public async Task<int> GetGameLikesCountAsync(Guid gameId)
+        public async Task<int> GetGameLikesCountAsync(int gameId)
         {
+            var likedGameId = await _context.Games
+                .Where(g => g.IgdbId == gameId)
+                .Select(g => g.Id)
+                .FirstOrDefaultAsync();
+
             var likesCount = await _context.Likes
-                .CountAsync(l => l.GameId == gameId);
+                .CountAsync(l => l.GameId == likedGameId);
 
             _logger.LogInformation("Game {GameId} has {Count} likes", gameId, likesCount);
             return likesCount;
         }
 
-        public async Task<int> GetGameFavoritesCountAsync(Guid gameId)
+        public async Task<int> GetGameFavoritesCountAsync(int gameId)
         {
+            var favoriteGameId = await _context.Games
+                .Where(g => g.IgdbId == gameId)
+                .Select(g => g.Id)
+                .FirstOrDefaultAsync();
+
             var favoritesCount = await _context.Favorites
-                .CountAsync(f => f.GameId == gameId);
+                .CountAsync(f => f.GameId == favoriteGameId);
 
             _logger.LogInformation("Game {GameId} has {Count} favorites", gameId, favoritesCount);
             return favoritesCount;

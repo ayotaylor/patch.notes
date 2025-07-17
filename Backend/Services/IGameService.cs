@@ -1,4 +1,5 @@
 using Backend.Models.DTO.Game;
+using Backend.Models.DTO.Request;
 using Backend.Models.DTO.Response;
 
 namespace Backend.Services

@@ -141,11 +141,18 @@
 
                 <!-- Action Buttons -->
                 <div class="d-flex gap-2 mb-3">
-                  <button @click="addToLibrary" :disabled="isInLibrary || isAddingToLibrary"
-                    class="btn btn-lg flex-grow-1" :class="isInLibrary ? 'btn-success' : 'btn-primary'">
-                    <span v-if="isAddingToLibrary" class="spinner-border spinner-border-sm me-2"></span>
-                    <i v-else class="fas" :class="isInLibrary ? 'fa-check' : 'fa-plus'"></i>
-                    {{ isInLibrary ? 'In Library' : isAddingToLibrary ? 'Adding...' : 'Add to Library' }}
+                  <button @click="toggleFavorites" :disabled="isProcessingFavorites"
+                    class="btn btn-lg flex-grow-1" :class="isInFavorites ? 'btn-success' : 'btn-primary'">
+                    <span v-if="isProcessingFavorites" class="spinner-border spinner-border-sm me-2"></span>
+                    <i v-else class="fas" :class="isInFavorites ? 'fa-check' : 'fa-plus'"></i>
+                    {{ isProcessingFavorites ? 'Processing...' : (isInFavorites ? 'Remove From Favorites' : 'Add to Favorites') }}
+                  </button>
+
+                  <button @click="toggleLike" class="btn btn-lg btn-outline-primary"
+                    :class="{ 'active': game.isLikedByUser }">
+                    <span v-if="isProcessingLikes" class="spinner-border spinner-border-sm me-2"></span>
+                    <i class="fas fa-thumbs-up" :class="{ 'text-primary': game.isLikedByUser }"></i>
+                    <span class="d-none d-md-inline ms-1">{{ game.isLikedByUser ? 'Liked' : 'Like' }}</span>
                   </button>
 
                   <button @click="toggleWishlist" class="btn btn-lg btn-outline-secondary"
@@ -154,11 +161,6 @@
                     <span class="d-none d-md-inline ms-1">{{ isInWishlist ? 'Wishlisted' : 'Wishlist' }}</span>
                   </button>
 
-                  <button @click="toggleLike" class="btn btn-lg btn-outline-primary"
-                    :class="{ 'active': game.isLikedByUser }">
-                    <i class="fas fa-thumbs-up" :class="{ 'text-primary': game.isLikedByUser }"></i>
-                    <span class="d-none d-md-inline ms-1">{{ game.isLikedByUser ? 'Liked' : 'Like' }}</span>
-                  </button>
                 </div>
 
                 <!-- New Release Badge -->
@@ -339,6 +341,7 @@ import { ref, computed, onMounted, watch, defineProps, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useGamesStore } from '@/stores/gamesStore'
 import { useToast } from 'vue-toastification'
+import { useAuthStore } from '@/stores/authStore'
 
 // Props
 const props = defineProps({
@@ -356,17 +359,20 @@ const props = defineProps({
 const route = useRoute()
 const router = useRouter()
 const gamesStore = useGamesStore()
+const authStore = useAuthStore()
 const toast = useToast()
 
 // State
 const game = ref(null)
 const loading = ref(true)
 const error = ref('')
-const isAddingToLibrary = ref(false)
-const selectedImage = ref(null)
-const userLibrary = ref(new Set())
+const isProcessingFavorites = ref(false)
+const userFavorites = ref(new Set())
+const isProcessingLikes = ref(false)
+const userLikes = ref(new Set())
 const userWishlist = ref(new Set())
 const similarGames = ref([])
+const selectedImage = ref(null)
 
 // Computed properties with safe access
 const gameIdentifier = computed(() => {
@@ -378,14 +384,19 @@ const gameIdentifier = computed(() => {
   return propId || propSlug || routeIdentifier || null
 })
 
-const isInLibrary = computed(() => {
+const isInFavorites = computed(() => {
   const id = gameIdentifier.value
-  return id && userLibrary.value.has(String(id))
+  return id && userFavorites.value.has(String(id))
 })
 
 const isInWishlist = computed(() => {
   const id = gameIdentifier.value
   return id && userWishlist.value.has(String(id))
+})
+
+const isInLikes = computed(() => {
+  const id = gameIdentifier.value
+  return id && userLikes.value.has(String(id))
 })
 
 // Safe property accessors
@@ -607,8 +618,8 @@ const loadGameDetails = async () => {
       await loadSimilarGames()
     }
 
-    // Load user's library status
-    await loadUserLibraryStatus()
+    // Load user's favorites status
+    await loadUserFavoritesStatus()
 
   } catch (err) {
     error.value = err.message || 'Failed to load game details'
@@ -631,12 +642,12 @@ const loadSimilarGames = async () => {
   }
 }
 
-const loadUserLibraryStatus = async () => {
+const loadUserFavoritesStatus = async () => {
   try {
     const libraryData = localStorage.getItem('userLibrary')
     if (libraryData) {
       const library = JSON.parse(libraryData)
-      userLibrary.value = new Set(library)
+      userFavorites.value = new Set(library)
     }
 
     const wishlistData = localStorage.getItem('userWishlist')
@@ -645,23 +656,36 @@ const loadUserLibraryStatus = async () => {
       userWishlist.value = new Set(wishlist)
     }
   } catch (err) {
-    console.error('Error loading user library status:', err)
+    console.error('Error loading user favorites status:', err)
   }
 }
 
-const addToLibrary = async () => {
-  if (!gameIdentifier.value) return
+const toggleFavorites = async () => {
+  if (!gameIdentifier.value || !authStore.user?.id) return
+  if (isProcessingFavorites.value) return  // prevent multiple clicks
 
   try {
-    isAddingToLibrary.value = true
-    userLibrary.value.add(gameIdentifier.value)
-    localStorage.setItem('userLibrary', JSON.stringify([...userLibrary.value]))
-    toast.success(`Added "${game.value.name}" to your library!`)
+    isProcessingFavorites.value = true
+    const userId = authStore.user.id
+    let result
+    if (isInFavorites.value) {
+      // remove from favorites
+      result = await gamesStore.removeFromFavorites(userId, game.value.id)
+      console.log("The game is now in favorites: ", result)
+    } else {
+      // add to favorites
+      result = await gamesStore.addToFavorites(userId, game.value.id)
+      console.log("The game is now in favorites: ", result)
+    }
+    //isInFavorites = result
+    userFavorites.value.add(gameIdentifier.value)
+    //localStorage.setItem('userLibrary', JSON.stringify([...userFavorites.value]))
+    toast.success(`Added "${game.value.name}" to your favorites!`)
   } catch (err) {
-    toast.error('Failed to add game to library')
-    console.error('Add to library error:', err)
+    toast.error('Failed to add game to favorites')
+    console.error('Add to favorites error:', err)
   } finally {
-    isAddingToLibrary.value = false
+    isProcessingFavorites.value = false
   }
 }
 
@@ -685,8 +709,29 @@ const toggleWishlist = async () => {
 }
 
 const toggleLike = async () => {
-  // TODO: Implement like functionality
-  console.log('Toggle like for game:', game.value.id)
+  if (!gameIdentifier.value || !authStore.user?.id) return
+  if (isProcessingLikes.value) return  // prevent multiple clicks
+
+  try {
+    isProcessingLikes.value = true
+    const userId = authStore.user.id
+    let result
+    if (isInLikes.value) {
+      // remove from likes
+      result = await gamesStore.removeFromLikes(userId, game.value.id)
+    } else {
+      // add to likes
+      result = await gamesStore.addToLikes(userId, game.value.id)
+    }
+    console.log("The game is now ii likes: ", result)
+    userLikes.value.add(gameIdentifier.value)
+    toast.success(`Added "${game.value.name}" to your likes!`)
+  } catch (err) {
+    toast.error('Failed to add game to likes')
+    console.error('Add to favorites error:', err)
+  } finally {
+    isProcessingLikes.value = false
+  }
 }
 
 const viewGame = (id) => {

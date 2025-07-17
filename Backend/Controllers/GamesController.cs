@@ -4,6 +4,7 @@ using Backend.Services;
 using System.Security.Claims;
 using Backend.Models.DTO.Response;
 using Backend.Models.DTO.Game;
+using Backend.Models.DTO.Request;
 
 namespace Backend.Controllers
 {

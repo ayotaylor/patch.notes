@@ -1,3 +1,4 @@
+using Backend.Models.DTO.Game;
 using Backend.Models.DTO.Response;
 using Backend.Models.DTO.Social;
 using Backend.Services;
@@ -19,12 +20,12 @@ namespace Backend.Controllers
         }
 
         [HttpGet("favorites/{userId}")]
-        public async Task<ActionResult<ApiResponse<List<FavoriteDto>>>> GetUserFavorites(Guid userId, int page = 1, int pageSize = 20)
+        public async Task<ActionResult<ApiResponse<List<GameDto>>>> GetUserFavorites(Guid userId, int page = 1, int pageSize = 5)
         {
             try
             {
                 var favorites = await _socialService.GetUserFavoritesAsync(userId, page, pageSize);
-                if (favorites == null || !favorites.Any())
+                if (favorites == null || favorites.Count <= 0)
                 {
                     return NotFound(new ApiResponse<List<FavoriteDto>>
                     {
@@ -33,7 +34,7 @@ namespace Backend.Controllers
                         Data = []
                     });
                 }
-                return Ok(new ApiResponse<List<FavoriteDto>>
+                return Ok(new ApiResponse<List<GameDto>>
                 {
                     Success = true,
                     Data = favorites
@@ -42,7 +43,7 @@ namespace Backend.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error fetching user favorites");
-                return StatusCode(500, new ApiResponse<List<FavoriteDto>>
+                return StatusCode(500, new ApiResponse<List<GameDto>>
                 {
                     Success = false,
                     Message = "An error occurred while fetching user favorites",
@@ -56,7 +57,9 @@ namespace Backend.Controllers
         {
             try
             {
-                if (favoriteDto == null || favoriteDto.UserId == Guid.Empty || favoriteDto.GameId == Guid.Empty)
+                if (favoriteDto == null
+                || favoriteDto.UserId == Guid.Empty
+                    || favoriteDto.GameId != 0)
                 {
                     return BadRequest(new ApiResponse<bool>
                     {
@@ -94,7 +97,8 @@ namespace Backend.Controllers
         {
             try
             {
-                if (favoriteDto == null || favoriteDto.UserId == Guid.Empty || favoriteDto.GameId == Guid.Empty)
+                if (favoriteDto == null || favoriteDto.UserId == Guid.Empty
+                    || favoriteDto.GameId != 0)
                 {
                     return BadRequest(new ApiResponse<bool>
                     {
@@ -138,7 +142,7 @@ namespace Backend.Controllers
             try
             {
                 var likes = await _socialService.GetUserLikesAsync(userId, page, pageSize);
-                if (likes == null || !likes.Any())
+                if (likes == null || likes.Count <= 0)
                 {
                     return NotFound(new ApiResponse<List<LikeDto>>
                     {
@@ -147,7 +151,7 @@ namespace Backend.Controllers
                         Data = []
                     });
                 }
-                return Ok(new ApiResponse<List<LikeDto>>
+                return Ok(new ApiResponse<List<GameDto>>
                 {
                     Success = true,
                     Data = likes
@@ -170,7 +174,7 @@ namespace Backend.Controllers
         {
             try
             {
-                if (likeDto == null || likeDto.UserId == Guid.Empty || likeDto.GameId == Guid.Empty)
+                if (likeDto == null || likeDto.UserId == Guid.Empty || likeDto.GameId != 0)
                 {
                     return BadRequest(new ApiResponse<bool>
                     {
@@ -213,7 +217,7 @@ namespace Backend.Controllers
         {
             try
             {
-                if (likeDto == null || likeDto.UserId == Guid.Empty || likeDto.GameId == Guid.Empty)
+                if (likeDto == null || likeDto.UserId == Guid.Empty || likeDto.GameId != 0)
                 {
                     return BadRequest(new ApiResponse<bool>
                     {

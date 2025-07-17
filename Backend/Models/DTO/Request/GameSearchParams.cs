@@ -1,4 +1,4 @@
-namespace Backend.Models.DTO.Response
+namespace Backend.Models.DTO.Request
 {
     public class GameSearchParams
     {

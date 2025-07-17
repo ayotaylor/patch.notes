@@ -1,11 +1,10 @@
 using Backend.Models.DTO.Game;
 
-namespace Backend.Models.DTO.Social
+namespace Backend.Models.DTO.Response
 {
-    public class FavoriteDto
+    public class FavoritesResponse
     {
         public Guid UserId { get; set; }
-        public int GameId { get; set; }
         public DateTime AddedAt { get; set; }
         public GameDto? Game { get; set; }
     }

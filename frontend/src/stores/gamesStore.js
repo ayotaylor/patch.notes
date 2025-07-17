@@ -339,36 +339,36 @@ export const useGamesStore = defineStore("games", () => {
     }
   };
 
-    const fetchNewGames = async (limit = 10, force = false) => {
-      const cacheKey = `new_games_${limit}`;
+  const fetchNewGames = async (limit = 10, force = false) => {
+    const cacheKey = `new_games_${limit}`;
 
-      if (!force && newGames.value.length > 0 && isCacheValid(cacheKey)) {
-        return newGames.value;
+    if (!force && newGames.value.length > 0 && isCacheValid(cacheKey)) {
+      return newGames.value;
+    }
+
+    try {
+      loading.value = true;
+      error.value = null;
+
+      const results = await gamesService.getNewGames(limit)
+
+      if (!Array.isArray(results)) {
+        console.error('fetchNewGames: Expected array but got:', typeof results);
+        return [];
       }
 
-      try {
-        loading.value = true;
-        error.value = null;
+      const gameInstances = [];
 
-        const results = await gamesService.getNewGames(limit)
-
-        if (!Array.isArray(results)) {
-          console.error('fetchNewGames: Expected array but got:', typeof results);
-          return [];
-        }
-
-        const gameInstances = [];
-
-        for (const gameItem of results) {
-          try {
-            const gameInstance = createGame(gameItem);
-            if (gameInstance && gameInstance.id) {
-              cacheGame(gameInstance);
-              gameInstances.push(gameInstance);
-            }
-          } catch (gameError) {
-            console.error('fetchNewGames: Error creating game instance:', gameError);
+      for (const gameItem of results) {
+        try {
+          const gameInstance = createGame(gameItem);
+          if (gameInstance && gameInstance.id) {
+            cacheGame(gameInstance);
+            gameInstances.push(gameInstance);
           }
+        } catch (gameError) {
+          console.error('fetchNewGames: Error creating game instance:', gameError);
+        }
       }
 
       newGames.value = gameInstances;
@@ -377,6 +377,74 @@ export const useGamesStore = defineStore("games", () => {
       return gameInstances;
     } catch (err) {
       console.error("fetchSimilarGames: Error:", err);
+      error.value = err.message;
+      return [];
+    } finally {
+      loading.value = false;
+    }
+  };
+
+  const removeFromFavorites = async (userId, gameId) => {
+    if (!userId) {
+      console.warn('removeFromFavorites: No userId provided');
+      return;
+    }
+    if (!gameId) {
+      console.warn('removeFromFavorites: No gameId provided');
+      return;
+    }
+    try {
+      loading.value = true;
+      error.value = null;
+
+      const result = await gamesService.removeFromFavorites(userId, gameId)
+
+      if(!result) {
+        throw new Error("User favorite operation failed")
+      }
+
+      if (typeof result === 'boolean') {
+        console.error('removeFromFavorites: Expected boolean but got:', typeof result);
+        return;
+      }
+
+      return result
+    } catch (err) {
+      console.error("removeFromFavorites: Error:", err);
+      error.value = err.message;
+      return [];
+    } finally {
+      loading.value = false;
+    }
+  };
+
+  const addToFavorites = async (userId, gameId) => {
+    if (!userId) {
+      console.warn('addToFavorites: No userId provided');
+      return;
+    }
+    if (!gameId) {
+      console.warn('addToFavorites: No gameId provided');
+      return;
+    }
+    try {
+      loading.value = true;
+      error.value = null;
+
+      const result = await gamesService.addToFavorites(userId, gameId)
+
+      if(!result) {
+        throw new Error("User favorite operation failed")
+      }
+
+      if (typeof result === 'boolean') {
+        console.error('addToFavorites: Expected boolean but got:', typeof result);
+        return;
+      }
+
+      return result
+    } catch (err) {
+      console.error("addToFavorites: Error:", err);
       error.value = err.message;
       return [];
     } finally {
@@ -418,6 +486,8 @@ export const useGamesStore = defineStore("games", () => {
     fetchPopularGames,
     fetchSimilarGames,
     fetchNewGames,
+    removeFromFavorites,
+    addToFavorites,
 
     // Cache management
     clearSearchResults,

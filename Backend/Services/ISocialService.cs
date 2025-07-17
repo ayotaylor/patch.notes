@@ -1,21 +1,21 @@
-using Backend.Models.DTO.Social;
+using Backend.Models.DTO.Game;
 
 namespace Backend.Services
 {
     public interface ISocialService
     {
         // Favorites
-        Task<List<FavoriteDto>> GetUserFavoritesAsync(Guid userId, int page = 1, int pageSize = 20);
-        Task<bool> AddToFavoritesAsync(Guid userId, Guid gameId);
-        Task<bool> RemoveFromFavoritesAsync(Guid userId, Guid gameId);
-        Task<bool> IsGameFavoriteAsync(Guid userId, Guid gameId);
+        Task<List<GameDto>> GetUserFavoritesAsync(Guid userId, int page = 1, int pageSize = 20);
+        Task<bool> AddToFavoritesAsync(Guid userId, int gameId);
+        Task<bool> RemoveFromFavoritesAsync(Guid userId, int gameId);
+        Task<bool> IsGameFavoriteAsync(Guid userId, int gameId);
 
         // Likes
-        Task<List<LikeDto>> GetUserLikesAsync(Guid userId, int page = 1, int pageSize = 20);
-        Task<bool> LikeGameAsync(Guid userId, Guid gameId);
-        Task<bool> UnlikeGameAsync(Guid userId, Guid gameId);
-        Task<bool> IsGameLikedAsync(Guid userId, Guid gameId);
-        Task<int> GetGameLikesCountAsync(Guid gameId);
-        Task<int> GetGameFavoritesCountAsync(Guid gameId);
+        Task<List<GameDto>> GetUserLikesAsync(Guid userId, int page = 1, int pageSize = 20);
+        Task<bool> LikeGameAsync(Guid userId, int gameId);
+        Task<bool> UnlikeGameAsync(Guid userId, int gameId);
+        Task<bool> IsGameLikedAsync(Guid userId, int gameId);
+        Task<int> GetGameLikesCountAsync(int gameId);
+        Task<int> GetGameFavoritesCountAsync(int gameId);
     }
 }
