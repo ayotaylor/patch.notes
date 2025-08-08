@@ -20,8 +20,13 @@ namespace Backend.Services
 
         public async Task<List<GameDto>> GetUserFavoritesAsync(Guid userId, int page = 1, int pageSize = 5)
         {
+            var userProfileId = await _context.UserProfiles
+                .Where(u => u.UserId == userId.ToString())
+                .Select(u => u.Id)
+                .FirstOrDefaultAsync();
+
             var favoriteGameIds = await _context.Favorites
-                .Where(f => f.UserId == userId)
+                .Where(f => f.UserId == userProfileId)
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
                 .Select(f => f.GameId)
@@ -56,8 +61,13 @@ namespace Backend.Services
                 .Select(g => g.Id)
                 .FirstOrDefaultAsync();
 
+            var userProfileId = await _context.UserProfiles
+                .Where(u => u.UserId == userId.ToString())
+                .Select(u => u.Id)
+                .FirstOrDefaultAsync();
+
             var existingFavorite = await _context.Favorites
-                .FirstOrDefaultAsync(f => f.UserId == userId && f.GameId == favoriteGameId);
+                .FirstOrDefaultAsync(f => f.UserId == userProfileId && f.GameId == favoriteGameId);
 
             if (existingFavorite != null)
             {
@@ -67,7 +77,7 @@ namespace Backend.Services
 
             var favorite = new Favorite
             {
-                UserId = userId,
+                UserId = userProfileId,
                 GameId = favoriteGameId,
                 AddedAt = DateTime.UtcNow
             };
@@ -86,8 +96,13 @@ namespace Backend.Services
                 .Select(g => g.Id)
                 .FirstOrDefaultAsync();
 
+            var userProfileId = await _context.UserProfiles
+                .Where(u => u.UserId == userId.ToString())
+                .Select(u => u.Id)
+                .FirstOrDefaultAsync();
+
             var favorite = await _context.Favorites
-                .FirstOrDefaultAsync(f => f.UserId == userId && f.GameId == favoriteGameId);
+                .FirstOrDefaultAsync(f => f.UserId == userProfileId && f.GameId == favoriteGameId);
 
             if (favorite == null)
             {
@@ -109,10 +124,15 @@ namespace Backend.Services
                 .Select(g => g.Id)
                 .FirstOrDefaultAsync();
 
-            var isFavorite = await _context.Favorites
-                .AnyAsync(f => f.UserId == userId && f.GameId == favoriteGameId);
+            var userProfileId = await _context.UserProfiles
+                .Where(u => u.UserId == userId.ToString())
+                .Select(u => u.Id)
+                .FirstOrDefaultAsync();
 
-            _logger.LogInformation("Game {GameId} is {Status} favorite for user {UserId}", 
+            var isFavorite = await _context.Favorites
+                .AnyAsync(f => f.UserId == userProfileId && f.GameId == favoriteGameId);
+
+            _logger.LogInformation("Game {GameId} is {Status} favorite for user {UserId}",
                 gameId, isFavorite ? "a" : "not a", userId);
             return isFavorite;
         }
@@ -154,8 +174,13 @@ namespace Backend.Services
                 .Select(g => g.Id)
                 .FirstOrDefaultAsync();
 
+            var userProfileId = await _context.UserProfiles
+                .Where(u => u.UserId == userId.ToString())
+                .Select(u => u.Id)
+                .FirstOrDefaultAsync();
+
             var existingLike = await _context.Likes
-                .FirstOrDefaultAsync(l => l.UserId == userId && l.GameId == likedGameId);
+                .FirstOrDefaultAsync(l => l.UserId == userProfileId && l.GameId == likedGameId);
 
             if (existingLike != null)
             {
@@ -165,7 +190,7 @@ namespace Backend.Services
 
             var like = new Like
             {
-                UserId = userId,
+                UserId = userProfileId,
                 GameId = likedGameId,
             };
 
@@ -183,8 +208,13 @@ namespace Backend.Services
                 .Select(g => g.Id)
                 .FirstOrDefaultAsync();
 
+            var userProfileId = await _context.UserProfiles
+                .Where(u => u.UserId == userId.ToString())
+                .Select(u => u.Id)
+                .FirstOrDefaultAsync();
+
             var like = await _context.Likes
-                .FirstOrDefaultAsync(l => l.UserId == userId && l.GameId == likedGameId);
+                .FirstOrDefaultAsync(l => l.UserId == userProfileId && l.GameId == likedGameId);
 
             if (like == null)
             {
@@ -206,10 +236,15 @@ namespace Backend.Services
                 .Select(g => g.Id)
                 .FirstOrDefaultAsync();
 
-            var isLiked = await _context.Likes
-                .AnyAsync(l => l.UserId == userId && l.GameId == likedGameId);
+            var userProfileId = await _context.UserProfiles
+                .Where(u => u.UserId == userId.ToString())
+                .Select(u => u.Id)
+                .FirstOrDefaultAsync();
 
-            _logger.LogInformation("Game {GameId} is {Status} liked by user {UserId}", 
+            var isLiked = await _context.Likes
+                .AnyAsync(l => l.UserId == userProfileId && l.GameId == likedGameId);
+
+            _logger.LogInformation("Game {GameId} is {Status} liked by user {UserId}",
                 gameId, isLiked ? "a" : "not a", userId);
             return isLiked;
         }

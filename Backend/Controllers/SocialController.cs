@@ -27,7 +27,7 @@ namespace Backend.Controllers
                 var favorites = await _socialService.GetUserFavoritesAsync(userId, page, pageSize);
                 if (favorites == null || favorites.Count <= 0)
                 {
-                    return NotFound(new ApiResponse<List<FavoriteDto>>
+                    return Ok(new ApiResponse<List<FavoriteDto>>
                     {
                         Success = false,
                         Message = "No favorites found for this user",
@@ -59,7 +59,7 @@ namespace Backend.Controllers
             {
                 if (favoriteDto == null
                 || favoriteDto.UserId == Guid.Empty
-                    || favoriteDto.GameId != 0)
+                    || favoriteDto.GameId <= 0)
                 {
                     return BadRequest(new ApiResponse<bool>
                     {
@@ -98,7 +98,7 @@ namespace Backend.Controllers
             try
             {
                 if (favoriteDto == null || favoriteDto.UserId == Guid.Empty
-                    || favoriteDto.GameId != 0)
+                    || favoriteDto.GameId <= 0)
                 {
                     return BadRequest(new ApiResponse<bool>
                     {
@@ -144,7 +144,7 @@ namespace Backend.Controllers
                 var likes = await _socialService.GetUserLikesAsync(userId, page, pageSize);
                 if (likes == null || likes.Count <= 0)
                 {
-                    return NotFound(new ApiResponse<List<LikeDto>>
+                    return Ok(new ApiResponse<List<LikeDto>>
                     {
                         Success = false,
                         Message = "No likes found for this user",
@@ -174,7 +174,7 @@ namespace Backend.Controllers
         {
             try
             {
-                if (likeDto == null || likeDto.UserId == Guid.Empty || likeDto.GameId != 0)
+                if (likeDto == null || likeDto.UserId == Guid.Empty || likeDto.GameId <= 0)
                 {
                     return BadRequest(new ApiResponse<bool>
                     {
@@ -217,7 +217,7 @@ namespace Backend.Controllers
         {
             try
             {
-                if (likeDto == null || likeDto.UserId == Guid.Empty || likeDto.GameId != 0)
+                if (likeDto == null || likeDto.UserId == Guid.Empty || likeDto.GameId <= 0)
                 {
                     return BadRequest(new ApiResponse<bool>
                     {

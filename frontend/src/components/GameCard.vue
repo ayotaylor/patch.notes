@@ -4,11 +4,12 @@
         <!-- Game Image -->
         <div class="position-relative">
             <img
-                :src="game.primaryImageUrl"
+                :src="gameImageUrl"
                 :alt="game.name"
                 class="card-img-top"
                 style="height: 200px; object-fit: cover;"
                 loading="lazy"
+                @error="(e) => handleImageError(e, 'gameSmall')"
             >
 
             <!-- Rating Badge -->
@@ -81,9 +82,9 @@
                     <i class="fas fa-fire me-1"></i>
                     {{ game.hypes }}
                 </span>
-                <span v-if="game.likes > 0" class="text-muted">
+                <span v-if="game.likesCount > 0" class="text-muted">
                     <i class="fas fa-heart me-1"></i>
-                    {{ game.likes }}
+                    {{ game.likesCount }}
                 </span>
             </div>
 
@@ -124,6 +125,7 @@
 <script setup>
 import { computed, defineProps, defineEmits } from 'vue'
 import { Game } from '@/models/Game'
+import { useImageFallback, FALLBACK_TYPES } from '@/composables/useImageFallback'
 
 // Props
 const props = defineProps({
@@ -164,7 +166,15 @@ const props = defineProps({
 // Emits
 defineEmits(['click', 'add-to-library', 'add-to-wishlist', 'show-details'])
 
+// Image fallback composable
+const { handleImageError, createReactiveImageUrl } = useImageFallback()
+
 // Computed properties
+const gameImageUrl = createReactiveImageUrl(
+    computed(() => props.game.primaryImageUrl), 
+    FALLBACK_TYPES.GAME_SMALL
+)
+
 const truncatedSummary = computed(() => {
     if (!props.game.summary) return ''
 

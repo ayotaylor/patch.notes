@@ -9,7 +9,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 // TODO: refactor class to remove repeated code and improve readability
-// TODO: refactor this service to use a repository pattern or 
+// TODO: refactor this service to use a repository pattern or
 // similar for better separation of concerns
 namespace Backend.Services
 {
@@ -166,13 +166,18 @@ namespace Backend.Services
                 .Select(f => new { f.GameId, f.UserId })
                 .ToListAsync();
 
+            var userProfileId = await _context.UserProfiles
+                    .Where(u => u.UserId == userId.ToString())
+                    .Select(u => u.Id)
+                    .FirstOrDefaultAsync();
+
             // Process in memory (fast since we only have page-sized data)
             var userLikes = userId.HasValue
-                ? new HashSet<Guid>(allLikes.Where(l => l.UserId == userId).Select(l => l.GameId))
+                ? new HashSet<Guid>(allLikes.Where(l => l.UserId == userProfileId).Select(l => l.GameId))
                 : new HashSet<Guid>();
 
             var userFavorites = userId.HasValue
-                ? new HashSet<Guid>(allFavorites.Where(f => f.UserId == userId).Select(f => f.GameId))
+                ? new HashSet<Guid>(allFavorites.Where(f => f.UserId == userProfileId).Select(f => f.GameId))
                 : new HashSet<Guid>();
 
             var likesCount = allLikes
@@ -217,10 +222,14 @@ namespace Backend.Services
 
             if (userId != Guid.Empty && userId.HasValue)
             {
+                var userProfileId = await _context.UserProfiles
+                    .Where(u => u.UserId == userId.ToString())
+                    .Select(u => u.Id)
+                    .FirstOrDefaultAsync();
                 gameDto.IsLikedByUser = await _context.Likes
-                    .AnyAsync(l => l.UserId == userId && l.GameId == game.Id);
+                    .AnyAsync(l => l.UserId == userProfileId && l.GameId == game.Id);
                 gameDto.IsFavoriteByUser = await _context.Favorites
-                    .AnyAsync(f => f.UserId == userId && f.GameId == game.Id);
+                    .AnyAsync(f => f.UserId == userProfileId && f.GameId == game.Id);
             }
 
             gameDto.LikesCount = await _context.Likes.CountAsync(l => l.GameId == game.Id);
@@ -256,10 +265,14 @@ namespace Backend.Services
 
             if (userId != Guid.Empty && userId.HasValue)
             {
+                var userProfileId = await _context.UserProfiles
+                    .Where(u => u.UserId == userId.ToString())
+                    .Select(u => u.Id)
+                    .FirstOrDefaultAsync();
                 gameDto.IsLikedByUser = await _context.Likes
-                    .AnyAsync(l => l.UserId == userId && l.GameId == game.Id);
+                    .AnyAsync(l => l.UserId == userProfileId && l.GameId == game.Id);
                 gameDto.IsFavoriteByUser = await _context.Favorites
-                    .AnyAsync(f => f.UserId == userId && f.GameId == game.Id);
+                    .AnyAsync(f => f.UserId == userProfileId && f.GameId == game.Id);
             }
 
             gameDto.LikesCount = await _context.Likes.CountAsync(l => l.GameId == game.Id);

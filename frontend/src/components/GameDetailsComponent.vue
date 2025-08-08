@@ -53,7 +53,7 @@
                 class="img-fluid w-100 h-100"
                 style="object-fit: cover; min-height: 300px; border-radius: 15px 0 0 15px;"
                 loading="eager"
-                @error="handleImageError"
+                @error="(e) => handleImageError(e, 'game')"
               >
             </div>
 
@@ -125,15 +125,15 @@
                       <small class="text-muted">Hypes</small>
                     </div>
                   </div>
-                  <div class="col-4" v-if="game.likes > 0">
+                  <div class="col-4" v-if="game.likesCount > 0">
                     <div class="text-center">
-                      <div class="h5 mb-0 fw-bold text-primary">{{ formatNumber(game.likes) }}</div>
+                      <div class="h5 mb-0 fw-bold text-primary">{{ formatNumber(game.likesCount) }}</div>
                       <small class="text-muted">Likes</small>
                     </div>
                   </div>
-                  <div class="col-4" v-if="game.favorites > 0">
+                  <div class="col-4" v-if="game.favoritesCount > 0">
                     <div class="text-center">
-                      <div class="h5 mb-0 fw-bold text-warning">{{ formatNumber(game.favorites) }}</div>
+                      <div class="h5 mb-0 fw-bold text-warning">{{ formatNumber(game.favoritesCount) }}</div>
                       <small class="text-muted">Favorites</small>
                     </div>
                   </div>
@@ -342,6 +342,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { useGamesStore } from '@/stores/gamesStore'
 import { useToast } from 'vue-toastification'
 import { useAuthStore } from '@/stores/authStore'
+import { useImageFallback, FALLBACK_TYPES } from '@/composables/useImageFallback'
 
 // Props
 const props = defineProps({
@@ -361,6 +362,7 @@ const router = useRouter()
 const gamesStore = useGamesStore()
 const authStore = useAuthStore()
 const toast = useToast()
+const { handleImageError, createReactiveImageUrl, getImageUrl } = useImageFallback()
 
 // State
 const game = ref(null)
@@ -385,8 +387,8 @@ const gameIdentifier = computed(() => {
 })
 
 const isInFavorites = computed(() => {
-  const id = gameIdentifier.value
-  return id && userFavorites.value.has(String(id))
+  if (!game.value?.id) return false
+  return userFavorites.value.has(String(game.value.id))
 })
 
 const isInWishlist = computed(() => {
@@ -400,15 +402,10 @@ const isInLikes = computed(() => {
 })
 
 // Safe property accessors
-const gameImageUrl = computed(() => {
-  try {
-    if (!game.value) return '/default-game.png'
-    return game.value.primaryImageUrl || '/default-game.png'
-  } catch (error) {
-    console.warn('Error getting game image URL:', error)
-    return '/default-game.png'
-  }
-})
+const gameImageUrl = createReactiveImageUrl(
+  computed(() => game.value?.primaryImageUrl),
+  FALLBACK_TYPES.GAME
+)
 
 const gameRating = computed(() => {
   try {
@@ -547,7 +544,7 @@ const franchisesList = computed(() => {
 
 const hasEngagementStats = computed(() => {
   try {
-    return game.value && (game.value.hypes > 0 || game.value.likes > 0 || game.value.favorites > 0)
+    return game.value && (game.value.hypes > 0 || game.value.likesCount > 0 || game.value.favoritesCount > 0)
   } catch (error) {
     console.warn('Error checking engagement stats:', error)
     return false
@@ -561,15 +558,13 @@ const formatNumber = (num) => {
   return num.toString()
 }
 
-const handleImageError = (event) => {
-  event.target.src = '/default-game.png'
-}
+// Image error handler is now provided by the composable
 
 const getSimilarGameImage = (similarGame) => {
   try {
-    return similarGame.primaryImageUrl || '/default-game.png'
+    return getImageUrl(similarGame.primaryImageUrl, FALLBACK_TYPES.GAME_ICON)
   } catch (error) {
-    return '/default-game.png'
+    return getImageUrl(null, FALLBACK_TYPES.GAME_ICON)
   }
 }
 
@@ -644,46 +639,53 @@ const loadSimilarGames = async () => {
 
 const loadUserFavoritesStatus = async () => {
   try {
-    const libraryData = localStorage.getItem('userLibrary')
-    if (libraryData) {
-      const library = JSON.parse(libraryData)
-      userFavorites.value = new Set(library)
-    }
+    const userId = authStore.user.id;
+    if (!userId) return;
 
-    const wishlistData = localStorage.getItem('userWishlist')
-    if (wishlistData) {
-      const wishlist = JSON.parse(wishlistData)
-      userWishlist.value = new Set(wishlist)
-    }
+    const userFavoritesResult = await gamesStore.getUserFavorites(userId);
+    userFavorites.value = new Set(userFavoritesResult.map(game=>String(game.igdbId)));
+
+    // const wishlistData = localStorage.getItem('userWishlist')
+    // if (wishlistData) {
+    //   const wishlist = JSON.parse(wishlistData)
+    //   userWishlist.value = new Set(wishlist)
+    // }
   } catch (err) {
     console.error('Error loading user favorites status:', err)
   }
 }
 
 const toggleFavorites = async () => {
-  if (!gameIdentifier.value || !authStore.user?.id) return
+  if (!game.value?.id || !authStore.user?.id) return
   if (isProcessingFavorites.value) return  // prevent multiple clicks
+
+  const userId = authStore.user.id
+  const gameId = String(game.value.id)
+  const wasInFavorites = isInFavorites.value // Capture current state before API call
 
   try {
     isProcessingFavorites.value = true
-    const userId = authStore.user.id
     let result
-    if (isInFavorites.value) {
+
+    if (wasInFavorites) {
       // remove from favorites
-      result = await gamesStore.removeFromFavorites(userId, game.value.id)
-      console.log("The game is now in favorites: ", result)
+      result = await gamesStore.removeFromFavorites(userId, game.value.id);
+      // Only update state after successful API call
+      userFavorites.value.delete(gameId);
+      toast.success(`Removed "${game.value.name}" from your favorites!`)
+      console.log("The game removed from favorites: ", result);
     } else {
       // add to favorites
-      result = await gamesStore.addToFavorites(userId, game.value.id)
-      console.log("The game is now in favorites: ", result)
+      result = await gamesStore.addToFavorites(userId, game.value.id);
+      // Only update state after successful API call
+      userFavorites.value.add(gameId);
+      toast.success(`Added "${game.value.name}" to your favorites!`)
+      console.log("The game added to favorites: ", result)
     }
-    //isInFavorites = result
-    userFavorites.value.add(gameIdentifier.value)
-    //localStorage.setItem('userLibrary', JSON.stringify([...userFavorites.value]))
-    toast.success(`Added "${game.value.name}" to your favorites!`)
   } catch (err) {
-    toast.error('Failed to add game to favorites')
-    console.error('Add to favorites error:', err)
+    // State remains unchanged on error, so button shows correct state
+    toast.error(`Failed to ${wasInFavorites ? 'remove from' : 'add to'} favorites`)
+    console.error('Toggle favorites error:', err)
   } finally {
     isProcessingFavorites.value = false
   }
@@ -709,26 +711,36 @@ const toggleWishlist = async () => {
 }
 
 const toggleLike = async () => {
-  if (!gameIdentifier.value || !authStore.user?.id) return
+  if (!game.value?.id || !authStore.user?.id) return
   if (isProcessingLikes.value) return  // prevent multiple clicks
+
+  const userId = authStore.user.id
+  const gameId = String(game.value.id)
+  const wasInLikes = isInLikes.value // Capture current state before API call
 
   try {
     isProcessingLikes.value = true
-    const userId = authStore.user.id
     let result
-    if (isInLikes.value) {
+
+    if (wasInLikes) {
       // remove from likes
       result = await gamesStore.removeFromLikes(userId, game.value.id)
+      // Only update state after successful API call
+      userLikes.value.delete(gameId)
+      toast.success(`Removed "${game.value.name}" from your likes!`)
+      console.log("The game removed from likes: ", result)
     } else {
       // add to likes
       result = await gamesStore.addToLikes(userId, game.value.id)
+      // Only update state after successful API call
+      userLikes.value.add(gameId)
+      toast.success(`Added "${game.value.name}" to your likes!`)
+      console.log("The game added to likes: ", result)
     }
-    console.log("The game is now ii likes: ", result)
-    userLikes.value.add(gameIdentifier.value)
-    toast.success(`Added "${game.value.name}" to your likes!`)
   } catch (err) {
-    toast.error('Failed to add game to likes')
-    console.error('Add to favorites error:', err)
+    // State remains unchanged on error, so button shows correct state
+    toast.error(`Failed to ${wasInLikes ? 'remove from' : 'add to'} likes`)
+    console.error('Toggle likes error:', err)
   } finally {
     isProcessingLikes.value = false
   }

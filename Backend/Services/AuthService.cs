@@ -141,7 +141,7 @@ namespace Backend.Services
 
                 _logger.LogInformation("User {Email} logged in successfully", user.Email);
 
-                var response = new AuthResponse 
+                var response = new AuthResponse
                 {
                     Success = true,
                     Message = "Login successful",
@@ -161,7 +161,7 @@ namespace Backend.Services
                 {
                     response.User.IsProfileUpdated = user.UserProfile.IsProfileUpdated;
                 }
-                
+
                 return response;
             }
             catch (Exception ex)

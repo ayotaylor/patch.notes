@@ -1,3 +1,11 @@
+/**
+ * Game Model
+ * 
+ * Note: This model returns null for missing images. Use the useImageFallback composable
+ * in Vue components to handle fallback images consistently across the application.
+ * 
+ * For non-Vue contexts, import getStaticFallbackImage from '@/composables/useImageFallback'
+ */
 export class Game {
   // Private fields for internal state
   _rawData = null;
@@ -17,8 +25,8 @@ export class Game {
     this.gameType = data.gameType || "";
     this.hypes = data.hypes || 0;
     this.igdbRating = data.igdbRating || 0.0;
-    this.likes = data.likesCount || 0;
-    this.favorites = data.favoritesCount || 0;
+    this.likesCount = data.likesCount || 0;
+    this.favoritesCount = data.favoritesCount || 0;
     this.isLikedByUser = Boolean(data.isLikedByUser);
     this.isFavoritedByUser = Boolean(data.isFavoritedByUser);
 
@@ -81,28 +89,51 @@ export class Game {
   }
   // Getters for lazy-loaded properties - now with better error handling
   get genres() {
-    return this._getProcessedSync("genres", () =>
-      this._processGenres(this._rawData.genres)
-    );
+    return this._getProcessedSync("genres", () => {
+      if (this._rawData.genres && Array.isArray(this._rawData.genres)) {
+        // Original API format or already processed array
+        return this._processGenres(this._rawData.genres);
+      }
+      return [];
+    });
   }
 
   get cover() {
     return this._getProcessedSync("cover", () => {
-      const covers = this._processCovers(this._rawData.covers);
-      return covers?.[0] || null;
+      // Handle both original API format (covers array) and serialized format (single cover object)
+      if (this._rawData.covers && Array.isArray(this._rawData.covers)) {
+        // Original API format - process the covers array
+        const covers = this._processCovers(this._rawData.covers);
+        return covers?.[0] || null;
+      } else if (this._rawData.cover && typeof this._rawData.cover === 'object') {
+        // Serialized format - return the already processed cover object
+        return this._rawData.cover;
+      }
+      return null;
     });
   }
 
   get covers() {
-    return this._getProcessedSync("covers", () =>
-      this._processCovers(this._rawData.covers)
-    );
+    return this._getProcessedSync("covers", () => {
+      if (this._rawData.covers && Array.isArray(this._rawData.covers)) {
+        // Original API format - process the covers array
+        return this._processCovers(this._rawData.covers);
+      } else if (this._rawData.cover && typeof this._rawData.cover === 'object') {
+        // Serialized format - return single cover as array
+        return [this._rawData.cover];
+      }
+      return [];
+    });
   }
 
   get screenshots() {
-    return this._getProcessedSync("screenshots", () =>
-      this._processScreenshots(this._rawData.screenshots)
-    );
+    return this._getProcessedSync("screenshots", () => {
+      if (this._rawData.screenshots && Array.isArray(this._rawData.screenshots)) {
+        // Original API format or already processed array
+        return this._processScreenshots(this._rawData.screenshots);
+      }
+      return [];
+    });
   }
 
   get developers() {
@@ -169,10 +200,10 @@ export class Game {
   get primaryImageUrl() {
     try {
       const cover = this.cover;
-      return cover?.imageUrl || cover?.url || "/default-game.png";
+      return cover?.imageUrl || cover?.url || null;
     } catch (error) {
       console.warn("Error getting primaryImageUrl:", error);
-      return "/default-game.png";
+      return null;
     }
   }
 
@@ -588,26 +619,39 @@ export class Game {
   toJSON() {
     try {
       return {
+        // Core properties
         id: this.id,
+        igdbId: this.id, // Keep both for compatibility
         name: this.name,
         slug: this.slug,
         summary: this.summary,
         storyline: this.storyline,
-        firstReleaseDate: this.firstReleaseDate?.toISOString(),
-        igdbRating: this.igdbRating,
-        rating: this.rating,
+        gameType: this.gameType,
         hypes: this.hypes,
-        likes: this.likes,
-        favorites: this.favorites,
+        igdbRating: this.igdbRating,
+        likesCount: this.likesCount,
+        favoritesCount: this.favoritesCount,
         isLikedByUser: this.isLikedByUser,
         isFavoritedByUser: this.isFavoritedByUser,
+        
+        // Dates
+        firstReleaseDate: this.firstReleaseDate?.toISOString(),
+        createdAt: this.createdAt.toISOString(),
+        updatedAt: this.updatedAt.toISOString(),
+        
+        // Processed data (for compatibility with deserialization)
         genres: this.genres,
-        cover: this.cover,
+        cover: this.cover, // Processed cover object
+        covers: this.covers, // Array of covers (fallback)
+        screenshots: this.screenshots,
         developers: this.developers,
         publishers: this.publishers,
         platforms: this.platforms,
-        createdAt: this.createdAt.toISOString(),
-        updatedAt: this.updatedAt.toISOString(),
+        ageRatings: this.ageRatings,
+        gameModes: this.gameModes,
+        franchises: this.franchises,
+        releaseDates: this.releaseDates,
+        altNames: this.altNames,
       };
     } catch (error) {
       console.warn("Error in toJSON:", error);

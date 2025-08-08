@@ -24,8 +24,8 @@
               <!-- Profile Image -->
               <div class="col-auto">
                 <div class="position-relative">
-                  <img 
-                    :src="profile.profileImageUrl || defaultAvatar" 
+                  <img
+                    :src="profile.profileImageUrl || defaultAvatar"
                     :alt="`${profile.displayName || 'User'}'s profile`"
                     class="rounded-circle border border-3 border-light shadow-sm"
                     style="width: 120px; height: 120px; object-fit: cover;"
@@ -109,8 +109,8 @@
                     </template>
                     <template v-else>
                       <div class="btn-group">
-                        <button 
-                          @click="saveProfile" 
+                        <button
+                          @click="saveProfile"
                           :disabled="isSaving"
                           class="btn btn-success"
                         >
@@ -224,10 +224,11 @@
                   <!-- Game Image -->
                   <div class="me-3">
                     <img
-                      :src="game.imageUrl || '/default-game.png'"
+                      :src="getImageUrl(game.imageUrl, FALLBACK_TYPES.GAME_ICON)"
                       :alt="game.name"
                       class="rounded"
                       style="width: 60px; height: 60px; object-fit: cover;"
+                      @error="(e) => handleImageError(e, 'gameIcon')"
                     >
                   </div>
 
@@ -285,10 +286,11 @@
                     :class="{ 'disabled': isGameInTop5(game.id) || editTopGames.length >= 5 }"
                   >
                     <img
-                      :src="game.imageUrl || '/default-game.png'"
+                      :src="getImageUrl(game.imageUrl, 'gameIcon')"
                       :alt="game.name"
                       class="rounded me-3"
                       style="width: 40px; height: 40px; object-fit: cover;"
+                      @error="(e) => handleImageError(e, 'gameIcon')"
                     >
                     <div>
                       <h6 class="mb-0">{{ game.name }}</h6>
@@ -314,10 +316,11 @@
                     <div class="d-flex align-items-center">
                       <span class="badge bg-primary me-3">{{ index + 1 }}</span>
                       <img
-                        :src="game.imageUrl || '/default-game.png'"
+                        :src="getImageUrl(game.imageUrl, 'gameIcon')"
                         :alt="game.name"
                         class="rounded me-3"
                         style="width: 40px; height: 40px; object-fit: cover;"
+                        @error="(e) => handleImageError(e, 'gameIcon')"
                       >
                       <div>
                         <h6 class="mb-0">{{ game.name }}</h6>
@@ -391,6 +394,7 @@ import { useAuthStore } from '@/stores/authStore'
 import { useProfileStore } from '@/stores/profileStore'
 import { useGamesStore } from '@/stores/gamesStore'
 import { useToast } from 'vue-toastification'
+import { useImageFallback, FALLBACK_TYPES } from '@/composables/useImageFallback'
 
 // Props for viewing other users' profiles
 const props = defineProps({
@@ -406,6 +410,7 @@ const authStore = useAuthStore()
 const profileStore = useProfileStore()
 const gamesStore = useGamesStore()
 const toast = useToast()
+const { handleImageError, getImageUrl } = useImageFallback()
 
 // State
 const profile = ref(null)
@@ -453,11 +458,11 @@ const fetchProfile = async () => {
   try {
     loading.value = true
     error.value = ''
-    
+
     const response = await profileStore.fetchProfile(
       isOwnProfile.value ? null : profileUserId.value
     )
-    
+
     profile.value = response
     topGames.value = response.topGames || []
   } catch (err) {
@@ -488,17 +493,17 @@ const saveProfile = async () => {
   try {
     isSaving.value = true
     saveError.value = ''
-    
+
     const response = await profileStore.updateProfile(editForm)
-    
+
     // Update profile data
     Object.assign(profile.value, response)
-    
+
     // Update auth store if it's own profile
     if (isOwnProfile.value) {
       authStore.updateUserProfileState(response)
     }
-    
+
     isEditing.value = false
     toast.success('Profile updated successfully!')
   } catch (err) {
@@ -563,15 +568,15 @@ const cancelGamesEditing = () => {
 const saveTopGames = async () => {
   try {
     isSavingGames.value = true
-    
+
     const response = await profileStore.updateTopGames({
       topGames: editTopGames.value
     })
-    
+
     topGames.value = response.topGames || editTopGames.value
     isEditingGames.value = false
     editTopGames.value = []
-    
+
     toast.success('Top games updated successfully!')
   } catch (err) {
     toast.error('Failed to save games')
@@ -673,16 +678,16 @@ onMounted(() => {
   .container {
     padding: 1rem;
   }
-  
+
   .card-body {
     padding: 1.5rem !important;
   }
-  
+
   .btn-group {
     flex-direction: column;
     width: 100%;
   }
-  
+
   .btn-group .btn {
     margin-bottom: 0.5rem;
   }

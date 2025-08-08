@@ -150,10 +150,11 @@
                   <!-- Game Image -->
                   <div class="me-3">
                     <img
-                      :src="game.primaryImageUrl || '/default-game.png'"
+                      :src="getImageUrl(game.primaryImageUrl, FALLBACK_TYPES.GAME_ICON)"
                       :alt="game.name"
                       class="rounded"
                       style="width: 50px; height: 50px; object-fit: cover;"
+                      @error="(e) => handleImageError(e, 'gameIcon')"
                     >
                   </div>
 
@@ -233,10 +234,11 @@
                   class="card border-0 bg-light cursor-pointer game-hover-card"
                 >
                   <img
-                    :src="game.primaryImageUrl || '/default-game.png'"
+                    :src="getImageUrl(game.primaryImageUrl, 'gameSmall')"
                     :alt="game.name"
                     class="card-img-top"
                     style="height: 120px; object-fit: cover;"
+                    @error="(e) => handleImageError(e, 'gameSmall')"
                   >
                   <div class="card-body p-2">
                     <h6 class="card-title mb-1 fw-semibold small">{{ game.name }}</h6>
@@ -322,6 +324,7 @@ import { useGamesStore } from '@/stores/gamesStore'
 import { useProfileStore } from '@/stores/profileStore'
 import { useToast } from 'vue-toastification'
 import GameCard from '@/components/GameCard.vue'
+import { useImageFallback, FALLBACK_TYPES } from '@/composables/useImageFallback'
 
 // Composables
 const router = useRouter()
@@ -329,6 +332,7 @@ const authStore = useAuthStore()
 const gamesStore = useGamesStore()
 const profileStore = useProfileStore()
 const toast = useToast()
+const { handleImageError, getImageUrl } = useImageFallback()
 
 // State
 const searchQuery = ref('')

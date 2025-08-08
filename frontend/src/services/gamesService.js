@@ -177,8 +177,10 @@ export const gamesService = {
         userId: userId,
         gameId: gameId
       }
-      const response = await apiClient.post(`/social/favorites`, body);
-      return response.data;
+      const response = await apiClient.delete(`/social/favorites`, {
+        data: body}
+      );
+      return response.data.data;
     } catch (error) {
       throw new Error(
         error.response?.data?.message || "Failed to remove from favorites"
@@ -204,11 +206,29 @@ export const gamesService = {
         userId: userId,
         gameId: gameId
       }
-      const response = await apiClient.delete(`/social/favorites`, body);
-      return response.data;
+      const response = await apiClient.post(`/social/favorites`, body);
+      return response.data.data;
     } catch (error) {
       throw new Error(
         error.response?.data?.message || "Failed to add to favorites"
+      );
+    }
+  },
+
+  async getUserFavorites(userId) {
+    try {
+      if (
+        !userId ||
+        (typeof userId !== "string" && typeof userId !== "number")
+      ) {
+        throw new Error("Game ID must be a non-empty string or number");
+      }
+
+      const response = await apiClient.get(`/social/favorites/${userId}`);
+      return response.data.data;
+    } catch (error) {
+      throw new Error(
+        error.response?.data?.message || "Failed to get user's favorites"
       );
     }
   },

@@ -16,7 +16,80 @@ export const useGamesStore = defineStore("games", () => {
 
   // Cache metadata
   const cacheTimestamps = ref(new Map());
-  const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+  const CACHE_DURATION = 30 * 60 * 1000; // 30 minutes
+
+  // Cover pre-caching configuration
+  const ENABLE_COVER_PRECACHING = true; // Set to false to disable cover pre-caching
+  const coverPreloadQueue = ref(new Set()); // Track which covers are being preloaded
+  const preloadedCovers = ref(new Set()); // Track successfully preloaded covers
+
+  // localStorage helpers
+  const CACHE_KEY = 'patchnotes_games_cache';
+  const TIMESTAMPS_KEY = 'patchnotes_cache_timestamps';
+
+  const saveToLocalStorage = () => {
+    try {
+      const gamesArray = Array.from(games.value.entries());
+      const timestampsArray = Array.from(cacheTimestamps.value.entries());
+      
+      localStorage.setItem(CACHE_KEY, JSON.stringify(gamesArray));
+      localStorage.setItem(TIMESTAMPS_KEY, JSON.stringify(timestampsArray));
+    } catch (err) {
+      console.warn('Failed to save cache to localStorage:', err);
+    }
+  };
+
+  const loadFromLocalStorage = () => {
+    try {
+      const savedGames = localStorage.getItem(CACHE_KEY);
+      const savedTimestamps = localStorage.getItem(TIMESTAMPS_KEY);
+      
+      if (savedGames) {
+        const gamesArray = JSON.parse(savedGames);
+        games.value = new Map(gamesArray.map(([key, gameData]) => [key, createGame(gameData)]));
+        
+        // Trigger background cover preloading for restored games
+        if (ENABLE_COVER_PRECACHING) {
+          // Use setTimeout to avoid blocking the initial load
+          setTimeout(() => {
+            preloadCoversForCachedGames();
+          }, 1000); // 1 second delay to let the app initialize first
+        }
+      }
+      
+      if (savedTimestamps) {
+        const timestampsArray = JSON.parse(savedTimestamps);
+        cacheTimestamps.value = new Map(timestampsArray);
+      }
+      
+      // Clean expired entries
+      cleanExpiredCache();
+    } catch (err) {
+      console.warn('Failed to load cache from localStorage:', err);
+      games.value = new Map();
+      cacheTimestamps.value = new Map();
+    }
+  };
+
+  const cleanExpiredCache = () => {
+    const now = Date.now();
+    const expiredKeys = [];
+    
+    for (const [key, timestamp] of cacheTimestamps.value) {
+      if (now - timestamp > CACHE_DURATION) {
+        expiredKeys.push(key);
+      }
+    }
+    
+    expiredKeys.forEach(key => {
+      games.value.delete(key);
+      cacheTimestamps.value.delete(key);
+    });
+    
+    if (expiredKeys.length > 0) {
+      saveToLocalStorage();
+    }
+  };
 
   // Getters
   const getGameById = computed(() => {
@@ -41,6 +114,143 @@ export const useGamesStore = defineStore("games", () => {
   const allGames = computed(() => {
     return Array.from(games.value.values()).filter(Boolean);
   });
+
+  // Cover pre-caching methods
+  const preloadGameCover = async (gameInstance, priority = 'low') => {
+    if (!ENABLE_COVER_PRECACHING || !gameInstance) return;
+
+    try {
+      // Get the cover using the Game model's getter
+      const cover = gameInstance.cover;
+      if (!cover?.imageUrl) {
+        console.log('preloadGameCover: No cover URL available for game:', gameInstance.name);
+        return;
+      }
+
+      const coverUrl = cover.imageUrl;
+      
+      // Skip if already preloaded or in queue
+      if (preloadedCovers.value.has(coverUrl) || coverPreloadQueue.value.has(coverUrl)) {
+        return;
+      }
+
+      // Add to queue
+      coverPreloadQueue.value.add(coverUrl);
+
+      console.log('preloadGameCover: Preloading cover for game:', gameInstance.name, 'URL:', coverUrl);
+
+      // Create lightweight Image object for preloading
+      const img = new Image();
+      
+      // Set up promise-based loading
+      const loadPromise = new Promise((resolve, reject) => {
+        img.onload = () => {
+          preloadedCovers.value.add(coverUrl);
+          coverPreloadQueue.value.delete(coverUrl);
+          console.log('preloadGameCover: Successfully preloaded cover for:', gameInstance.name);
+          resolve(coverUrl);
+        };
+        
+        img.onerror = () => {
+          coverPreloadQueue.value.delete(coverUrl);
+          console.warn('preloadGameCover: Failed to preload cover for:', gameInstance.name, 'URL:', coverUrl);
+          reject(new Error(`Failed to load cover: ${coverUrl}`));
+        };
+      });
+
+      // Set the src to trigger loading (non-blocking)
+      img.src = coverUrl;
+
+      // For high priority (like current game being viewed), await the load
+      // For medium priority, await but with shorter timeout
+      if (priority === 'high') {
+        await loadPromise;
+      } else if (priority === 'medium') {
+        // Await with timeout for medium priority
+        try {
+          await Promise.race([
+            loadPromise,
+            new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 2000))
+          ]);
+        } catch (timeoutError) {
+          // Continue without waiting if timeout occurs
+          console.log('preloadGameCover: Medium priority timeout for:', gameInstance.name);
+        }
+      }
+
+    } catch (error) {
+      console.warn('preloadGameCover: Error preloading cover for game:', gameInstance?.name, error);
+      if (gameInstance) {
+        const cover = gameInstance.cover;
+        if (cover?.imageUrl) {
+          coverPreloadQueue.value.delete(cover.imageUrl);
+        }
+      }
+    }
+  };
+
+  const preloadMultipleGameCovers = async (gameInstances, options = {}) => {
+    if (!ENABLE_COVER_PRECACHING || !Array.isArray(gameInstances)) return;
+
+    const {
+      priority = 'low',
+      maxConcurrent = 3, // Limit concurrent preloads to avoid overwhelming the browser
+      delayBetweenBatches = 100 // ms delay between batches
+    } = options;
+
+    console.log(`preloadMultipleGameCovers: Starting preload for ${gameInstances.length} games`);
+
+    // Process in batches to avoid overwhelming the browser
+    for (let i = 0; i < gameInstances.length; i += maxConcurrent) {
+      const batch = gameInstances.slice(i, i + maxConcurrent);
+      
+      // Process batch in parallel
+      const promises = batch.map(game => preloadGameCover(game, priority));
+      
+      try {
+        await Promise.allSettled(promises); // Don't fail if individual images fail
+      } catch (error) {
+        console.warn('preloadMultipleGameCovers: Batch error:', error);
+      }
+
+      // Small delay between batches for performance
+      if (i + maxConcurrent < gameInstances.length && delayBetweenBatches > 0) {
+        await new Promise(resolve => setTimeout(resolve, delayBetweenBatches));
+      }
+    }
+
+    console.log('preloadMultipleGameCovers: Completed preload batch');
+  };
+
+  const preloadCoversForCachedGames = async () => {
+    try {
+      console.log('preloadCoversForCachedGames: Starting background preload for cached games');
+      
+      // Get all unique game instances from cache (avoid duplicates from multiple keys)
+      const uniqueGames = new Map();
+      for (const gameInstance of games.value.values()) {
+        if (gameInstance && gameInstance.id) {
+          uniqueGames.set(gameInstance.id, gameInstance);
+        }
+      }
+      
+      const gameInstances = Array.from(uniqueGames.values());
+      console.log(`preloadCoversForCachedGames: Found ${gameInstances.length} unique games to preload`);
+      
+      if (gameInstances.length === 0) return;
+      
+      // Use very conservative settings for background preloading
+      await preloadMultipleGameCovers(gameInstances, {
+        priority: 'low',           // Non-blocking
+        maxConcurrent: 2,          // Very conservative concurrency
+        delayBetweenBatches: 500   // Longer delays to be less aggressive
+      });
+      
+      console.log('preloadCoversForCachedGames: Completed background preload');
+    } catch (error) {
+      console.warn('preloadCoversForCachedGames: Error during background preload:', error);
+    }
+  };
 
   // Helper methods
   const createGame = (data) => {
@@ -69,49 +279,55 @@ export const useGamesStore = defineStore("games", () => {
     }
   };
 
-  const cacheGame = (gameData, identifier = null) => {
-    console.log('cacheGame called with:', gameData, identifier);
-
-    if (!gameData) {
-      console.log('cacheGame: no game data provided');
-      return null;
-    }
+  const cacheGame = (gameData, identifier = null, options = {}) => {
+    if (!gameData) return null;
 
     const gameInstance = createGame(gameData);
-    console.log('cacheGame: created instance:', gameInstance);
-
-    if (!gameInstance || !gameInstance.id) {
-      console.warn('cacheGame: Invalid game instance or missing ID:', gameInstance);
-      return null;
-    }
+    if (!gameInstance || !gameInstance.id) return null;
 
     const timestamp = Date.now();
     const primaryKey = String(gameInstance.id);
 
-    // Check if we already have this game cached
-    const existingGame = games.value.get(primaryKey);
-    if (existingGame) {
-      console.log('cacheGame: returning existing game from cache');
-      return existingGame;
+    // Check if already cached
+    if (games.value.has(primaryKey)) {
+      const cachedInstance = games.value.get(primaryKey);
+      
+      // Still preload cover for already cached games if requested
+      if (options.preloadCover !== false) {
+        const priority = options.coverPriority || 'low';
+        // Non-blocking preload
+        preloadGameCover(cachedInstance, priority).catch(() => {
+          // Silently handle preload failures
+        });
+      }
+      
+      return cachedInstance;
     }
 
-    // Cache new game
+    // Build keys array safely
     const keys = [
       primaryKey,
-      gameInstance.slug,
+      gameInstance.slug ? String(gameInstance.slug) : null,
       identifier ? String(identifier) : null
     ].filter(Boolean);
 
-    console.log('cacheGame: caching with keys:', keys);
-
-    const newGamesMap = new Map(games.value);
+    // Cache directly in existing Map (no new Map creation)
     keys.forEach((key) => {
-      newGamesMap.set(key, gameInstance);
+      games.value.set(key, gameInstance);
       cacheTimestamps.value.set(key, timestamp);
     });
 
-    games.value = newGamesMap;
-    console.log('cacheGame: cached successfully, returning:', gameInstance);
+    // Persist to localStorage
+    saveToLocalStorage();
+    
+    // Preload game cover after caching (non-blocking)
+    if (options.preloadCover !== false) {
+      const priority = options.coverPriority || 'low';
+      preloadGameCover(gameInstance, priority).catch(() => {
+        // Silently handle preload failures
+      });
+    }
+    
     return gameInstance;
   };
 
@@ -131,6 +347,14 @@ export const useGamesStore = defineStore("games", () => {
     if (games.value.has(key) && isCacheValid(key)) {
       const cachedGame = games.value.get(key);
       console.log('getCachedGame: found cached game:', cachedGame);
+      
+      // Trigger immediate cover preload for accessed cached games
+      if (ENABLE_COVER_PRECACHING && cachedGame) {
+        preloadGameCover(cachedGame, 'high').catch(() => {
+          // Silently handle preload failures
+        });
+      }
+      
       return cachedGame;
     }
 
@@ -139,6 +363,14 @@ export const useGamesStore = defineStore("games", () => {
       const gameBySlug = getGameBySlug.value(identifier);
       if (gameBySlug) {
         console.log('getCachedGame: found game by slug:', gameBySlug);
+        
+        // Trigger immediate cover preload for accessed cached games
+        if (ENABLE_COVER_PRECACHING && gameBySlug) {
+          preloadGameCover(gameBySlug, 'high').catch(() => {
+            // Silently handle preload failures
+          });
+        }
+        
         return gameBySlug;
       }
     }
@@ -178,9 +410,12 @@ export const useGamesStore = defineStore("games", () => {
         throw new Error("Game not found");
       }
 
-      // Cache the game
+      // Cache the game with high priority cover preloading for details view
       console.log('fetchGameDetails: Caching game data');
-      const gameInstance = cacheGame(gameData, identifier);
+      const gameInstance = cacheGame(gameData, identifier, { 
+        preloadCover: true, 
+        coverPriority: 'high' 
+      });
       console.log('fetchGameDetails: Cached game instance:', gameInstance);
       console.log('fetchGameDetails: Instance type:', typeof gameInstance);
 
@@ -229,7 +464,8 @@ export const useGamesStore = defineStore("games", () => {
         try {
           const gameInstance = createGame(gameItem);
           if (gameInstance && gameInstance.id) {
-            cacheGame(gameInstance);
+            // Cache with low priority cover preloading for search results
+            cacheGame(gameInstance, null, { preloadCover: true, coverPriority: 'low' });
             gameInstances.push(gameInstance);
           } else {
             console.warn('searchGames: Invalid game data, skipping:', gameItem);
@@ -277,7 +513,8 @@ export const useGamesStore = defineStore("games", () => {
         try {
           const gameInstance = createGame(gameItem);
           if (gameInstance && gameInstance.id) {
-            cacheGame(gameInstance);
+            // Cache with medium priority cover preloading for popular games
+            cacheGame(gameInstance, null, { preloadCover: true, coverPriority: 'medium' });
             gameInstances.push(gameInstance);
           }
         } catch (gameError) {
@@ -321,7 +558,8 @@ export const useGamesStore = defineStore("games", () => {
         try {
           const gameInstance = createGame(gameItem);
           if (gameInstance && gameInstance.id) {
-            cacheGame(gameInstance);
+            // Cache with low priority cover preloading for similar games
+            cacheGame(gameInstance, null, { preloadCover: true, coverPriority: 'low' });
             gameInstances.push(gameInstance);
           }
         } catch (gameError) {
@@ -363,7 +601,8 @@ export const useGamesStore = defineStore("games", () => {
         try {
           const gameInstance = createGame(gameItem);
           if (gameInstance && gameInstance.id) {
-            cacheGame(gameInstance);
+            // Cache with medium priority cover preloading for new games
+            cacheGame(gameInstance, null, { preloadCover: true, coverPriority: 'medium' });
             gameInstances.push(gameInstance);
           }
         } catch (gameError) {
@@ -403,7 +642,7 @@ export const useGamesStore = defineStore("games", () => {
         throw new Error("User favorite operation failed")
       }
 
-      if (typeof result === 'boolean') {
+      if (typeof result !== 'boolean') {
         console.error('removeFromFavorites: Expected boolean but got:', typeof result);
         return;
       }
@@ -437,7 +676,7 @@ export const useGamesStore = defineStore("games", () => {
         throw new Error("User favorite operation failed")
       }
 
-      if (typeof result === 'boolean') {
+      if (typeof result !== 'boolean') {
         console.error('addToFavorites: Expected boolean but got:', typeof result);
         return;
       }
@@ -445,6 +684,37 @@ export const useGamesStore = defineStore("games", () => {
       return result
     } catch (err) {
       console.error("addToFavorites: Error:", err);
+      error.value = err.message;
+      return [];
+    } finally {
+      loading.value = false;
+    }
+  };
+
+  const getUserFavorites = async (userId) => {
+    if (!userId) {
+      console.warn('getUserFavorites: No userId provided');
+      return;
+    }
+
+    try {
+      loading.value = true;
+      error.value = null;
+
+      const result = await gamesService.getUserFavorites(userId);
+
+      if(!result) {
+        throw new Error("Get User favorites operation failed");
+      }
+
+      if (!Array.isArray(result)) {
+        console.error('getUserFavorites: Expected list but got: ', typeof result);
+        return;
+      }
+
+      return result;
+    } catch (err) {
+      console.error("getUserFavorites: Error:", err);
       error.value = err.message;
       return [];
     } finally {
@@ -464,7 +734,36 @@ export const useGamesStore = defineStore("games", () => {
     popularGames.value = [];
     similarGames.value.clear();
     newGames.value = [];
+    
+    // Clear cover preload cache
+    coverPreloadQueue.value.clear();
+    preloadedCovers.value.clear();
+    
+    // Clear localStorage
+    try {
+      localStorage.removeItem(CACHE_KEY);
+      localStorage.removeItem(TIMESTAMPS_KEY);
+    } catch (err) {
+      console.warn('Failed to clear localStorage cache:', err);
+    }
   };
+
+  // Cover preload management methods
+  const clearCoverPreloadCache = () => {
+    coverPreloadQueue.value.clear();
+    preloadedCovers.value.clear();
+  };
+
+  const getCoverPreloadStats = () => {
+    return {
+      queued: coverPreloadQueue.value.size,
+      preloaded: preloadedCovers.value.size,
+      enabled: ENABLE_COVER_PRECACHING
+    };
+  };
+
+  // Initialize cache from localStorage
+  loadFromLocalStorage();
 
   return {
     // State
@@ -488,9 +787,16 @@ export const useGamesStore = defineStore("games", () => {
     fetchNewGames,
     removeFromFavorites,
     addToFavorites,
+    getUserFavorites,
 
     // Cache management
     clearSearchResults,
     clearCache,
+
+    // Cover preloading (exposed for manual control if needed)
+    preloadGameCover,
+    preloadMultipleGameCovers,
+    clearCoverPreloadCache,
+    getCoverPreloadStats,
   };
 });
