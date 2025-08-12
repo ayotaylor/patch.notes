@@ -148,11 +148,11 @@
                     {{ isProcessingFavorites ? 'Processing...' : (isInFavorites ? 'Remove From Favorites' : 'Add to Favorites') }}
                   </button>
 
-                  <button @click="toggleLike" class="btn btn-lg btn-outline-primary"
-                    :class="{ 'active': game.isLikedByUser }">
+                  <button @click="toggleLike" :disabled="isProcessingLikes"
+                    class="btn btn-lg flex-grow-1" :class="isInLikes ? 'btn-success' : 'btn-primary'">
                     <span v-if="isProcessingLikes" class="spinner-border spinner-border-sm me-2"></span>
-                    <i class="fas fa-thumbs-up" :class="{ 'text-primary': game.isLikedByUser }"></i>
-                    <span class="d-none d-md-inline ms-1">{{ game.isLikedByUser ? 'Liked' : 'Like' }}</span>
+                    <i v-else class="fas" :class="isInLikes ? 'fa-thumbs-up' : 'fa-thumbs-up'"></i>
+                    {{ isProcessingLikes ? 'Processing...' : (isInLikes ? 'Liked' : 'Like') }}
                   </button>
 
                   <button @click="toggleWishlist" class="btn btn-lg btn-outline-secondary"
@@ -391,14 +391,14 @@ const isInFavorites = computed(() => {
   return userFavorites.value.has(String(game.value.id))
 })
 
+const isInLikes = computed(() => {
+  if (!game.value?.id) return false;
+  return userLikes.value.has(String(game.value.id));
+})
+
 const isInWishlist = computed(() => {
   const id = gameIdentifier.value
   return id && userWishlist.value.has(String(id))
-})
-
-const isInLikes = computed(() => {
-  const id = gameIdentifier.value
-  return id && userLikes.value.has(String(id))
 })
 
 // Safe property accessors
@@ -613,8 +613,11 @@ const loadGameDetails = async () => {
       await loadSimilarGames()
     }
 
-    // Load user's favorites status
+    // Load user's favorites and likes status
+    //TODO: create functions to check if game is liked and favorited by user to replace the two below
+    // TODO: maybe use these in a different context like in the user's profile page
     await loadUserFavoritesStatus()
+    await loadUserLikesStatus()
 
   } catch (err) {
     error.value = err.message || 'Failed to load game details'
@@ -644,14 +647,20 @@ const loadUserFavoritesStatus = async () => {
 
     const userFavoritesResult = await gamesStore.getUserFavorites(userId);
     userFavorites.value = new Set(userFavoritesResult.map(game=>String(game.igdbId)));
-
-    // const wishlistData = localStorage.getItem('userWishlist')
-    // if (wishlistData) {
-    //   const wishlist = JSON.parse(wishlistData)
-    //   userWishlist.value = new Set(wishlist)
-    // }
   } catch (err) {
     console.error('Error loading user favorites status:', err)
+  }
+}
+
+const loadUserLikesStatus = async () => {
+  try {
+    const userId = authStore.user.id;
+    if (!userId) return;
+
+    const userLikesResult = await gamesStore.getUserLikes(userId);
+    userLikes.value = new Set(userLikesResult.map(game=>String(game.igdbId)));
+  } catch (err) {
+    console.error('Error loading user likes status:', err)
   }
 }
 
@@ -691,25 +700,6 @@ const toggleFavorites = async () => {
   }
 }
 
-const toggleWishlist = async () => {
-  if (!gameIdentifier.value) return
-  try {
-    const identifier = String(gameIdentifier.value)
-    if (isInWishlist.value) {
-      userWishlist.value.delete(identifier)
-      toast.success(`Removed "${game.value.name}" from wishlist`)
-    } else {
-      userWishlist.value.add(identifier)
-      toast.success(`Added "${game.value.name}" to wishlist`)
-    }
-
-    localStorage.setItem('userWishlist', JSON.stringify([...userWishlist.value]))
-  } catch (err) {
-    toast.error('Failed to update wishlist')
-    console.error('Wishlist error:', err)
-  }
-}
-
 const toggleLike = async () => {
   if (!game.value?.id || !authStore.user?.id) return
   if (isProcessingLikes.value) return  // prevent multiple clicks
@@ -743,6 +733,25 @@ const toggleLike = async () => {
     console.error('Toggle likes error:', err)
   } finally {
     isProcessingLikes.value = false
+  }
+}
+
+const toggleWishlist = async () => {
+  if (!gameIdentifier.value) return
+  try {
+    const identifier = String(gameIdentifier.value)
+    if (isInWishlist.value) {
+      userWishlist.value.delete(identifier)
+      toast.success(`Removed "${game.value.name}" from wishlist`)
+    } else {
+      userWishlist.value.add(identifier)
+      toast.success(`Added "${game.value.name}" to wishlist`)
+    }
+
+    localStorage.setItem('userWishlist', JSON.stringify([...userWishlist.value]))
+  } catch (err) {
+    toast.error('Failed to update wishlist')
+    console.error('Wishlist error:', err)
   }
 }
 

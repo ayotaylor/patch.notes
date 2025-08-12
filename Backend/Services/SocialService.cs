@@ -139,8 +139,13 @@ namespace Backend.Services
 
         public async Task<List<GameDto>> GetUserLikesAsync(Guid userId, int page = 1, int pageSize = 20)
         {
+            var userProfileId = await _context.UserProfiles
+                .Where(u => u.UserId == userId.ToString())
+                .Select(u => u.Id)
+                .FirstOrDefaultAsync();
+
             var likedGameIds = await _context.Likes
-                .Where(f => f.UserId == userId)
+                .Where(f => f.UserId == userProfileId)
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
                 .Select(f => f.GameId)

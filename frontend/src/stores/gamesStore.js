@@ -31,7 +31,7 @@ export const useGamesStore = defineStore("games", () => {
     try {
       const gamesArray = Array.from(games.value.entries());
       const timestampsArray = Array.from(cacheTimestamps.value.entries());
-      
+
       localStorage.setItem(CACHE_KEY, JSON.stringify(gamesArray));
       localStorage.setItem(TIMESTAMPS_KEY, JSON.stringify(timestampsArray));
     } catch (err) {
@@ -43,11 +43,11 @@ export const useGamesStore = defineStore("games", () => {
     try {
       const savedGames = localStorage.getItem(CACHE_KEY);
       const savedTimestamps = localStorage.getItem(TIMESTAMPS_KEY);
-      
+
       if (savedGames) {
         const gamesArray = JSON.parse(savedGames);
         games.value = new Map(gamesArray.map(([key, gameData]) => [key, createGame(gameData)]));
-        
+
         // Trigger background cover preloading for restored games
         if (ENABLE_COVER_PRECACHING) {
           // Use setTimeout to avoid blocking the initial load
@@ -56,12 +56,12 @@ export const useGamesStore = defineStore("games", () => {
           }, 1000); // 1 second delay to let the app initialize first
         }
       }
-      
+
       if (savedTimestamps) {
         const timestampsArray = JSON.parse(savedTimestamps);
         cacheTimestamps.value = new Map(timestampsArray);
       }
-      
+
       // Clean expired entries
       cleanExpiredCache();
     } catch (err) {
@@ -74,18 +74,18 @@ export const useGamesStore = defineStore("games", () => {
   const cleanExpiredCache = () => {
     const now = Date.now();
     const expiredKeys = [];
-    
+
     for (const [key, timestamp] of cacheTimestamps.value) {
       if (now - timestamp > CACHE_DURATION) {
         expiredKeys.push(key);
       }
     }
-    
+
     expiredKeys.forEach(key => {
       games.value.delete(key);
       cacheTimestamps.value.delete(key);
     });
-    
+
     if (expiredKeys.length > 0) {
       saveToLocalStorage();
     }
@@ -128,7 +128,7 @@ export const useGamesStore = defineStore("games", () => {
       }
 
       const coverUrl = cover.imageUrl;
-      
+
       // Skip if already preloaded or in queue
       if (preloadedCovers.value.has(coverUrl) || coverPreloadQueue.value.has(coverUrl)) {
         return;
@@ -141,7 +141,7 @@ export const useGamesStore = defineStore("games", () => {
 
       // Create lightweight Image object for preloading
       const img = new Image();
-      
+
       // Set up promise-based loading
       const loadPromise = new Promise((resolve, reject) => {
         img.onload = () => {
@@ -150,7 +150,7 @@ export const useGamesStore = defineStore("games", () => {
           console.log('preloadGameCover: Successfully preloaded cover for:', gameInstance.name);
           resolve(coverUrl);
         };
-        
+
         img.onerror = () => {
           coverPreloadQueue.value.delete(coverUrl);
           console.warn('preloadGameCover: Failed to preload cover for:', gameInstance.name, 'URL:', coverUrl);
@@ -203,10 +203,10 @@ export const useGamesStore = defineStore("games", () => {
     // Process in batches to avoid overwhelming the browser
     for (let i = 0; i < gameInstances.length; i += maxConcurrent) {
       const batch = gameInstances.slice(i, i + maxConcurrent);
-      
+
       // Process batch in parallel
       const promises = batch.map(game => preloadGameCover(game, priority));
-      
+
       try {
         await Promise.allSettled(promises); // Don't fail if individual images fail
       } catch (error) {
@@ -225,7 +225,7 @@ export const useGamesStore = defineStore("games", () => {
   const preloadCoversForCachedGames = async () => {
     try {
       console.log('preloadCoversForCachedGames: Starting background preload for cached games');
-      
+
       // Get all unique game instances from cache (avoid duplicates from multiple keys)
       const uniqueGames = new Map();
       for (const gameInstance of games.value.values()) {
@@ -233,19 +233,19 @@ export const useGamesStore = defineStore("games", () => {
           uniqueGames.set(gameInstance.id, gameInstance);
         }
       }
-      
+
       const gameInstances = Array.from(uniqueGames.values());
       console.log(`preloadCoversForCachedGames: Found ${gameInstances.length} unique games to preload`);
-      
+
       if (gameInstances.length === 0) return;
-      
+
       // Use very conservative settings for background preloading
       await preloadMultipleGameCovers(gameInstances, {
         priority: 'low',           // Non-blocking
         maxConcurrent: 2,          // Very conservative concurrency
         delayBetweenBatches: 500   // Longer delays to be less aggressive
       });
-      
+
       console.log('preloadCoversForCachedGames: Completed background preload');
     } catch (error) {
       console.warn('preloadCoversForCachedGames: Error during background preload:', error);
@@ -291,7 +291,7 @@ export const useGamesStore = defineStore("games", () => {
     // Check if already cached
     if (games.value.has(primaryKey)) {
       const cachedInstance = games.value.get(primaryKey);
-      
+
       // Still preload cover for already cached games if requested
       if (options.preloadCover !== false) {
         const priority = options.coverPriority || 'low';
@@ -300,7 +300,7 @@ export const useGamesStore = defineStore("games", () => {
           // Silently handle preload failures
         });
       }
-      
+
       return cachedInstance;
     }
 
@@ -319,7 +319,7 @@ export const useGamesStore = defineStore("games", () => {
 
     // Persist to localStorage
     saveToLocalStorage();
-    
+
     // Preload game cover after caching (non-blocking)
     if (options.preloadCover !== false) {
       const priority = options.coverPriority || 'low';
@@ -327,7 +327,7 @@ export const useGamesStore = defineStore("games", () => {
         // Silently handle preload failures
       });
     }
-    
+
     return gameInstance;
   };
 
@@ -347,14 +347,14 @@ export const useGamesStore = defineStore("games", () => {
     if (games.value.has(key) && isCacheValid(key)) {
       const cachedGame = games.value.get(key);
       console.log('getCachedGame: found cached game:', cachedGame);
-      
+
       // Trigger immediate cover preload for accessed cached games
       if (ENABLE_COVER_PRECACHING && cachedGame) {
         preloadGameCover(cachedGame, 'high').catch(() => {
           // Silently handle preload failures
         });
       }
-      
+
       return cachedGame;
     }
 
@@ -363,14 +363,14 @@ export const useGamesStore = defineStore("games", () => {
       const gameBySlug = getGameBySlug.value(identifier);
       if (gameBySlug) {
         console.log('getCachedGame: found game by slug:', gameBySlug);
-        
+
         // Trigger immediate cover preload for accessed cached games
         if (ENABLE_COVER_PRECACHING && gameBySlug) {
           preloadGameCover(gameBySlug, 'high').catch(() => {
             // Silently handle preload failures
           });
         }
-        
+
         return gameBySlug;
       }
     }
@@ -412,9 +412,9 @@ export const useGamesStore = defineStore("games", () => {
 
       // Cache the game with high priority cover preloading for details view
       console.log('fetchGameDetails: Caching game data');
-      const gameInstance = cacheGame(gameData, identifier, { 
-        preloadCover: true, 
-        coverPriority: 'high' 
+      const gameInstance = cacheGame(gameData, identifier, {
+        preloadCover: true,
+        coverPriority: 'high'
       });
       console.log('fetchGameDetails: Cached game instance:', gameInstance);
       console.log('fetchGameDetails: Instance type:', typeof gameInstance);
@@ -623,6 +623,105 @@ export const useGamesStore = defineStore("games", () => {
     }
   };
 
+  const removeFromLikes = async (userId, gameId) => {
+    if (!userId) {
+      console.warn('removeFromLikes: No userId provided');
+      return;
+    }
+    if (!gameId) {
+      console.warn('removeFromLikes: No gameId provided');
+      return;
+    }
+    try {
+      loading.value = true;
+      error.value = null;
+
+      const result = await gamesService.removeFromLikes(userId, gameId)
+
+      if(!result) {
+        throw new Error("User likes operation failed")
+      }
+
+      if (typeof result !== 'boolean') {
+        console.error('removeFromLikes: Expected boolean but got:', typeof result);
+        return;
+      }
+
+      return result
+    } catch (err) {
+      console.error("removeFromLikes: Error:", err);
+      error.value = err.message;
+      return [];
+    } finally {
+      loading.value = false;
+    }
+  };
+
+  const addToLikes = async (userId, gameId) => {
+    if (!userId) {
+      console.warn('addToLikes: No userId provided');
+      return;
+    }
+    if (!gameId) {
+      console.warn('addToLikes: No gameId provided');
+      return;
+    }
+    try {
+      loading.value = true;
+      error.value = null;
+
+      const result = await gamesService.addToLikes(userId, gameId)
+
+      if(!result) {
+        throw new Error("User likes operation failed")
+      }
+
+      if (typeof result !== 'boolean') {
+        console.error('addToLikes: Expected boolean but got:', typeof result);
+        return;
+      }
+
+      return result
+    } catch (err) {
+      console.error("addToLikes: Error:", err);
+      error.value = err.message;
+      return [];
+    } finally {
+      loading.value = false;
+    }
+  };
+
+  const getUserLikes = async (userId) => {
+    if (!userId) {
+      console.warn('getUserLikes: No userId provided');
+      return;
+    }
+
+    try {
+      loading.value = true;
+      error.value = null;
+
+      const result = await gamesService.getUserLikes(userId);
+
+      if(!result) {
+        throw new Error("Get User likes operation failed");
+      }
+
+      if (!Array.isArray(result)) {
+        console.error('getUserLikes: Expected list but got: ', typeof result);
+        return;
+      }
+
+      return result;
+    } catch (err) {
+      console.error("getUserLikes: Error:", err);
+      error.value = err.message;
+      return [];
+    } finally {
+      loading.value = false;
+    }
+  };
+
   const removeFromFavorites = async (userId, gameId) => {
     if (!userId) {
       console.warn('removeFromFavorites: No userId provided');
@@ -734,11 +833,11 @@ export const useGamesStore = defineStore("games", () => {
     popularGames.value = [];
     similarGames.value.clear();
     newGames.value = [];
-    
+
     // Clear cover preload cache
     coverPreloadQueue.value.clear();
     preloadedCovers.value.clear();
-    
+
     // Clear localStorage
     try {
       localStorage.removeItem(CACHE_KEY);
@@ -785,6 +884,9 @@ export const useGamesStore = defineStore("games", () => {
     fetchPopularGames,
     fetchSimilarGames,
     fetchNewGames,
+    removeFromLikes,
+    addToLikes,
+    getUserLikes,
     removeFromFavorites,
     addToFavorites,
     getUserFavorites,
