@@ -434,9 +434,24 @@ export const useGamesStore = defineStore("games", () => {
     }
   };
 
-  const searchGames = async (query) => {
+  // Search state for pagination
+  const searchPagination = ref({
+    page: 1,
+    pageSize: 20,
+    totalCount: 0,
+    totalPages: 0,
+    hasNextPage: false,
+    hasPreviousPage: false
+  });
+  const allSearchResults = ref([]); // Store all loaded results
+  const currentSearchQuery = ref('');
+  const displayedResultsCount = ref(8); // Track how many results to display
+
+  const searchGames = async (query, page = 1, append = false) => {
     if (!query || !query.trim()) {
       searchResults.value = [];
+      allSearchResults.value = [];
+      currentSearchQuery.value = '';
       return [];
     }
 
@@ -444,17 +459,40 @@ export const useGamesStore = defineStore("games", () => {
       searchLoading.value = true;
       error.value = null;
 
-      console.log('searchGames: Searching for:', query);
-      const results = await gamesService.searchGames(query);
+      // If this is a new search, reset results
+      if (!append || query !== currentSearchQuery.value) {
+        allSearchResults.value = [];
+        searchResults.value = [];
+        displayedResultsCount.value = 8;
+        page = 1;
+      }
+
+      currentSearchQuery.value = query;
+
+      console.log('searchGames: Searching for:', query, 'page:', page);
+      const results = await gamesService.searchGames(query, page);
       console.log('searchGames: API returned:', results);
 
+      // Update pagination info
+      searchPagination.value = {
+        page: results.page || 1,
+        pageSize: results.pageSize || 20,
+        totalCount: results.totalCount || 0,
+        totalPages: results.totalPages || 0,
+        hasNextPage: results.hasNextPage || false,
+        hasPreviousPage: results.hasPreviousPage || false
+      };
+
       // Handle different response structures
-      const gameData = results.data || results || [];
+      const gameData = results.data || [];
       console.log('searchGames: Processed data:', gameData);
 
       if (!Array.isArray(gameData)) {
         console.error('searchGames: Expected array but got:', typeof gameData, gameData);
-        searchResults.value = [];
+        if (!append) {
+          searchResults.value = [];
+          allSearchResults.value = [];
+        }
         return [];
       }
 
@@ -475,14 +513,27 @@ export const useGamesStore = defineStore("games", () => {
         }
       }
 
-      searchResults.value = gameInstances;
-      console.log('searchGames: Final results:', gameInstances.length, 'games');
+      if (append) {
+        // Append new results to existing ones
+        allSearchResults.value = [...allSearchResults.value, ...gameInstances];
+      } else {
+        // Replace results for new search
+        allSearchResults.value = gameInstances;
+      }
+
+      // Update displayed results based on current display count
+      searchResults.value = allSearchResults.value.slice(0, displayedResultsCount.value);
+      
+      console.log('searchGames: Final results:', gameInstances.length, 'new games,', allSearchResults.value.length, 'total games');
 
       return gameInstances;
     } catch (err) {
       console.error("searchGames: Error:", err);
       error.value = err.message;
-      searchResults.value = [];
+      if (!append) {
+        searchResults.value = [];
+        allSearchResults.value = [];
+      }
       throw err;
     } finally {
       searchLoading.value = false;
@@ -821,9 +872,54 @@ export const useGamesStore = defineStore("games", () => {
     }
   };
 
+  // Intelligent load more function
+  const loadMoreSearchResults = async () => {
+    if (!currentSearchQuery.value) {
+      return;
+    }
+    
+    // First, try to show more from already loaded results
+    const currentlyDisplayed = searchResults.value.length;
+    const totalLoaded = allSearchResults.value.length;
+    
+    if (currentlyDisplayed < totalLoaded) {
+      // Show more from current loaded results (8 more at a time)
+      const newDisplayCount = Math.min(currentlyDisplayed + 8, totalLoaded);
+      displayedResultsCount.value = newDisplayCount;
+      searchResults.value = allSearchResults.value.slice(0, newDisplayCount);
+      console.log('Showing more loaded results:', newDisplayCount, 'of', totalLoaded);
+      return;
+    }
+    
+    // If all loaded results are displayed and there are more pages, fetch next page
+    if (searchPagination.value.hasNextPage) {
+      const nextPage = searchPagination.value.page + 1;
+      displayedResultsCount.value = totalLoaded + 8; // Prepare to show 8 more after loading
+      await searchGames(currentSearchQuery.value, nextPage, true);
+      console.log('Loaded next page:', nextPage);
+    }
+  };
+
+  const canLoadMore = computed(() => {
+    const currentlyDisplayed = searchResults.value.length;
+    const totalLoaded = allSearchResults.value.length;
+    return currentlyDisplayed < totalLoaded || searchPagination.value.hasNextPage;
+  });
+
   // Cache management
   const clearSearchResults = () => {
     searchResults.value = [];
+    allSearchResults.value = [];
+    currentSearchQuery.value = '';
+    displayedResultsCount.value = 8;
+    searchPagination.value = {
+      page: 1,
+      pageSize: 20,
+      totalCount: 0,
+      totalPages: 0,
+      hasNextPage: false,
+      hasPreviousPage: false
+    };
   };
 
   const clearCache = () => {
@@ -868,11 +964,14 @@ export const useGamesStore = defineStore("games", () => {
     // State
     games: allGames,
     searchResults,
+    allSearchResults,
     popularGames,
     newGames,
     loading,
     searchLoading,
     error,
+    searchPagination,
+    currentSearchQuery,
 
     // Getters
     getGameById,
@@ -890,6 +989,10 @@ export const useGamesStore = defineStore("games", () => {
     removeFromFavorites,
     addToFavorites,
     getUserFavorites,
+
+    // Pagination functions
+    loadMoreSearchResults,
+    canLoadMore,
 
     // Cache management
     clearSearchResults,

@@ -115,8 +115,6 @@ namespace Backend.Services
                 .Include(g => g.GameType)//.ThenInclude(gtg => gtg.GameType)
                 .Include(g => g.GameCompanies).ThenInclude(gc => gc.Company)
                 .Include(g => g.GamePlayerPerspectives).ThenInclude(gpp => gpp.PlayerPerspective)
-                .Skip((searchParams.Page - 1) * searchParams.PageSize)
-                .Take(searchParams.PageSize)
                 .ToListAsync();
 
             // OPTIMIZATION 4: Batch load user interactions and counts in parallel

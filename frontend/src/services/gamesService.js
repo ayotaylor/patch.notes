@@ -2,19 +2,35 @@ import apiClient from "./apiClient";
 
 export const gamesService = {
   // Search games
-  async searchGames(query) {
+  async searchGames(query, page = 1, pageSize = 20) {
     try {
       if (!query || typeof query !== "string") {
         throw new Error("Query must be a non-empty string");
       }
       if (query.trim() === "") {
-        return []; // Return empty array for empty queries
+        return {
+          data: [],
+          page: 1,
+          pageSize: pageSize,
+          totalCount: 0,
+          totalPages: 0,
+          hasNextPage: false,
+          hasPreviousPage: false
+        };
       }
       query = query.trim();
       const response = await apiClient.get(
-        `/games/search?Search=${encodeURIComponent(query)}`
+        `/games/search?Search=${encodeURIComponent(query)}&Page=${page}&PageSize=${pageSize}`
       );
-      return response.data.data || [];
+      return response.data.data || {
+        data: [],
+        page: 1,
+        pageSize: pageSize,
+        totalCount: 0,
+        totalPages: 0,
+        hasNextPage: false,
+        hasPreviousPage: false
+      };
     } catch (error) {
       console.log(error);
       throw new Error(

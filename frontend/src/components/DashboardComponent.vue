@@ -71,11 +71,13 @@
             </div>
 
             <!-- Search Results -->
-            <div v-if="gamesStore.searchResults.length > 0" class="mt-4">
-              <h6 class="fw-bold mb-3">Search Results ({{ gamesStore.searchResults.length }})</h6>
+            <div v-if="gamesStore.allSearchResults.length > 0" class="mt-4">
+              <h6 class="fw-bold mb-3">
+                Search Results ({{ gamesStore.searchResults.length }} of {{ gamesStore.searchPagination.totalCount }})
+              </h6>
               <div class="row g-3">
                 <div
-                  v-for="game in gamesStore.searchResults.slice(0, 8)"
+                  v-for="game in gamesStore.searchResults"
                   :key="game.id"
                   class="col-md-6 col-lg-3"
                 >
@@ -86,10 +88,17 @@
                   />
                 </div>
               </div>
-              <div v-if="gamesStore.searchResults.length > 8" class="text-center mt-3">
-                <button @click="showAllSearchResults = !showAllSearchResults" class="btn btn-outline-primary">
-                  <i class="fas" :class="showAllSearchResults ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
-                  {{ showAllSearchResults ? 'Show Less' : `Show All ${gamesStore.searchResults.length} Results` }}
+              
+              <!-- Load More Button -->
+              <div v-if="gamesStore.canLoadMore" class="text-center mt-3">
+                <button 
+                  @click="loadMoreResults" 
+                  :disabled="gamesStore.searchLoading"
+                  class="btn btn-primary"
+                >
+                  <span v-if="gamesStore.searchLoading" class="spinner-border spinner-border-sm me-2"></span>
+                  <i v-else class="fas fa-plus me-2"></i>
+                  {{ gamesStore.searchLoading ? 'Loading...' : 'Load More Results' }}
                 </button>
               </div>
             </div>
@@ -317,7 +326,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
 import { useGamesStore } from '@/stores/gamesStore'
@@ -337,7 +346,6 @@ const { handleImageError, getImageUrl } = useImageFallback()
 // State
 const searchQuery = ref('')
 const hasSearched = ref(false)
-const showAllSearchResults = ref(false)
 const error = ref('')
 const userStats = ref({
   gamesCount: 0,
@@ -359,10 +367,18 @@ const searchGames = async () => {
   try {
     hasSearched.value = true
     await gamesStore.searchGames(searchQuery.value)
-    showAllSearchResults.value = false
   } catch (err) {
     error.value = 'Failed to search games'
     console.error('Search error:', err)
+  }
+}
+
+const loadMoreResults = async () => {
+  try {
+    await gamesStore.loadMoreSearchResults()
+  } catch (err) {
+    error.value = 'Failed to load more results'
+    console.error('Load more error:', err)
   }
 }
 
@@ -478,6 +494,13 @@ onMounted(async () => {
     error.value = 'Failed to load dashboard data'
     console.error('Dashboard loading error:', err)
   }
+})
+
+// Clear search results when leaving the dashboard page
+onBeforeUnmount(() => {
+  gamesStore.clearSearchResults()
+  hasSearched.value = false
+  searchQuery.value = ''
 })
 </script>
 

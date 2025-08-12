@@ -30,7 +30,7 @@ namespace Backend.Controllers
                 var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
                 var result = await _gameService.GetGamesAsync(searchParams,
                     Guid.TryParse(userId, out var parsedUserId) ? parsedUserId : null);
-                if (result == null || result.Data == null || !result.Data.Any())
+                if (result == null || result.Data == null || result.Data.Count <= 0)
                 {
                     return NotFound(new ApiResponse<PagedResponse<GameDto>>
                     {
@@ -97,7 +97,7 @@ namespace Backend.Controllers
             try
             {
                 var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-                var game = await _gameService.GetGameBySlugAsync(slug, 
+                var game = await _gameService.GetGameBySlugAsync(slug,
                     userId != null ? Guid.Parse(userId) : Guid.Empty);
                 if (game == null)
                 {
