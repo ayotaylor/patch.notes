@@ -42,11 +42,11 @@
             <h6 class="fw-bold mb-3">
               {{ resultsTitle || `Search Results (${gamesStore.searchResults.length} of ${gamesStore.searchPagination.totalCount})` }}
             </h6>
-            
+
             <!-- Compact Results (for ProfileComponent) -->
-            <div v-if="resultsMode === 'compact'" 
+            <div v-if="resultsMode === 'compact'"
                  ref="scrollContainer"
-                 class="list-group" 
+                 class="list-group"
                  :style="{ maxHeight: maxHeight, overflowY: 'auto' }">
               <button
                 v-for="game in displayedResults"
@@ -69,7 +69,7 @@
                 </div>
                 <i v-if="isGameSelected && isGameSelected(game)" class="fas fa-check text-success ms-auto"></i>
               </button>
-              
+
               <!-- Infinite scroll loading indicator -->
               <div v-if="paginationMode === 'infinite-scroll' && isLoadingMore" class="infinite-scroll-loading text-center py-2">
                 <div class="spinner-border spinner-border-sm text-primary"></div>
@@ -91,13 +91,13 @@
                 />
               </div>
             </div>
-            
+
             <!-- Pagination Controls -->
             <div v-if="showLoadMore" class="pagination-controls mt-3">
               <!-- Page-based Pagination -->
               <div v-if="paginationMode === 'pages'" class="d-flex justify-content-between align-items-center">
                 <div class="d-flex gap-2">
-                  <button 
+                  <button
                     @click="goToPrevPage"
                     :disabled="!canGoPrev"
                     class="btn btn-outline-primary"
@@ -105,7 +105,7 @@
                     <i class="fas fa-chevron-left me-1"></i>
                     Previous
                   </button>
-                  <button 
+                  <button
                     @click="goToNextPage"
                     :disabled="!canGoNext || gamesStore.searchLoading"
                     class="btn btn-primary"
@@ -116,15 +116,15 @@
                   </button>
                 </div>
                 <div class="text-muted">
-                  Page {{ currentPage }} of {{ totalPages }} 
+                  Page {{ currentPage }} of {{ totalPages }}
                   ({{ gamesStore.searchPagination.totalCount }} total results)
                 </div>
               </div>
 
               <!-- Load More Button (original behavior) -->
               <div v-else-if="paginationMode === 'load-more' && gamesStore.canLoadMore" class="text-center">
-                <button 
-                  @click="loadMoreResults" 
+                <button
+                  @click="loadMoreResults"
                   :disabled="gamesStore.searchLoading"
                   class="btn btn-primary"
                 >
@@ -189,7 +189,7 @@
               </div>
               <i v-if="isGameSelected && isGameSelected(game)" class="fas fa-check text-success ms-auto"></i>
             </button>
-            
+
             <!-- Infinite scroll loading indicator for inline mode -->
             <div v-if="paginationMode === 'infinite-scroll' && isLoadingMore" class="infinite-scroll-loading text-center py-2">
               <div class="spinner-border spinner-border-sm text-primary"></div>
@@ -227,7 +227,7 @@ const props = defineProps({
     type: Boolean,
     default: true
   },
-  
+
   // Content customization
   title: {
     type: String,
@@ -241,7 +241,7 @@ const props = defineProps({
     type: String,
     default: ''
   },
-  
+
   // Results display
   resultsMode: {
     type: String,
@@ -256,7 +256,7 @@ const props = defineProps({
     type: String,
     default: '400px'
   },
-  
+
   // Behavior
   autoSearch: {
     type: Boolean,
@@ -266,7 +266,7 @@ const props = defineProps({
     type: Number,
     default: 300
   },
-  
+
   // Pagination mode
   paginationMode: {
     type: String,
@@ -277,7 +277,7 @@ const props = defineProps({
     type: Number,
     default: 8 // Games to show per page in pagination mode
   },
-  
+
   // Selection callbacks
   isGameDisabled: {
     type: Function,
@@ -308,7 +308,7 @@ const hasResults = computed(() => gamesStore.allSearchResults.length > 0)
 
 const displayedResults = computed(() => {
   let results = []
-  
+
   if (props.paginationMode === 'pages') {
     // For page-based pagination, show only current page from all loaded results
     const startIndex = (currentPage.value - 1) * props.gamesPerPage
@@ -321,7 +321,7 @@ const displayedResults = computed(() => {
     // For load-more, show current displayed results from store
     results = gamesStore.searchResults
   }
-  
+
   return props.maxResults ? results.slice(0, props.maxResults) : results
 })
 
@@ -349,7 +349,7 @@ const performSearch = async () => {
     hasSearched.value = true
     currentPage.value = 1
     await gamesStore.searchGames(searchQuery.value)
-    
+
     // For pages mode, ensure we have enough data for proper pagination
     if (props.paginationMode === 'pages') {
       // Load additional pages if needed to support navigation
@@ -357,7 +357,7 @@ const performSearch = async () => {
         await loadMoreResults()
       }
     }
-    
+
     emit('search', { query: searchQuery.value, results: displayedResults.value })
   } catch (err) {
     console.error('Search error:', err)
@@ -431,13 +431,13 @@ const clearSearchResults = () => {
 // Infinite scroll functionality
 const handleScroll = async () => {
   if (props.paginationMode !== 'infinite-scroll' || isLoadingMore.value || !gamesStore.canLoadMore) return
-  
+
   const container = scrollContainer.value
   if (!container) return
-  
+
   const { scrollTop, scrollHeight, clientHeight } = container
   const threshold = 50 // Load more when 50px from bottom
-  
+
   if (scrollTop + clientHeight >= scrollHeight - threshold) {
     await loadMoreResults()
   }
