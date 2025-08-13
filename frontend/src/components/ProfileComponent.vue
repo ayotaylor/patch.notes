@@ -173,17 +173,20 @@
         <div class="card shadow-sm border-0">
           <div class="card-header bg-white border-bottom">
             <div class="d-flex justify-content-between align-items-center">
-              <h3 class="h5 mb-0 fw-bold">
-                <i class="fas fa-trophy text-warning me-2"></i>
-                Top 5 Games
-              </h3>
+              <div>
+                <h3 class="h5 mb-0 fw-bold">
+                  <i class="fas fa-heart text-danger me-2"></i>
+                  Top 5 Favorite Games
+                </h3>
+                <small class="text-muted">Showcase your favorite games (1-5 games)</small>
+              </div>
               <button
                 v-if="isOwnProfile && !isEditing"
                 @click="toggleGamesEditing"
                 class="btn btn-sm btn-outline-primary"
               >
                 <i class="fas fa-edit me-1"></i>
-                Edit Games
+                Edit Favorites
               </button>
             </div>
           </div>
@@ -191,18 +194,18 @@
           <div class="card-body p-4">
             <!-- No Games State -->
             <div v-if="!topGames || topGames.length === 0" class="text-center py-4">
-              <i class="fas fa-gamepad text-muted mb-3" style="font-size: 3rem;"></i>
-              <h5 class="text-muted">No games added yet</h5>
+              <i class="fas fa-heart text-muted mb-3" style="font-size: 3rem;"></i>
+              <h5 class="text-muted">No favorite games yet</h5>
               <p class="text-muted">
-                {{ isOwnProfile ? 'Add your favorite games to showcase them on your profile.' : 'This user hasn\'t added any games yet.' }}
+                {{ isOwnProfile ? 'Add 1-5 of your favorite games to showcase them on your profile.' : 'This user hasn\'t added any favorite games yet.' }}
               </p>
               <button
                 v-if="isOwnProfile"
                 @click="toggleGamesEditing"
                 class="btn btn-primary"
               >
-                <i class="fas fa-plus me-2"></i>
-                Add Games
+                <i class="fas fa-heart me-2"></i>
+                Add Favorite Games
               </button>
             </div>
 
@@ -257,55 +260,43 @@
 
             <!-- Games Editing Mode -->
             <div v-else class="games-editing">
-              <div class="mb-3">
-                <label class="form-label fw-bold">Search and Add Games</label>
-                <div class="input-group">
-                  <input
-                    v-model="gameSearchQuery"
-                    @input="searchGames"
-                    type="text"
-                    class="form-control"
-                    placeholder="Search for games..."
-                  >
-                  <button class="btn btn-outline-secondary" type="button">
-                    <i class="fas fa-search"></i>
-                  </button>
-                </div>
-              </div>
-
-              <!-- Search Results -->
-              <div v-if="gameSearchResults.length > 0" class="mb-4">
-                <h6 class="fw-bold mb-2">Search Results</h6>
-                <div class="list-group" style="max-height: 200px; overflow-y: auto;">
-                  <button
-                    v-for="game in gameSearchResults"
-                    :key="game.id"
-                    @click="addGameToTop5(game)"
-                    :disabled="isGameInTop5(game.id) || editTopGames.length >= 5"
-                    class="list-group-item list-group-item-action d-flex align-items-center"
-                    :class="{ 'disabled': isGameInTop5(game.id) || editTopGames.length >= 5 }"
-                  >
-                    <img
-                      :src="getImageUrl(game.imageUrl, 'gameIcon')"
-                      :alt="game.name"
-                      class="rounded me-3"
-                      style="width: 40px; height: 40px; object-fit: cover;"
-                      @error="(e) => handleImageError(e, 'gameIcon')"
-                    >
-                    <div>
-                      <h6 class="mb-0">{{ game.name }}</h6>
-                      <small class="text-muted">{{ game.genre }}</small>
-                    </div>
-                    <i v-if="isGameInTop5(game.id)" class="fas fa-check text-success ms-auto"></i>
-                  </button>
-                </div>
+              <!-- Game Search Component -->
+              <div class="mb-4">
+                <GameSearchComponent
+                  :show-card="false"
+                  :show-title="true"
+                  :show-results="true"
+                  :show-load-more="false"
+                  title="Search and Add Games"
+                  placeholder="Search for games..."
+                  results-title="Search Results"
+                  results-mode="compact"
+                  pagination-mode="infinite-scroll"
+                  max-height="250px"
+                  :auto-search="true"
+                  :debounce-ms="300"
+                  :is-game-disabled="(game) => isGameInTop5(game.id) || editTopGames.length >= 5"
+                  :is-game-selected="(game) => isGameInTop5(game.id)"
+                  @select-game="addGameToTop5"
+                />
               </div>
 
               <!-- Current Top 5 (Editing) -->
               <div class="mb-3">
-                <h6 class="fw-bold mb-2">Your Top 5 Games ({{ editTopGames.length }}/5)</h6>
-                <div v-if="editTopGames.length === 0" class="text-center py-3 text-muted">
-                  No games selected. Search and click games above to add them.
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                  <h6 class="fw-bold mb-0">Your Top 5 Games ({{ editTopGames.length }}/5)</h6>
+                  <div class="text-end">
+                    <small class="text-muted">
+                      {{ editTopGames.length === 0 ? 'Add at least 1 game' :
+                         editTopGames.length === 5 ? 'Maximum reached' :
+                         `Add ${5 - editTopGames.length} more` }}
+                    </small>
+                  </div>
+                </div>
+                <div v-if="editTopGames.length === 0" class="text-center py-3 text-muted border rounded-3 bg-light">
+                  <i class="fas fa-search mb-2"></i>
+                  <p class="mb-0">No games selected. Search and click games above to add them.</p>
+                  <small class="text-muted">You must add between 1-5 games to your favorites.</small>
                 </div>
                 <div v-else class="list-group">
                   <div
@@ -360,17 +351,28 @@
               <div class="d-flex gap-2">
                 <button
                   @click="saveTopGames"
-                  :disabled="isSavingGames"
+                  :disabled="isSavingGames || editTopGames.length === 0 || editTopGames.length > 5"
                   class="btn btn-success"
+                  :class="{ 'btn-outline-success': editTopGames.length === 0 }"
                 >
                   <span v-if="isSavingGames" class="spinner-border spinner-border-sm me-2"></span>
                   <i v-else class="fas fa-save me-2"></i>
-                  {{ isSavingGames ? 'Saving...' : 'Save Games' }}
+                  {{ isSavingGames ? 'Saving...' :
+                     editTopGames.length === 0 ? 'Add Games First' :
+                     'Save Games' }}
                 </button>
                 <button @click="cancelGamesEditing" class="btn btn-outline-secondary">
                   <i class="fas fa-times me-2"></i>
                   Cancel
                 </button>
+              </div>
+
+              <!-- Validation hint -->
+              <div v-if="editTopGames.length === 0" class="mt-2">
+                <small class="text-muted">
+                  <i class="fas fa-info-circle me-1"></i>
+                  You must add at least 1 game before saving.
+                </small>
               </div>
             </div>
           </div>
@@ -395,6 +397,7 @@ import { useProfileStore } from '@/stores/profileStore'
 import { useGamesStore } from '@/stores/gamesStore'
 import { useToast } from 'vue-toastification'
 import { useImageFallback, FALLBACK_TYPES } from '@/composables/useImageFallback'
+import GameSearchComponent from '@/components/GameSearchComponent.vue'
 
 // Props for viewing other users' profiles
 const props = defineProps({
@@ -431,11 +434,11 @@ const editForm = reactive({
 
 // Games state
 const topGames = ref([])
+const userFavorites = ref([])
 const isEditingGames = ref(false)
 const editTopGames = ref([])
+const originalTopGames = ref([]) // Track original games for comparison
 const isSavingGames = ref(false)
-const gameSearchQuery = ref('')
-const gameSearchResults = ref([])
 const imageInput = ref(null)
 
 // Computed properties
@@ -464,12 +467,30 @@ const fetchProfile = async () => {
     )
 
     profile.value = response
-    topGames.value = response.topGames || []
+
+    // Load user's favorites to populate top games
+    if (profileUserId.value) {
+      await loadUserFavorites()
+    }
   } catch (err) {
     error.value = err.message || 'Failed to load profile'
     console.error('Error fetching profile:', err)
   } finally {
     loading.value = false
+  }
+}
+
+const loadUserFavorites = async () => {
+  try {
+    const favorites = await gamesStore.getUserFavorites(profileUserId.value)
+    userFavorites.value = favorites || []
+
+    // Set top games from first 5 favorites
+    topGames.value = userFavorites.value.slice(0, 5)
+  } catch (err) {
+    console.error('Error loading user favorites:', err)
+    userFavorites.value = []
+    topGames.value = []
   }
 }
 
@@ -555,29 +576,68 @@ const toggleGamesEditing = () => {
   isEditingGames.value = !isEditingGames.value
   if (isEditingGames.value) {
     editTopGames.value = [...topGames.value]
+    originalTopGames.value = [...topGames.value] // Store original for comparison
+    // Load current favorites to show what's available
+    loadUserFavorites()
   }
 }
 
 const cancelGamesEditing = () => {
   isEditingGames.value = false
   editTopGames.value = []
-  gameSearchQuery.value = ''
-  gameSearchResults.value = []
+  originalTopGames.value = []
 }
 
 const saveTopGames = async () => {
   try {
+    // Validate the games count (1-5 games required)
+    if (editTopGames.value.length === 0) {
+      toast.error('Please add at least 1 game to your top 5')
+      return
+    }
+
+    if (editTopGames.value.length > 5) {
+      toast.error('You can only have a maximum of 5 games in your top 5')
+      return
+    }
+
     isSavingGames.value = true
 
-    const response = await profileStore.updateTopGames({
-      topGames: editTopGames.value
-    })
+    // First, we need to ensure all selected games are in user's favorites
+    const userId = authStore.user?.id
+    if (!userId) {
+      throw new Error('User not authenticated')
+    }
 
-    topGames.value = response.topGames || editTopGames.value
+    // For each game in editTopGames, ensure it's in favorites
+    for (const game of editTopGames.value) {
+      const isInFavorites = userFavorites.value.some(fav => fav.id === game.id)
+      if (!isInFavorites) {
+        // Add to favorites first
+        await gamesStore.addToFavorites(userId, game.id)
+      }
+    }
+
+    // Remove games that were in the original top 5 but not in the new top 5
+    const newTopGameIds = editTopGames.value.map(game => game.igdbId)
+    const originalTopGameIds = originalTopGames.value.map(game => game.igdbId)
+
+    for (const originalGameId of originalTopGameIds) {
+      if (!newTopGameIds.includes(originalGameId)) {
+        console.log('Removing game from favorites:', originalGameId)
+        await gamesStore.removeFromFavorites(userId, originalGameId)
+      }
+    }
+
+    // Update the local state
+    const savedGamesCount = editTopGames.value.length
+    topGames.value = [...editTopGames.value]
+    userFavorites.value = [...editTopGames.value]
     isEditingGames.value = false
     editTopGames.value = []
+    originalTopGames.value = []
 
-    toast.success('Top games updated successfully!')
+    toast.success(`Top ${savedGamesCount} games updated successfully!`)
   } catch (err) {
     toast.error('Failed to save games')
     console.error('Error saving games:', err)
@@ -586,20 +646,6 @@ const saveTopGames = async () => {
   }
 }
 
-const searchGames = async () => {
-  if (!gameSearchQuery.value.trim()) {
-    gameSearchResults.value = []
-    return
-  }
-
-  try {
-    const results = await gamesStore.searchGames(gameSearchQuery.value)
-    gameSearchResults.value = results
-  } catch (err) {
-    console.error('Error searching games:', err)
-    gameSearchResults.value = []
-  }
-}
 
 const addGameToTop5 = (game) => {
   if (editTopGames.value.length < 5 && !isGameInTop5(game.id)) {
@@ -608,7 +654,12 @@ const addGameToTop5 = (game) => {
 }
 
 const removeGameFromTop5 = (index) => {
-  editTopGames.value.splice(index, 1)
+  if (index >= 0 && index < editTopGames.value.length) {
+    const removedGame = editTopGames.value[index]
+    editTopGames.value.splice(index, 1)
+    // Optional: Show feedback to user
+    console.log(`Removed "${removedGame.name}" from top games list`)
+  }
 }
 
 const moveGameUp = (index) => {
@@ -636,12 +687,7 @@ watch(() => profileUserId.value, () => {
   }
 }, { immediate: true })
 
-// Debounce search
-let searchTimeout
-watch(gameSearchQuery, () => {
-  clearTimeout(searchTimeout)
-  searchTimeout = setTimeout(searchGames, 300)
-})
+// Search is now handled by GameSearchComponent
 
 // Lifecycle
 onMounted(() => {

@@ -445,7 +445,6 @@ export const useGamesStore = defineStore("games", () => {
   });
   const allSearchResults = ref([]); // Store all loaded results
   const currentSearchQuery = ref('');
-  const displayedResultsCount = ref(8); // Track how many results to display
 
   const searchGames = async (query, page = 1, append = false) => {
     if (!query || !query.trim()) {
@@ -463,7 +462,6 @@ export const useGamesStore = defineStore("games", () => {
       if (!append || query !== currentSearchQuery.value) {
         allSearchResults.value = [];
         searchResults.value = [];
-        displayedResultsCount.value = 8;
         page = 1;
       }
 
@@ -521,8 +519,8 @@ export const useGamesStore = defineStore("games", () => {
         allSearchResults.value = gameInstances;
       }
 
-      // Update displayed results based on current display count
-      searchResults.value = allSearchResults.value.slice(0, displayedResultsCount.value);
+      // For new searches, show all loaded results; for appends, keep showing all
+      searchResults.value = allSearchResults.value;
       
       console.log('searchGames: Final results:', gameInstances.length, 'new games,', allSearchResults.value.length, 'total games');
 
@@ -872,38 +870,19 @@ export const useGamesStore = defineStore("games", () => {
     }
   };
 
-  // Intelligent load more function
+  // Load more function - fetches next page from API
   const loadMoreSearchResults = async () => {
-    if (!currentSearchQuery.value) {
+    if (!currentSearchQuery.value || !searchPagination.value.hasNextPage) {
       return;
     }
     
-    // First, try to show more from already loaded results
-    const currentlyDisplayed = searchResults.value.length;
-    const totalLoaded = allSearchResults.value.length;
-    
-    if (currentlyDisplayed < totalLoaded) {
-      // Show more from current loaded results (8 more at a time)
-      const newDisplayCount = Math.min(currentlyDisplayed + 8, totalLoaded);
-      displayedResultsCount.value = newDisplayCount;
-      searchResults.value = allSearchResults.value.slice(0, newDisplayCount);
-      console.log('Showing more loaded results:', newDisplayCount, 'of', totalLoaded);
-      return;
-    }
-    
-    // If all loaded results are displayed and there are more pages, fetch next page
-    if (searchPagination.value.hasNextPage) {
-      const nextPage = searchPagination.value.page + 1;
-      displayedResultsCount.value = totalLoaded + 8; // Prepare to show 8 more after loading
-      await searchGames(currentSearchQuery.value, nextPage, true);
-      console.log('Loaded next page:', nextPage);
-    }
+    const nextPage = searchPagination.value.page + 1;
+    await searchGames(currentSearchQuery.value, nextPage, true);
+    console.log('Loaded next page:', nextPage);
   };
 
   const canLoadMore = computed(() => {
-    const currentlyDisplayed = searchResults.value.length;
-    const totalLoaded = allSearchResults.value.length;
-    return currentlyDisplayed < totalLoaded || searchPagination.value.hasNextPage;
+    return searchPagination.value.hasNextPage;
   });
 
   // Cache management
@@ -911,7 +890,6 @@ export const useGamesStore = defineStore("games", () => {
     searchResults.value = [];
     allSearchResults.value = [];
     currentSearchQuery.value = '';
-    displayedResultsCount.value = 8;
     searchPagination.value = {
       page: 1,
       pageSize: 20,

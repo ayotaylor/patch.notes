@@ -35,81 +35,20 @@
     <!-- Search Section -->
     <div class="row mb-4">
       <div class="col-12">
-        <div class="card shadow-sm border-0">
-          <div class="card-header bg-white border-bottom">
-            <h3 class="h5 mb-0 fw-bold">
-              <i class="fas fa-search text-primary me-2"></i>
-              Search Games
-            </h3>
-          </div>
-          <div class="card-body p-4">
-            <div class="row">
-              <div class="col-lg-8 mx-auto">
-                <div class="input-group input-group-lg">
-                  <span class="input-group-text bg-light border-end-0">
-                    <i class="fas fa-search text-muted"></i>
-                  </span>
-                  <input
-                    v-model="searchQuery"
-                    @keyup.enter="searchGames"
-                    type="text"
-                    class="form-control border-start-0 ps-0"
-                    placeholder="Search for games by title, genre, or developer..."
-                    :disabled="gamesStore.searchLoading"
-                  >
-                  <button
-                    @click="searchGames"
-                    :disabled="!searchQuery.trim() || gamesStore.searchLoading"
-                    class="btn btn-primary px-4"
-                  >
-                    <span v-if="gamesStore.searchLoading" class="spinner-border spinner-border-sm me-2"></span>
-                    <i v-else class="fas fa-search me-2"></i>
-                    {{ gamesStore.searchLoading ? 'Searching...' : 'Search' }}
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            <!-- Search Results -->
-            <div v-if="gamesStore.allSearchResults.length > 0" class="mt-4">
-              <h6 class="fw-bold mb-3">
-                Search Results ({{ gamesStore.searchResults.length }} of {{ gamesStore.searchPagination.totalCount }})
-              </h6>
-              <div class="row g-3">
-                <div
-                  v-for="game in gamesStore.searchResults"
-                  :key="game.id"
-                  class="col-md-6 col-lg-3"
-                >
-                  <GameCard
-                    :game="game"
-                    @click="() => viewGameDetails(game.id)"
-                    @add-to-library="addToLibrary"
-                  />
-                </div>
-              </div>
-              
-              <!-- Load More Button -->
-              <div v-if="gamesStore.canLoadMore" class="text-center mt-3">
-                <button 
-                  @click="loadMoreResults" 
-                  :disabled="gamesStore.searchLoading"
-                  class="btn btn-primary"
-                >
-                  <span v-if="gamesStore.searchLoading" class="spinner-border spinner-border-sm me-2"></span>
-                  <i v-else class="fas fa-plus me-2"></i>
-                  {{ gamesStore.searchLoading ? 'Loading...' : 'Load More Results' }}
-                </button>
-              </div>
-            </div>
-
-            <!-- No Search Results -->
-            <div v-else-if="hasSearched && !gamesStore.searchLoading" class="text-center py-4">
-              <i class="fas fa-search text-muted mb-3" style="font-size: 2rem;"></i>
-              <p class="text-muted">No games found for "{{ searchQuery }}". Try a different search term.</p>
-            </div>
-          </div>
-        </div>
+        <GameSearchComponent
+          :show-card="true"
+          :show-title="true"
+          :show-results="true"
+          :show-load-more="true"
+          title="Search Games"
+          placeholder="Search for games by title, genre, or developer..."
+          results-mode="grid"
+          pagination-mode="pages"
+          :games-per-page="8"
+          :auto-search="true"
+          @select-game="handleGameSelect"
+          @add-to-library="addToLibrary"
+        />
       </div>
     </div>
 
@@ -326,13 +265,13 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
 import { useGamesStore } from '@/stores/gamesStore'
 import { useProfileStore } from '@/stores/profileStore'
 import { useToast } from 'vue-toastification'
-import GameCard from '@/components/GameCard.vue'
+import GameSearchComponent from '@/components/GameSearchComponent.vue'
 import { useImageFallback, FALLBACK_TYPES } from '@/composables/useImageFallback'
 
 // Composables
@@ -344,8 +283,6 @@ const toast = useToast()
 const { handleImageError, getImageUrl } = useImageFallback()
 
 // State
-const searchQuery = ref('')
-const hasSearched = ref(false)
 const error = ref('')
 const userStats = ref({
   gamesCount: 0,
@@ -361,25 +298,8 @@ const popularGames = computed(() => gamesStore.popularGames)
 const newGames = computed(() => gamesStore.newGames || [])
 
 // Methods
-const searchGames = async () => {
-  if (!searchQuery.value.trim()) return
-
-  try {
-    hasSearched.value = true
-    await gamesStore.searchGames(searchQuery.value)
-  } catch (err) {
-    error.value = 'Failed to search games'
-    console.error('Search error:', err)
-  }
-}
-
-const loadMoreResults = async () => {
-  try {
-    await gamesStore.loadMoreSearchResults()
-  } catch (err) {
-    error.value = 'Failed to load more results'
-    console.error('Load more error:', err)
-  }
+const handleGameSelect = (game) => {
+  viewGameDetails(game.id)
 }
 
 const viewGameDetails = (gameId) => {
@@ -469,17 +389,7 @@ const viewFriends = () => {
 }
 
 // Watchers
-let searchTimeout
-watch(searchQuery, () => {
-  clearTimeout(searchTimeout)
-  //debounce search to avoid too many requests
-  if (searchQuery.value.trim()) {
-    searchTimeout = setTimeout(searchGames, 2000)
-  } else {
-    gamesStore.clearSearchResults()
-    hasSearched.value = false
-  }
-})
+// Search is now handled by GameSearchComponent
 
 // Lifecycle
 onMounted(async () => {
@@ -499,8 +409,6 @@ onMounted(async () => {
 // Clear search results when leaving the dashboard page
 onBeforeUnmount(() => {
   gamesStore.clearSearchResults()
-  hasSearched.value = false
-  searchQuery.value = ''
 })
 </script>
 
