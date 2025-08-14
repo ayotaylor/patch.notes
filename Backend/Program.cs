@@ -21,6 +21,7 @@ builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IUserProfileService, UserProfileService>();
 builder.Services.AddScoped<IGameService, GameService>();
 builder.Services.AddScoped<ISocialService, SocialService>();
+builder.Services.AddScoped<IReviewService, ReviewService>();
 
 // add igdb import service -- TODO: to be removed later
 // get igdb settings from configuration

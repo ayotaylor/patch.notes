@@ -56,6 +56,7 @@ namespace Backend.Data
         // Social features
         public DbSet<Favorite> Favorites { get; set; }
         public DbSet<Like> Likes { get; set; }
+        public DbSet<Review> Reviews { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
@@ -139,6 +140,10 @@ namespace Backend.Data
 
             builder.Entity<Like>()
                 .HasIndex(l => new { l.UserId, l.GameId })
+                .IsUnique();
+
+            builder.Entity<Review>()
+                .HasIndex(r => new { r.UserId, r.GameId })
                 .IsUnique();
 
             // game company indexes

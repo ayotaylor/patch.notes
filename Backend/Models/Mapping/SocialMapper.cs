@@ -24,5 +24,22 @@ namespace Backend.Mapping
                 Game = like.Game?.ToDto(),
             };
         }
+
+        public static ReviewDto ToDto(this Review review)
+        {
+            return new ReviewDto
+            {
+                Id = review.Id,
+                UserId = review.UserId,
+                GameId = review.GameId,
+                Rating = review.Rating,
+                ReviewText = review.ReviewText,
+                ReviewDate = review.ReviewDate,
+                CreatedAt = review.CreatedAt,
+                UpdatedAt = review.UpdatedAt,
+                UserDisplayName = review.User?.DisplayName ?? review.User?.FirstName + " " + review.User?.LastName,
+                GameTitle = review.Game?.Name
+            };
+        }
     }
 }

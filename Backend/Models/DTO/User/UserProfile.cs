@@ -19,4 +19,5 @@ public class UserProfile : BaseEntity
     public User User { get; set; } = null!;
     public virtual ICollection<Favorite> Favorites { get; set; } = new List<Favorite>();
     public virtual ICollection<Like> Likes { get; set; } = new List<Like>();
+    public virtual ICollection<Review> Reviews { get; set; } = new List<Review>();
 }
