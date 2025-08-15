@@ -68,12 +68,24 @@
                       Developer: {{ developersText }}
                     </p>
                   </div>
-                  <div v-if="gameRating > 0" class="text-end">
-                    <div class="h4 mb-0 fw-bold text-warning">
-                      <i class="fas fa-star"></i>
-                      {{ gameRating }}/5
+                  <div class="text-end">
+                    <!-- User Reviews Rating -->
+                    <div v-if="game.averageRating > 0" class="mb-2">
+                      <div class="h4 mb-0 fw-bold text-primary">
+                        <i class="fas fa-star"></i>
+                        {{ game.averageRating.toFixed(1) }}/5
+                      </div>
+                      <small class="text-muted">{{ game.reviewsCount }} Review{{ game.reviewsCount !== 1 ? 's' : '' }}</small>
                     </div>
-                    <small class="text-muted">IGDB Rating</small>
+
+                    <!-- IGDB Rating -->
+                    <div v-if="gameRating > 0" class="mt-2">
+                      <div class="h5 mb-0 fw-bold text-warning">
+                        <i class="fas fa-star"></i>
+                        {{ gameRating }}/5
+                      </div>
+                      <small class="text-muted">IGDB Rating</small>
+                    </div>
                   </div>
                 </div>
 
@@ -236,6 +248,132 @@
             </div>
           </div>
         </div>
+
+        <!-- Reviews Section -->
+        <div class="card shadow-sm border-0 mb-4">
+          <div class="card-header bg-white border-bottom">
+            <div class="d-flex justify-content-between align-items-center">
+              <h3 class="h5 mb-0 fw-bold">
+                <i class="fas fa-comments text-primary me-2"></i>
+                Reviews
+                <span v-if="game.reviewsCount > 0" class="text-muted fw-normal">({{ game.reviewsCount }})</span>
+              </h3>
+              <button
+                v-if="authStore.isAuthenticated && !userReview"
+                @click="showReviewForm = !showReviewForm"
+                class="btn btn-primary btn-sm"
+              >
+                <i class="fas fa-plus me-2"></i>
+                Write Review
+              </button>
+            </div>
+          </div>
+          <div class="card-body p-4">
+            <!-- User's Review Form -->
+            <div v-if="showReviewForm" class="mb-4">
+              <ReviewForm
+                :game="game"
+                :existing-review="userReview"
+                :is-submitting="isSubmittingReview"
+                @submit="submitReview"
+                @cancel="showReviewForm = false"
+                @delete="deleteUserReview"
+              />
+            </div>
+
+            <!-- Recent Reviews Section -->
+            <div v-if="!showReviewForm">
+              <!-- Recent Reviews Heading -->
+              <div v-if="gameReviews.length > 0" class="mb-3">
+                <h4 class="h6 fw-bold text-secondary mb-0">
+                  <i class="fas fa-clock me-2"></i>
+                  Recent Reviews
+                </h4>
+              </div>
+
+              <!-- Reviews List -->
+              <ReviewsList
+                :reviews="gameReviews"
+                :loading="loadingReviews"
+                :loading-more="loadingMoreReviews"
+                :has-more-reviews="hasMoreReviews"
+                :total-count="game.reviewsCount || 0"
+                :show-header="false"
+                :show-game="false"
+                :show-limited="true"
+                :display-limit="5"
+                :truncate-reviews="true"
+                :empty-message="(game.reviewsCount === 0 && gameReviews.length === 0) ? 'No reviews yet' : 'Loading reviews...'"
+                :empty-sub-message="(game.reviewsCount === 0 && gameReviews.length === 0) ? 'Be the first to share your thoughts about this game!' : ''"
+                @load-more="loadMoreReviews"
+                @show-all="showAllReviews"
+                @edit="editReview"
+                @delete="deleteReview"
+              >
+                <template #empty-actions>
+                  <button
+                    v-if="authStore.isAuthenticated"
+                    @click="showReviewForm = true"
+                    class="btn btn-primary"
+                  >
+                    <i class="fas fa-star me-2"></i>
+                    Write the First Review
+                  </button>
+                </template>
+              </ReviewsList>
+
+              <!-- User's Review Section -->
+              <div v-if="userReview && gameReviews.length > 0" class="mt-4">
+                <div class="border-top pt-4">
+                  <h4 class="h6 fw-bold text-secondary mb-3">
+                    <i class="fas fa-user me-2"></i>
+                    Your Review
+                  </h4>
+                  <!-- <div class="alert alert-info d-flex justify-content-between align-items-center mb-3">
+                    <div>
+                      <i class="fas fa-info-circle me-2"></i>
+                      You have reviewed this game
+                    </div>
+                    <button @click="showReviewForm = true" class="btn btn-sm btn-outline-primary">
+                      Edit Review
+                    </button>
+                  </div> -->
+                  <ReviewCard
+                    :review="userReview"
+                    :highlighted="true"
+                    :truncated="false"
+                    @edit="showReviewForm = true"
+                    @delete="deleteUserReview"
+                  />
+                </div>
+              </div>
+
+              <!-- User's Review Only (when no other reviews) -->
+              <div v-else-if="userReview && gameReviews.length === 0" class="mb-4">
+                <h4 class="h6 fw-bold text-secondary mb-3">
+                  <i class="fas fa-user me-2"></i>
+                  Your Review
+                </h4>
+                <div class="alert alert-info d-flex justify-content-between align-items-center mb-3">
+                  <div>
+                    <i class="fas fa-info-circle me-2"></i>
+                    You have reviewed this game
+                  </div>
+                  <button @click="showReviewForm = true" class="btn btn-sm btn-outline-primary">
+                    Edit Review
+                  </button>
+                </div>
+                <ReviewCard
+                  :review="userReview"
+                  :highlighted="true"
+                  :truncated="false"
+                  @edit="showReviewForm = true"
+                  @delete="deleteUserReview"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
       <!-- Sidebar -->
@@ -343,6 +481,10 @@ import { useGamesStore } from '@/stores/gamesStore'
 import { useToast } from 'vue-toastification'
 import { useAuthStore } from '@/stores/authStore'
 import { useImageFallback, FALLBACK_TYPES } from '@/composables/useImageFallback'
+import { reviewsService } from '@/services/reviewsService'
+import ReviewCard from './ReviewCard.vue'
+import ReviewForm from './ReviewForm.vue'
+import ReviewsList from './ReviewsList.vue'
 
 // Props
 const props = defineProps({
@@ -375,6 +517,16 @@ const userLikes = ref(new Set())
 const userWishlist = ref(new Set())
 const similarGames = ref([])
 const selectedImage = ref(null)
+
+// Review state
+const gameReviews = ref([])
+const userReview = ref(null)
+const loadingReviews = ref(false)
+const loadingMoreReviews = ref(false)
+const hasMoreReviews = ref(false)
+const showReviewForm = ref(false)
+const isSubmittingReview = ref(false)
+const reviewsPage = ref(1)
 
 // Computed properties with safe access
 const gameIdentifier = computed(() => {
@@ -619,6 +771,12 @@ const loadGameDetails = async () => {
     await loadUserFavoritesStatus()
     await loadUserLikesStatus()
 
+    // Load reviews and user's review
+    await Promise.all([
+      loadGameReviews(1),
+      loadUserReview()
+    ])
+
   } catch (err) {
     error.value = err.message || 'Failed to load game details'
     game.value = null
@@ -752,6 +910,140 @@ const toggleWishlist = async () => {
   } catch (err) {
     toast.error('Failed to update wishlist')
     console.error('Wishlist error:', err)
+  }
+}
+
+// Review Methods
+const loadGameReviews = async (page = 1, append = false) => {
+  if (!game.value?.id) return
+
+  try {
+    if (page === 1) {
+      loadingReviews.value = true
+      gameReviews.value = []
+    } else {
+      loadingMoreReviews.value = true
+    }
+
+    const response = await reviewsService.getGameReviews(game.value.id, page, 5)
+
+    if (append && page > 1) {
+      gameReviews.value.push(...response.data)
+    } else {
+      gameReviews.value = response.data
+    }
+
+    hasMoreReviews.value = response.hasNextPage
+    reviewsPage.value = page
+  } catch (error) {
+    console.error('Error loading game reviews:', error)
+    toast.error('Failed to load reviews')
+  } finally {
+    loadingReviews.value = false
+    loadingMoreReviews.value = false
+  }
+}
+
+const loadUserReview = async () => {
+  if (!game.value?.id || !authStore.user?.id) return
+
+  try {
+    const review = await reviewsService.getUserGameReview(authStore.user.id, game.value.id)
+    userReview.value = review
+  } catch (error) {
+    // User hasn't reviewed this game, which is fine
+    userReview.value = null
+  }
+}
+
+const submitReview = async (reviewData) => {
+  if (!game.value?.id || !authStore.user?.id) return
+
+  try {
+    isSubmittingReview.value = true
+
+    let result
+    if (userReview.value) {
+      // Update existing review
+      result = await reviewsService.updateReview(userReview.value.id, reviewData)
+      toast.success('Review updated successfully!')
+    } else {
+      // Add new review
+      reviewData.gameId = game.value.id
+      result = await reviewsService.addReview(reviewData)
+      toast.success('Review added successfully!')
+    }
+
+    // Update local state
+    userReview.value = result
+    showReviewForm.value = false
+
+    // Reload reviews and game stats
+    await Promise.all([
+      loadGameReviews(1),
+      reloadGameDetails()
+    ])
+  } catch (error) {
+    console.error('Error submitting review:', error)
+    toast.error(error.message || 'Failed to submit review')
+  } finally {
+    isSubmittingReview.value = false
+  }
+}
+
+const deleteUserReview = async () => {
+  if (!userReview.value?.id) return
+
+  try {
+    await reviewsService.deleteReview(userReview.value.id)
+    toast.success('Review deleted successfully!')
+
+    // Update local state
+    userReview.value = null
+    showReviewForm.value = false
+
+    // Reload reviews and game stats
+    await Promise.all([
+      loadGameReviews(1),
+      reloadGameDetails()
+    ])
+  } catch (error) {
+    console.error('Error deleting review:', error)
+    toast.error('Failed to delete review')
+  }
+}
+
+const loadMoreReviews = async () => {
+  await loadGameReviews(reviewsPage.value + 1, true)
+}
+
+const showAllReviews = () => {
+  // Navigate to dedicated reviews page
+  router.push(`/games/${game.value.id}/reviews`)
+}
+
+const editReview = (review) => {
+  if (review.user.id === authStore.user?.id) {
+    showReviewForm.value = true
+  }
+}
+
+const deleteReview = (review) => {
+  if (review.user.id === authStore.user?.id) {
+    deleteUserReview()
+  }
+}
+
+const reloadGameDetails = async () => {
+  // Reload game details to get updated review stats
+  try {
+    const gameData = await gamesStore.fetchGameDetails(gameIdentifier.value)
+    if (gameData) {
+      game.value.reviewsCount = gameData.reviewsCount
+      game.value.averageRating = gameData.averageRating
+    }
+  } catch (error) {
+    console.error('Error reloading game details:', error)
   }
 }
 

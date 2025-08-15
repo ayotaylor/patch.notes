@@ -1,3 +1,4 @@
+using System.Text.Json.Serialization;
 using Backend.Models;
 using Backend.Models.Auth;
 using Backend.Models.Social;

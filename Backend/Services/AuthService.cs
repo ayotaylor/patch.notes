@@ -3,6 +3,7 @@ using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using Microsoft.Extensions.Options;
 
 using Backend.Models.DTO;
 using Backend.Config;
@@ -16,17 +17,20 @@ namespace Backend.Services
         private readonly SignInManager<User> _signInManager;
         private readonly IConfiguration _configuration;
         private readonly ILogger<AuthService> _logger;
+        private readonly JwtSettings _jwtSettings;
 
         public AuthService(
             UserManager<User> userManager,
             SignInManager<User> signInManager,
             IConfiguration configuration,
-            ILogger<AuthService> logger)
+            ILogger<AuthService> logger,
+            IOptions<JwtSettings> jwtSettings)
         {
             _userManager = userManager;
             _signInManager = signInManager;
             _configuration = configuration;
             _logger = logger;
+            _jwtSettings = jwtSettings.Value;
         }
 
         public async Task<AuthResponse> RegisterAsync(RegisterRequest request)
@@ -276,9 +280,8 @@ namespace Backend.Services
         {
             try
             {
-                var jwtSettings = _configuration.GetSection("Jwt").Get<JwtSettings>();
-                jwtSettings.SecretKey = _configuration["Jwt:SecretKey"]; // From secrets
-                var key = Encoding.UTF8.GetBytes(jwtSettings.SecretKey);
+                _jwtSettings.SecretKey = _configuration["Jwt:SecretKey"]; // From secrets
+                var key = Encoding.UTF8.GetBytes(_jwtSettings.SecretKey);
 
                 var tokenHandler = new JwtSecurityTokenHandler();
                 var validationParameters = new TokenValidationParameters
@@ -286,9 +289,9 @@ namespace Backend.Services
                     ValidateIssuerSigningKey = true,
                     IssuerSigningKey = new SymmetricSecurityKey(key),
                     ValidateIssuer = true,
-                    ValidIssuer = jwtSettings.Issuer,
+                    ValidIssuer = _jwtSettings.Issuer,
                     ValidateAudience = true,
-                    ValidAudience = jwtSettings.Audience,
+                    ValidAudience = _jwtSettings.Audience,
                     ValidateLifetime = true,
                     ClockSkew = TimeSpan.Zero,
                 };
@@ -304,10 +307,8 @@ namespace Backend.Services
 
         public string GenerateJwtTokenAsync(User user)
         {
-            var jwtSettings = _configuration.GetSection("Jwt").Get<JwtSettings>();
-            jwtSettings.SecretKey = _configuration["Jwt:SecretKey"]; // From secrets
-
-            var key = Encoding.UTF8.GetBytes(jwtSettings.SecretKey);
+            _jwtSettings.SecretKey = _configuration["Jwt:SecretKey"]; // From secrets
+            var key = Encoding.UTF8.GetBytes(_jwtSettings.SecretKey);
 
             var claims = new List<Claim>
             {
@@ -324,9 +325,9 @@ namespace Backend.Services
             var tokenDescriptor = new SecurityTokenDescriptor
             {
                 Subject = new ClaimsIdentity(claims),
-                Expires = DateTime.UtcNow.AddMinutes(Convert.ToDouble(jwtSettings.ExpirationMinutes)),
-                Issuer = jwtSettings.Issuer,
-                Audience = jwtSettings.Audience,
+                Expires = DateTime.UtcNow.AddMinutes(Convert.ToDouble(_jwtSettings.ExpirationMinutes)),
+                Issuer = _jwtSettings.Issuer,
+                Audience = _jwtSettings.Audience,
                 SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature),
             };
 

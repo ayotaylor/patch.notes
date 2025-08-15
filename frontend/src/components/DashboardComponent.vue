@@ -219,6 +219,59 @@
       </div>
     </div>
 
+    <!-- Latest Reviews -->
+    <div class="row mt-4">
+      <div class="col-12">
+        <div class="card shadow-sm border-0">
+          <div class="card-header bg-white border-bottom">
+            <div class="d-flex justify-content-between align-items-center">
+              <h3 class="h5 mb-0 fw-bold">
+                <i class="fas fa-comments text-primary me-2"></i>
+                Latest Reviews
+              </h3>
+              <router-link to="/reviews" class="btn btn-sm btn-outline-primary">
+                View All Reviews
+                <i class="fas fa-arrow-right ms-2"></i>
+              </router-link>
+            </div>
+          </div>
+          <div class="card-body p-4">
+            <!-- Loading State -->
+            <div v-if="loadingReviews" class="text-center py-5">
+              <div class="spinner-border text-primary mb-3"></div>
+              <p class="text-muted">Loading latest reviews...</p>
+            </div>
+
+            <!-- Reviews List -->
+            <div v-else-if="latestReviews.length > 0">
+              <div class="row g-3">
+                <div
+                  v-for="review in latestReviews"
+                  :key="review.id"
+                  class="col-12"
+                  :class="{ 'col-lg-6': latestReviews.length > 1 }"
+                >
+                  <ReviewCard
+                    :review="review"
+                    :show-game="true"
+                    :truncated="true"
+                    :max-length="120"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <!-- Empty State -->
+            <div v-else class="text-center py-5">
+              <i class="fas fa-star text-muted mb-3" style="font-size: 2rem;"></i>
+              <p class="text-muted">No reviews available yet.</p>
+              <p class="text-muted small">Be the first to share your gaming thoughts!</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Quick Actions -->
     <div class="row mt-4">
       <div class="col-12">
@@ -272,7 +325,9 @@ import { useGamesStore } from '@/stores/gamesStore'
 import { useProfileStore } from '@/stores/profileStore'
 import { useToast } from 'vue-toastification'
 import GameSearchComponent from '@/components/GameSearchComponent.vue'
+import ReviewCard from '@/components/ReviewCard.vue'
 import { useImageFallback, FALLBACK_TYPES } from '@/composables/useImageFallback'
+import { reviewsService } from '@/services/reviewsService'
 
 // Composables
 const router = useRouter()
@@ -292,6 +347,10 @@ const userStats = ref({
 
 // User library for checking if games are already added
 const userLibrary = ref(new Set())
+
+// Reviews state
+const latestReviews = ref([])
+const loadingReviews = ref(false)
 
 // Computed
 const popularGames = computed(() => gamesStore.popularGames)
@@ -375,6 +434,19 @@ const formatReleaseDate = (dateString) => {
   return date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' })
 }
 
+const loadLatestReviews = async () => {
+  try {
+    loadingReviews.value = true
+    const reviews = await reviewsService.getLatestReviews()
+    latestReviews.value = reviews
+  } catch (error) {
+    console.error('Error loading latest reviews:', error)
+    toast.error('Failed to load latest reviews')
+  } finally {
+    loadingReviews.value = false
+  }
+}
+
 // Quick action methods
 const viewLibrary = () => {
   router.push('/library')
@@ -398,7 +470,8 @@ onMounted(async () => {
     await Promise.all([
       gamesStore.fetchPopularGames(10),
       gamesStore.fetchNewGames(8),
-      loadUserStats()
+      loadUserStats(),
+      loadLatestReviews()
     ])
   } catch (err) {
     error.value = 'Failed to load dashboard data'

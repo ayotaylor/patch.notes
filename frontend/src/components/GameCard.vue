@@ -12,11 +12,15 @@
                 @error="(e) => handleImageError(e, 'gameSmall')"
             >
 
-            <!-- Rating Badge -->
-            <div v-if="game.rating > 0" class="position-absolute top-0 start-0 m-2">
+            <!-- Rating Badge - prioritize user reviews over IGDB rating -->
+            <div v-if="game.averageRating > 0 || game.rating > 0" class="position-absolute top-0 start-0 m-2">
                 <span class="badge bg-dark bg-opacity-75 d-flex align-items-center">
                     <i class="fas fa-star text-warning me-1"></i>
-                    {{ game.rating }}/5
+                    <span v-if="game.averageRating > 0">
+                        {{ game.averageRating.toFixed(1) }}/5
+                        <small class="opacity-75">({{ game.reviewsCount }})</small>
+                    </span>
+                    <span v-else>{{ game.rating }}/5</span>
                 </span>
             </div>
 
@@ -77,6 +81,10 @@
                 <span v-if="game.platforms?.length" class="text-muted">
                     <i class="fas fa-gamepad me-1"></i>
                     {{ platformsText }}
+                </span>
+                <span v-if="game.reviewsCount > 0" class="text-muted">
+                    <i class="fas fa-comments me-1"></i>
+                    {{ game.reviewsCount }} review{{ game.reviewsCount !== 1 ? 's' : '' }}
                 </span>
                 <span v-if="game.hypes > 0" class="text-muted">
                     <i class="fas fa-fire me-1"></i>

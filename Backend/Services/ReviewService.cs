@@ -1,6 +1,7 @@
 using Backend.Data;
 using Backend.Mapping;
 using Backend.Models.DTO.Social;
+using Backend.Models.DTO.Response;
 using Backend.Models.Social;
 using Microsoft.EntityFrameworkCore;
 
@@ -17,7 +18,7 @@ namespace Backend.Services
             _logger = logger;
         }
 
-        public async Task<List<ReviewDto>> GetGameReviewsAsync(int gameId, int page = 1, int pageSize = 20)
+        public async Task<PagedResponse<ReviewDto>> GetGameReviewsAsync(int gameId, int page = 1, int pageSize = 20)
         {
             var gameGuid = await _context.Games
                 .Where(g => g.IgdbId == gameId)
@@ -26,8 +27,23 @@ namespace Backend.Services
 
             if (gameGuid == Guid.Empty)
             {
-                return new List<ReviewDto>();
+                return new PagedResponse<ReviewDto>
+                {
+                    Data = new List<ReviewDto>(),
+                    Page = page,
+                    PageSize = pageSize,
+                    TotalCount = 0,
+                    TotalPages = 0,
+                    HasNextPage = false,
+                    HasPreviousPage = false
+                };
             }
+
+            var totalCount = await _context.Reviews
+                .Where(r => r.GameId == gameGuid)
+                .CountAsync();
+
+            var totalPages = (int)Math.Ceiling((double)totalCount / pageSize);
 
             var reviews = await _context.Reviews
                 .Include(r => r.User)
@@ -38,10 +54,19 @@ namespace Backend.Services
                 .Take(pageSize)
                 .ToListAsync();
 
-            return reviews.Select(r => r.ToDto()).ToList();
+            return new PagedResponse<ReviewDto>
+            {
+                Data = reviews.Select(r => r.ToDto()).ToList(),
+                Page = page,
+                PageSize = pageSize,
+                TotalCount = totalCount,
+                TotalPages = totalPages,
+                HasNextPage = page < totalPages,
+                HasPreviousPage = page > 1
+            };
         }
 
-        public async Task<List<ReviewDto>> GetUserReviewsAsync(Guid userId, int page = 1, int pageSize = 20)
+        public async Task<PagedResponse<ReviewDto>> GetUserReviewsAsync(Guid userId, int page = 1, int pageSize = 20)
         {
             var userProfileId = await _context.UserProfiles
                 .Where(u => u.UserId == userId.ToString())
@@ -50,8 +75,23 @@ namespace Backend.Services
 
             if (userProfileId == Guid.Empty)
             {
-                return new List<ReviewDto>();
+                return new PagedResponse<ReviewDto>
+                {
+                    Data = new List<ReviewDto>(),
+                    Page = page,
+                    PageSize = pageSize,
+                    TotalCount = 0,
+                    TotalPages = 0,
+                    HasNextPage = false,
+                    HasPreviousPage = false
+                };
             }
+
+            var totalCount = await _context.Reviews
+                .Where(r => r.UserId == userProfileId)
+                .CountAsync();
+
+            var totalPages = (int)Math.Ceiling((double)totalCount / pageSize);
 
             var reviews = await _context.Reviews
                 .Include(r => r.User)
@@ -62,7 +102,41 @@ namespace Backend.Services
                 .Take(pageSize)
                 .ToListAsync();
 
-            return reviews.Select(r => r.ToDto()).ToList();
+            return new PagedResponse<ReviewDto>
+            {
+                Data = reviews.Select(r => r.ToDto()).ToList(),
+                Page = page,
+                PageSize = pageSize,
+                TotalCount = totalCount,
+                TotalPages = totalPages,
+                HasNextPage = page < totalPages,
+                HasPreviousPage = page > 1
+            };
+        }
+
+        public async Task<PagedResponse<ReviewDto>> GetLatestReviewsAsync(int page = 1, int pageSize = 20)
+        {
+            var totalCount = await _context.Reviews.CountAsync();
+            var totalPages = (int)Math.Ceiling((double)totalCount / pageSize);
+
+            var reviews = await _context.Reviews
+                .Include(r => r.User)
+                .Include(r => r.Game)
+                .OrderByDescending(r => r.CreatedAt)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
+            return new PagedResponse<ReviewDto>
+            {
+                Data = reviews.Select(r => r.ToDto()).ToList(),
+                Page = page,
+                PageSize = pageSize,
+                TotalCount = totalCount,
+                TotalPages = totalPages,
+                HasNextPage = page < totalPages,
+                HasPreviousPage = page > 1
+            };
         }
 
         public async Task<ReviewDto?> GetReviewAsync(Guid reviewId)

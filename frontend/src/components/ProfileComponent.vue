@@ -378,6 +378,83 @@
           </div>
         </div>
       </div>
+
+      <!-- User Reviews Section -->
+      <div class="col-12">
+        <div class="card shadow-sm border-0 mb-4">
+          <div class="card-header bg-white border-bottom">
+            <div class="d-flex justify-content-between align-items-center">
+              <h3 class="h5 mb-0 fw-bold">
+                <i class="fas fa-star text-primary me-2"></i>
+                {{ isOwnProfile ? 'My ' : ''}} Reviews
+                <span v-if="userReviews.length > 0" class="text-muted fw-normal">({{ totalReviews }})</span>
+              </h3>
+              <router-link
+                v-if="userReviews.length > displayedReviewsLimit"
+                :to="`/profile/${profile.id}/reviews`"
+                class="btn btn-sm btn-outline-primary"
+              >
+                View All Reviews
+                <i class="fas fa-arrow-right ms-1"></i>
+              </router-link>
+            </div>
+          </div>
+          <div class="card-body p-4">
+            <!-- Loading State -->
+            <div v-if="loadingReviews" class="text-center py-5">
+              <div class="spinner-border text-primary mb-3"></div>
+              <p class="text-muted">Loading reviews...</p>
+            </div>
+
+            <!-- Reviews List -->
+            <div v-else-if="userReviews.length > 0">
+              <div class="row g-3">
+                <div
+                  v-for="review in displayedReviews"
+                  :key="review.id"
+                  class="col-12"
+                >
+                  <ReviewCard
+                    :review="review"
+                    :show-game="true"
+                    :show-date="true"
+                    :truncated="true"
+                    :max-length="150"
+                  />
+                </div>
+              </div>
+
+              <!-- Show More Button -->
+              <div v-if="userReviews.length > displayedReviewsLimit" class="text-center mt-4">
+                <router-link
+                  :to="`/profile/${profile.id}/reviews`"
+                  class="btn btn-outline-primary"
+                >
+                  <i class="fas fa-plus me-2"></i>
+                  View All {{ totalReviews }} Reviews
+                </router-link>
+              </div>
+            </div>
+
+            <!-- Empty State -->
+            <div v-else class="text-center py-5">
+              <i class="fas fa-star-o text-muted mb-3" style="font-size: 2rem;"></i>
+              <h6 class="text-muted mb-2">No Reviews Yet</h6>
+              <p class="text-muted small mb-3">
+                {{ isOwnProfile ? "You haven't written any reviews yet." : `${profile.displayName || 'This user'} hasn't written any reviews yet.` }}
+              </p>
+              <router-link
+                v-if="isOwnProfile"
+                to="/dashboard"
+                class="btn btn-primary"
+              >
+                <i class="fas fa-search me-2"></i>
+                Find Games to Review
+              </router-link>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- Error Alert -->
@@ -398,6 +475,8 @@ import { useGamesStore } from '@/stores/gamesStore'
 import { useToast } from 'vue-toastification'
 import { useImageFallback, FALLBACK_TYPES } from '@/composables/useImageFallback'
 import GameSearchComponent from '@/components/GameSearchComponent.vue'
+import ReviewCard from '@/components/ReviewCard.vue'
+import { reviewsService } from '@/services/reviewsService'
 
 // Props for viewing other users' profiles
 const props = defineProps({
@@ -420,6 +499,12 @@ const profile = ref(null)
 const loading = ref(true)
 const error = ref('')
 const saveError = ref('')
+
+// Reviews state
+const userReviews = ref([])
+const loadingReviews = ref(false)
+const totalReviews = ref(0)
+const displayedReviewsLimit = 3
 
 // Editing state
 const isEditing = ref(false)
@@ -456,6 +541,11 @@ const defaultAvatar = computed(() => {
   return `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&size=120&background=6c757d&color=ffffff`
 })
 
+// Reviews computed properties
+const displayedReviews = computed(() => {
+  return userReviews.value.slice(0, displayedReviewsLimit)
+})
+
 // Methods
 const fetchProfile = async () => {
   try {
@@ -472,6 +562,9 @@ const fetchProfile = async () => {
     if (profileUserId.value) {
       await loadUserFavorites()
     }
+
+    // Load user's reviews
+    await loadUserReviews()
   } catch (err) {
     error.value = err.message || 'Failed to load profile'
     console.error('Error fetching profile:', err)
@@ -491,6 +584,23 @@ const loadUserFavorites = async () => {
     console.error('Error loading user favorites:', err)
     userFavorites.value = []
     topGames.value = []
+  }
+}
+
+const loadUserReviews = async () => {
+  if (!profileUserId.value) return
+
+  try {
+    loadingReviews.value = true
+    const response = await reviewsService.getUserReviews(profileUserId.value, 1, displayedReviewsLimit + 5)
+    userReviews.value = response.data || []
+    totalReviews.value = response.totalCount || 0
+  } catch (error) {
+    console.error('Error loading user reviews:', error)
+    userReviews.value = []
+    totalReviews.value = 0
+  } finally {
+    loadingReviews.value = false
   }
 }
 

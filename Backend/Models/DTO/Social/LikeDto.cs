@@ -1,3 +1,4 @@
+using System.Text.Json.Serialization;
 using Backend.Models.DTO.Game;
 
 namespace Backend.Models.DTO.Social

@@ -1,3 +1,4 @@
+using Backend.Models.DTO.Game;
 using Backend.Models.DTO.Social;
 using Backend.Models.Social;
 
@@ -38,7 +39,21 @@ namespace Backend.Mapping
                 CreatedAt = review.CreatedAt,
                 UpdatedAt = review.UpdatedAt,
                 UserDisplayName = review.User?.DisplayName ?? review.User?.FirstName + " " + review.User?.LastName,
-                GameTitle = review.Game?.Name
+                GameTitle = review.Game?.Name,
+                User = new UserProfile
+                {
+                    Id = Guid.Parse(review.User.UserId),
+                    DisplayName = review.User.DisplayName != null ?
+                        review.User.DisplayName : review.User.FirstName + "" + review.User.LastName,
+                    ProfileUrlImageUrl = review.User.ProfileUrlImageUrl,
+                },
+                Game = new GameDto
+                {
+                    IgdbId = review.Game.IgdbId,
+                    Name = review.Game.Name,
+                    Covers = review.Game.ToDto().Covers,
+                    Slug = review.Game.Slug,
+                }
             };
         }
     }

@@ -21,16 +21,24 @@ namespace Backend.Controllers
         }
 
         [HttpGet("game/{gameId:int}")]
-        public async Task<ActionResult<ApiResponse<List<ReviewDto>>>> GetGameReviews(int gameId, [FromQuery] int page = 1, [FromQuery] int pageSize = 20)
+        public async Task<ActionResult<ApiResponse<PagedResponse<ReviewDto>>>> GetGameReviews(int gameId, [FromQuery] int page = 1, [FromQuery] int pageSize = 20)
         {
             try
             {
                 var reviews = await _reviewService.GetGameReviewsAsync(gameId, page, pageSize);
-                return Ok(new ApiResponse<List<ReviewDto>>
+               if (reviews == null || reviews.Data == null || reviews.Data.Count <= 0)
+                {
+                    return Ok(new ApiResponse<PagedResponse<ReviewDto>>
+                    {
+                        Success = false,
+                        Message = "No reviews found",
+                        Data = new PagedResponse<ReviewDto>()
+                    });
+                }
+                return Ok(new ApiResponse<PagedResponse<ReviewDto>>
                 {
                     Success = true,
                     Data = reviews,
-                    Message = reviews.Count > 0 ? $"Retrieved {reviews.Count} reviews" : "No reviews found"
                 });
             }
             catch (Exception ex)
@@ -46,25 +54,67 @@ namespace Backend.Controllers
         }
 
         [HttpGet("user/{userId:guid}")]
-        public async Task<ActionResult<ApiResponse<List<ReviewDto>>>> GetUserReviews(Guid userId, [FromQuery] int page = 1, [FromQuery] int pageSize = 20)
+        public async Task<ActionResult<ApiResponse<PagedResponse<ReviewDto>>>> GetUserReviews(Guid userId, [FromQuery] int page = 1, [FromQuery] int pageSize = 20)
         {
             try
             {
                 var reviews = await _reviewService.GetUserReviewsAsync(userId, page, pageSize);
-                return Ok(new ApiResponse<List<ReviewDto>>
+                if (reviews == null || reviews.Data == null || reviews.Data.Count <= 0)
+                {
+                    return Ok(new ApiResponse<PagedResponse<ReviewDto>>
+                    {
+                        Success = false,
+                        Message = "No reviews found",
+                        Data = new PagedResponse<ReviewDto>()
+                    });
+                }
+                return Ok(new ApiResponse<PagedResponse<ReviewDto>>
                 {
                     Success = true,
                     Data = reviews,
-                    Message = reviews.Count > 0 ? $"Retrieved {reviews.Count} reviews" : "No reviews found"
                 });
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error fetching reviews for user {UserId}", userId);
-                return StatusCode(500, new ApiResponse<List<ReviewDto>>
+                return StatusCode(500, new ApiResponse<PagedResponse<ReviewDto>>
                 {
                     Success = false,
                     Message = "An error occurred while fetching user reviews",
+                    Errors = [ex.Message]
+                });
+            }
+        }
+
+        [HttpGet("latest")]
+        public async Task<ActionResult<ApiResponse<PagedResponse<ReviewDto>>>> GetLatestReviews([FromQuery] int page = 1, [FromQuery] int pageSize = 20)
+        {
+            try
+            {
+                var reviews = await _reviewService.GetLatestReviewsAsync(page, pageSize);
+                if (reviews == null || reviews.Data == null || reviews.Data.Count <= 0)
+                {
+                    return Ok(new ApiResponse<PagedResponse<ReviewDto>>
+                    {
+                        Success = false,
+                        Message = "No reviews found",
+                        Data = new PagedResponse<ReviewDto>()
+                    });
+                }
+
+                return Ok(new ApiResponse<PagedResponse<ReviewDto>>
+                {
+                    Success = true,
+                    Data = reviews,
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error fetching latest reviews");
+                return StatusCode(500, new ApiResponse<PagedResponse<ReviewDto>>
+                {
+                    Success = false,
+                    Message = "An error occurred while fetching latest reviews",
                     Errors = [ex.Message]
                 });
             }
@@ -111,7 +161,7 @@ namespace Backend.Controllers
                 var review = await _reviewService.GetUserReviewForGameAsync(userId, gameId);
                 if (review == null)
                 {
-                    return NotFound(new ApiResponse<ReviewDto>
+                    return Ok(new ApiResponse<ReviewDto>
                     {
                         Success = false,
                         Message = "Review not found"

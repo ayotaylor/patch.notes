@@ -10,6 +10,7 @@ const RegisterComponent = () => import("@/components/RegisterComponent.vue");
 const DashboardComponent = () => import("@/components/DashboardComponent.vue");
 const ProfileComponent = () => import("@/components/ProfileComponent.vue");
 const GameDetailsComponent = () => import("@/components/GameDetailsComponent.vue");
+const ReviewsListPage = () => import("@/components/ReviewsListPage.vue");
 // const ForgotPassword = () => import('@/views/ForgotPassword.vue')
 // const ResetPassword = () => import('@/views/ResetPassword.vue')
 
@@ -103,6 +104,45 @@ const routes = [
       requiresAuth: false,
       validateToken: "never",
       title: "Game Details - Patch Notes",
+    },
+  },
+  // Reviews routes
+  {
+    path: "/reviews",
+    name: "AllReviews",
+    component: ReviewsListPage,
+    meta: {
+      requiresAuth: false,
+      validateToken: "never",
+      title: "All Reviews - Patch Notes",
+    },
+  },
+  {
+    path: "/games/:gameId/reviews",
+    name: "GameReviews",
+    component: ReviewsListPage,
+    props: (route) => ({
+      gameId: route.params.gameId,
+      gameName: route.query.name || ''
+    }),
+    meta: {
+      requiresAuth: false,
+      validateToken: "never",
+      title: "Game Reviews - Patch Notes",
+    },
+  },
+  {
+    path: "/profile/:userId/reviews",
+    name: "UserReviews",
+    component: ReviewsListPage,
+    props: (route) => ({
+      userId: route.params.userId,
+      userName: route.query.name || ''
+    }),
+    meta: {
+      requiresAuth: false,
+      validateToken: "never",
+      title: "User Reviews - Patch Notes",
     },
   },
 

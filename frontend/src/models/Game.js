@@ -29,6 +29,10 @@ export class Game {
     this.favoritesCount = data.favoritesCount || 0;
     this.isLikedByUser = Boolean(data.isLikedByUser);
     this.isFavoritedByUser = Boolean(data.isFavoritedByUser);
+    
+    // Review statistics
+    this.reviewsCount = data.reviewsCount || 0;
+    this.averageRating = data.averageRating || 0.0;
 
     // Timestamps
     this.createdAt = this._parseDate(data.createdAt) || new Date();
@@ -633,6 +637,8 @@ export class Game {
         favoritesCount: this.favoritesCount,
         isLikedByUser: this.isLikedByUser,
         isFavoritedByUser: this.isFavoritedByUser,
+        reviewsCount: this.reviewsCount,
+        averageRating: this.averageRating,
         
         // Dates
         firstReleaseDate: this.firstReleaseDate?.toISOString(),
@@ -701,6 +707,8 @@ export class Game {
         "favorites",
         "isLikedByUser",
         "isFavoritedByUser",
+        "reviewsCount",
+        "averageRating",
         "createdAt",
         "updatedAt",
         "firstReleaseDate",
@@ -740,6 +748,8 @@ export class Game {
         "favorites",
         "isLikedByUser",
         "isFavoritedByUser",
+        "reviewsCount",
+        "averageRating",
         "createdAt",
         "updatedAt",
         "firstReleaseDate",
