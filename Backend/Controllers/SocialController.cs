@@ -254,5 +254,211 @@ namespace Backend.Controllers
                 });
             }
         }
+
+        // Review Likes
+        [HttpPost("reviews/{reviewId:guid}/like")]
+        public async Task<ActionResult<ApiResponse<bool>>> LikeReview(Guid reviewId, [FromBody] LikeRequest request)
+        {
+            try
+            {
+                var result = await _socialService.LikeReviewAsync(request.UserId, reviewId);
+                if (result)
+                {
+                    return Ok(new ApiResponse<bool>
+                    {
+                        Success = true,
+                        Data = true,
+                        Message = "Review liked successfully"
+                    });
+                }
+                return BadRequest(new ApiResponse<bool>
+                {
+                    Success = false,
+                    Data = false,
+                    Message = "Failed to like review"
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error liking review {ReviewId}", reviewId);
+                return StatusCode(500, new ApiResponse<bool>
+                {
+                    Success = false,
+                    Message = "An error occurred while liking the review"
+                });
+            }
+        }
+
+        [HttpDelete("reviews/{reviewId:guid}/like")]
+        public async Task<ActionResult<ApiResponse<bool>>> UnlikeReview(Guid reviewId, [FromBody] LikeRequest request)
+        {
+            try
+            {
+                var result = await _socialService.UnlikeReviewAsync(request.UserId, reviewId);
+                if (result)
+                {
+                    return Ok(new ApiResponse<bool>
+                    {
+                        Success = true,
+                        Data = true,
+                        Message = "Review unliked successfully"
+                    });
+                }
+                return BadRequest(new ApiResponse<bool>
+                {
+                    Success = false,
+                    Data = false,
+                    Message = "Failed to unlike review"
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error unliking review {ReviewId}", reviewId);
+                return StatusCode(500, new ApiResponse<bool>
+                {
+                    Success = false,
+                    Message = "An error occurred while unliking the review"
+                });
+            }
+        }
+
+        // GameList Likes
+        [HttpPost("lists/{gameListId:guid}/like")]
+        public async Task<ActionResult<ApiResponse<bool>>> LikeGameList(Guid gameListId, [FromBody] LikeRequest request)
+        {
+            try
+            {
+                var result = await _socialService.LikeGameListAsync(request.UserId, gameListId);
+                if (result)
+                {
+                    return Ok(new ApiResponse<bool>
+                    {
+                        Success = true,
+                        Data = true,
+                        Message = "Game list liked successfully"
+                    });
+                }
+                return BadRequest(new ApiResponse<bool>
+                {
+                    Success = false,
+                    Data = false,
+                    Message = "Failed to like game list"
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error liking game list {GameListId}", gameListId);
+                return StatusCode(500, new ApiResponse<bool>
+                {
+                    Success = false,
+                    Message = "An error occurred while liking the game list"
+                });
+            }
+        }
+
+        [HttpDelete("lists/{gameListId:guid}/like")]
+        public async Task<ActionResult<ApiResponse<bool>>> UnlikeGameList(Guid gameListId, [FromBody] LikeRequest request)
+        {
+            try
+            {
+                var result = await _socialService.UnlikeGameListAsync(request.UserId, gameListId);
+                if (result)
+                {
+                    return Ok(new ApiResponse<bool>
+                    {
+                        Success = true,
+                        Data = true,
+                        Message = "Game list unliked successfully"
+                    });
+                }
+                return BadRequest(new ApiResponse<bool>
+                {
+                    Success = false,
+                    Data = false,
+                    Message = "Failed to unlike game list"
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error unliking game list {GameListId}", gameListId);
+                return StatusCode(500, new ApiResponse<bool>
+                {
+                    Success = false,
+                    Message = "An error occurred while unliking the game list"
+                });
+            }
+        }
+
+        // Comment Likes
+        [HttpPost("comments/{commentId:guid}/like")]
+        public async Task<ActionResult<ApiResponse<bool>>> LikeComment(Guid commentId, [FromBody] LikeRequest request)
+        {
+            try
+            {
+                var result = await _socialService.LikeCommentAsync(request.UserId, commentId);
+                if (result)
+                {
+                    return Ok(new ApiResponse<bool>
+                    {
+                        Success = true,
+                        Data = true,
+                        Message = "Comment liked successfully"
+                    });
+                }
+                return BadRequest(new ApiResponse<bool>
+                {
+                    Success = false,
+                    Data = false,
+                    Message = "Failed to like comment"
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error liking comment {CommentId}", commentId);
+                return StatusCode(500, new ApiResponse<bool>
+                {
+                    Success = false,
+                    Message = "An error occurred while liking the comment"
+                });
+            }
+        }
+
+        [HttpDelete("comments/{commentId:guid}/like")]
+        public async Task<ActionResult<ApiResponse<bool>>> UnlikeComment(Guid commentId, [FromBody] LikeRequest request)
+        {
+            try
+            {
+                var result = await _socialService.UnlikeCommentAsync(request.UserId, commentId);
+                if (result)
+                {
+                    return Ok(new ApiResponse<bool>
+                    {
+                        Success = true,
+                        Data = true,
+                        Message = "Comment unliked successfully"
+                    });
+                }
+                return BadRequest(new ApiResponse<bool>
+                {
+                    Success = false,
+                    Data = false,
+                    Message = "Failed to unlike comment"
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error unliking comment {CommentId}", commentId);
+                return StatusCode(500, new ApiResponse<bool>
+                {
+                    Success = false,
+                    Message = "An error occurred while unliking the comment"
+                });
+            }
+        }
+    }
+
+    public class LikeRequest
+    {
+        public Guid UserId { get; set; }
     }
 }

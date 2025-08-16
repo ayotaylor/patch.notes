@@ -22,6 +22,8 @@ builder.Services.AddScoped<IUserProfileService, UserProfileService>();
 builder.Services.AddScoped<IGameService, GameService>();
 builder.Services.AddScoped<ISocialService, SocialService>();
 builder.Services.AddScoped<IReviewService, ReviewService>();
+builder.Services.AddScoped<IGameListService, GameListService>();
+builder.Services.AddScoped<ICommentService, CommentService>();
 
 // add igdb import service -- TODO: to be removed later
 // get igdb settings from configuration

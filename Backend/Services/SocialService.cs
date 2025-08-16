@@ -34,6 +34,7 @@ namespace Backend.Services
 
             var games = await _context.Games
                 .Where(g => favoriteGameIds.Contains(g.Id))
+                .Include(c => c.Covers)
                 .ToListAsync();
 
             var favoritesDto = new List<GameDto>();
@@ -280,6 +281,213 @@ namespace Backend.Services
 
             _logger.LogInformation("Game {GameId} has {Count} favorites", gameId, favoritesCount);
             return favoritesCount;
+        }
+
+        // Review Likes
+        public async Task<bool> LikeReviewAsync(Guid userId, Guid reviewId)
+        {
+            var userProfileId = await _context.UserProfiles
+                .Where(u => u.UserId == userId.ToString())
+                .Select(u => u.Id)
+                .FirstOrDefaultAsync();
+
+            if (userProfileId == Guid.Empty)
+                return false;
+
+            var existingLike = await _context.ReviewLikes
+                .FirstOrDefaultAsync(rl => rl.UserId == userProfileId && rl.ReviewId == reviewId);
+
+            if (existingLike != null)
+                return false;
+
+            var reviewLike = new ReviewLike
+            {
+                UserId = userProfileId,
+                ReviewId = reviewId
+            };
+
+            _context.ReviewLikes.Add(reviewLike);
+            await _context.SaveChangesAsync();
+            return true;
+        }
+
+        public async Task<bool> UnlikeReviewAsync(Guid userId, Guid reviewId)
+        {
+            var userProfileId = await _context.UserProfiles
+                .Where(u => u.UserId == userId.ToString())
+                .Select(u => u.Id)
+                .FirstOrDefaultAsync();
+
+            if (userProfileId == Guid.Empty)
+                return false;
+
+            var reviewLike = await _context.ReviewLikes
+                .FirstOrDefaultAsync(rl => rl.UserId == userProfileId && rl.ReviewId == reviewId);
+
+            if (reviewLike == null)
+                return false;
+
+            _context.ReviewLikes.Remove(reviewLike);
+            await _context.SaveChangesAsync();
+            return true;
+        }
+
+        public async Task<bool> IsReviewLikedAsync(Guid userId, Guid reviewId)
+        {
+            var userProfileId = await _context.UserProfiles
+                .Where(u => u.UserId == userId.ToString())
+                .Select(u => u.Id)
+                .FirstOrDefaultAsync();
+
+            if (userProfileId == Guid.Empty)
+                return false;
+
+            return await _context.ReviewLikes
+                .AnyAsync(rl => rl.UserId == userProfileId && rl.ReviewId == reviewId);
+        }
+
+        public async Task<int> GetReviewLikesCountAsync(Guid reviewId)
+        {
+            return await _context.ReviewLikes
+                .CountAsync(rl => rl.ReviewId == reviewId);
+        }
+
+        // GameList Likes
+        public async Task<bool> LikeGameListAsync(Guid userId, Guid gameListId)
+        {
+            var userProfileId = await _context.UserProfiles
+                .Where(u => u.UserId == userId.ToString())
+                .Select(u => u.Id)
+                .FirstOrDefaultAsync();
+
+            if (userProfileId == Guid.Empty)
+                return false;
+
+            var existingLike = await _context.GameListLikes
+                .FirstOrDefaultAsync(gll => gll.UserId == userProfileId && gll.GameListId == gameListId);
+
+            if (existingLike != null)
+                return false;
+
+            var gameListLike = new GameListLike
+            {
+                UserId = userProfileId,
+                GameListId = gameListId
+            };
+
+            _context.GameListLikes.Add(gameListLike);
+            await _context.SaveChangesAsync();
+            return true;
+        }
+
+        public async Task<bool> UnlikeGameListAsync(Guid userId, Guid gameListId)
+        {
+            var userProfileId = await _context.UserProfiles
+                .Where(u => u.UserId == userId.ToString())
+                .Select(u => u.Id)
+                .FirstOrDefaultAsync();
+
+            if (userProfileId == Guid.Empty)
+                return false;
+
+            var gameListLike = await _context.GameListLikes
+                .FirstOrDefaultAsync(gll => gll.UserId == userProfileId && gll.GameListId == gameListId);
+
+            if (gameListLike == null)
+                return false;
+
+            _context.GameListLikes.Remove(gameListLike);
+            await _context.SaveChangesAsync();
+            return true;
+        }
+
+        public async Task<bool> IsGameListLikedAsync(Guid userId, Guid gameListId)
+        {
+            var userProfileId = await _context.UserProfiles
+                .Where(u => u.UserId == userId.ToString())
+                .Select(u => u.Id)
+                .FirstOrDefaultAsync();
+
+            if (userProfileId == Guid.Empty)
+                return false;
+
+            return await _context.GameListLikes
+                .AnyAsync(gll => gll.UserId == userProfileId && gll.GameListId == gameListId);
+        }
+
+        public async Task<int> GetGameListLikesCountAsync(Guid gameListId)
+        {
+            return await _context.GameListLikes
+                .CountAsync(gll => gll.GameListId == gameListId);
+        }
+
+        // Comment Likes
+        public async Task<bool> LikeCommentAsync(Guid userId, Guid commentId)
+        {
+            var userProfileId = await _context.UserProfiles
+                .Where(u => u.UserId == userId.ToString())
+                .Select(u => u.Id)
+                .FirstOrDefaultAsync();
+
+            if (userProfileId == Guid.Empty)
+                return false;
+
+            var existingLike = await _context.CommentLikes
+                .FirstOrDefaultAsync(cl => cl.UserId == userProfileId && cl.CommentId == commentId);
+
+            if (existingLike != null)
+                return false;
+
+            var commentLike = new CommentLike
+            {
+                UserId = userProfileId,
+                CommentId = commentId
+            };
+
+            _context.CommentLikes.Add(commentLike);
+            await _context.SaveChangesAsync();
+            return true;
+        }
+
+        public async Task<bool> UnlikeCommentAsync(Guid userId, Guid commentId)
+        {
+            var userProfileId = await _context.UserProfiles
+                .Where(u => u.UserId == userId.ToString())
+                .Select(u => u.Id)
+                .FirstOrDefaultAsync();
+
+            if (userProfileId == Guid.Empty)
+                return false;
+
+            var commentLike = await _context.CommentLikes
+                .FirstOrDefaultAsync(cl => cl.UserId == userProfileId && cl.CommentId == commentId);
+
+            if (commentLike == null)
+                return false;
+
+            _context.CommentLikes.Remove(commentLike);
+            await _context.SaveChangesAsync();
+            return true;
+        }
+
+        public async Task<bool> IsCommentLikedAsync(Guid userId, Guid commentId)
+        {
+            var userProfileId = await _context.UserProfiles
+                .Where(u => u.UserId == userId.ToString())
+                .Select(u => u.Id)
+                .FirstOrDefaultAsync();
+
+            if (userProfileId == Guid.Empty)
+                return false;
+
+            return await _context.CommentLikes
+                .AnyAsync(cl => cl.UserId == userProfileId && cl.CommentId == commentId);
+        }
+
+        public async Task<int> GetCommentLikesCountAsync(Guid commentId)
+        {
+            return await _context.CommentLikes
+                .CountAsync(cl => cl.CommentId == commentId);
         }
      }
 }

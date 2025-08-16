@@ -30,12 +30,12 @@ namespace Backend.Models.DTO.Game
         public List<ReleaseDateDto> ReleaseDates { get; set; } = new();
 
         // Game relationships
-        public List<GameDto> Dlcs { get; set; } = new();
-        public List<GameDto> Expansions { get; set; } = new();
-        public List<GameDto> Ports { get; set; } = new();
-        public List<GameDto> Remakes { get; set; } = new();
-        public List<GameDto> Remasters { get; set; } = new();
-        public List<GameDto> SimilarGames { get; set; } = new();
+        public List<GameRelationshipDto> Dlcs { get; set; } = new();
+        public List<GameRelationshipDto> Expansions { get; set; } = new();
+        public List<GameRelationshipDto> Ports { get; set; } = new();
+        public List<GameRelationshipDto> Remakes { get; set; } = new();
+        public List<GameRelationshipDto> Remasters { get; set; } = new();
+        public List<GameRelationshipDto> SimilarGames { get; set; } = new();
 
         // Social data
         public int LikesCount { get; set; }

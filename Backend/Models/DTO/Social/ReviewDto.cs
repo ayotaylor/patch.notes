@@ -24,7 +24,7 @@ namespace Backend.Models.DTO.Social
         public string? UserDisplayName { get; set; }
         public string? GameTitle { get; set; }
 
-        public UserProfile? User { get; set; }
-        public GameDto? Game { get; set; }
+        public UserSummaryDto? User { get; set; }
+        public GameSummaryDto? Game { get; set; }
     }
 }

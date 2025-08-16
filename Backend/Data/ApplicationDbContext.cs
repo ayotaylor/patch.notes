@@ -57,6 +57,12 @@ namespace Backend.Data
         public DbSet<Favorite> Favorites { get; set; }
         public DbSet<Like> Likes { get; set; }
         public DbSet<Review> Reviews { get; set; }
+        public DbSet<GameList> GameLists { get; set; }
+        public DbSet<GameListItem> GameListItems { get; set; }
+        public DbSet<Comment> Comments { get; set; }
+        public DbSet<ReviewLike> ReviewLikes { get; set; }
+        public DbSet<GameListLike> GameListLikes { get; set; }
+        public DbSet<CommentLike> CommentLikes { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
@@ -145,6 +151,28 @@ namespace Backend.Data
             builder.Entity<Review>()
                 .HasIndex(r => new { r.UserId, r.GameId })
                 .IsUnique();
+
+            // GameList unique constraints and configurations
+            builder.Entity<GameListItem>()
+                .HasIndex(gli => new { gli.GameListId, gli.GameId })
+                .IsUnique();
+
+            builder.Entity<ReviewLike>()
+                .HasIndex(rl => new { rl.UserId, rl.ReviewId })
+                .IsUnique();
+
+            builder.Entity<GameListLike>()
+                .HasIndex(gll => new { gll.UserId, gll.GameListId })
+                .IsUnique();
+
+            builder.Entity<CommentLike>()
+                .HasIndex(cl => new { cl.UserId, cl.CommentId })
+                .IsUnique();
+
+            // Comment constraints
+            builder.Entity<Comment>()
+                .ToTable(t => t.HasCheckConstraint("CK_Comment_Target", 
+                    "(ReviewId IS NOT NULL AND GameListId IS NULL) OR (ReviewId IS NULL AND GameListId IS NOT NULL)"));
 
             // game company indexes
             builder.Entity<GameCompany>()

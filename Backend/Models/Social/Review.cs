@@ -25,5 +25,8 @@ namespace Backend.Models.Social
         
         [ForeignKey("GameId")]
         public virtual Backend.Models.Game.Game Game { get; set; } = null!;
+        
+        public virtual ICollection<Comment> Comments { get; set; } = new List<Comment>();
+        public virtual ICollection<ReviewLike> Likes { get; set; } = new List<ReviewLike>();
     }
 }

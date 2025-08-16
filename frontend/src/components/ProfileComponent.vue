@@ -227,7 +227,7 @@
                   <!-- Game Image -->
                   <div class="me-3">
                     <img
-                      :src="getImageUrl(game.imageUrl, FALLBACK_TYPES.GAME_ICON)"
+                      :src="getImageUrl(game.primaryImageUrl, FALLBACK_TYPES.GAME_ICON)"
                       :alt="game.name"
                       class="rounded"
                       style="width: 60px; height: 60px; object-fit: cover;"
@@ -238,8 +238,7 @@
                   <!-- Game Info -->
                   <div class="flex-grow-1">
                     <h6 class="mb-1 fw-bold">{{ game.name }}</h6>
-                    <p class="mb-1 text-muted small">{{ game.genre || 'Unknown Genre' }}</p>
-                    <div class="d-flex gap-3 small text-muted">
+                    <!-- <div class="d-flex gap-3 small text-muted">
                       <span v-if="game.playTime">
                         <i class="fas fa-clock me-1"></i>
                         {{ game.playTime }}
@@ -252,7 +251,7 @@
                         <i class="fas fa-star me-1 text-warning"></i>
                         {{ game.rating }}/5
                       </span>
-                    </div>
+                    </div> -->
                   </div>
                 </div>
               </div>
@@ -307,7 +306,7 @@
                     <div class="d-flex align-items-center">
                       <span class="badge bg-primary me-3">{{ index + 1 }}</span>
                       <img
-                        :src="getImageUrl(game.imageUrl, 'gameIcon')"
+                        :src="getImageUrl(game.primaryImageUrl, 'gameIcon')"
                         :alt="game.name"
                         class="rounded me-3"
                         style="width: 40px; height: 40px; object-fit: cover;"

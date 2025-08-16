@@ -47,7 +47,7 @@ namespace Backend.Services
 
             var reviews = await _context.Reviews
                 .Include(r => r.User)
-                .Include(r => r.Game)
+                .Include(r => r.Game).ThenInclude(c => c.Covers)
                 .Where(r => r.GameId == gameGuid)
                 .OrderByDescending(r => r.CreatedAt)
                 .Skip((page - 1) * pageSize)
@@ -95,7 +95,7 @@ namespace Backend.Services
 
             var reviews = await _context.Reviews
                 .Include(r => r.User)
-                .Include(r => r.Game)
+                .Include(r => r.Game).ThenInclude(c => c.Covers)
                 .Where(r => r.UserId == userProfileId)
                 .OrderByDescending(r => r.CreatedAt)
                 .Skip((page - 1) * pageSize)
@@ -121,7 +121,7 @@ namespace Backend.Services
 
             var reviews = await _context.Reviews
                 .Include(r => r.User)
-                .Include(r => r.Game)
+                .Include(r => r.Game).ThenInclude(c => c.Covers)
                 .OrderByDescending(r => r.CreatedAt)
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
@@ -168,7 +168,7 @@ namespace Backend.Services
 
             var review = await _context.Reviews
                 .Include(r => r.User)
-                .Include(r => r.Game)
+                .Include(r => r.Game).ThenInclude(c => c.Covers)
                 .FirstOrDefaultAsync(r => r.UserId == userProfileId && r.GameId == gameGuid);
 
             return review?.ToDto();

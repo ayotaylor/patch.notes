@@ -110,8 +110,9 @@ export class Game {
         const covers = this._processCovers(this._rawData.covers);
         return covers?.[0] || null;
       } else if (this._rawData.cover && typeof this._rawData.cover === 'object') {
-        // Serialized format - return the already processed cover object
-        return this._rawData.cover;
+        // Single cover object - process it to ensure consistent format
+        const processedCover = this._processCovers([this._rawData.cover]);
+        return processedCover?.[0] || null;
       }
       return null;
     });
@@ -123,8 +124,8 @@ export class Game {
         // Original API format - process the covers array
         return this._processCovers(this._rawData.covers);
       } else if (this._rawData.cover && typeof this._rawData.cover === 'object') {
-        // Serialized format - return single cover as array
-        return [this._rawData.cover];
+        // Single cover object - process it to ensure consistent format
+        return this._processCovers([this._rawData.cover]);
       }
       return [];
     });
@@ -203,6 +204,12 @@ export class Game {
   // Convenience getters for common UI needs - with safe fallbacks
   get primaryImageUrl() {
     try {
+      // First check for direct CoverUrl field (from GameSummaryDto)
+      if (this._rawData.coverUrl || this._rawData.CoverUrl) {
+        return this._rawData.coverUrl || this._rawData.CoverUrl;
+      }
+      
+      // Fallback to cover object (from full GameDto)
       const cover = this.cover;
       return cover?.imageUrl || cover?.url || null;
     } catch (error) {

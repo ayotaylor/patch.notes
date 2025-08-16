@@ -32,7 +32,7 @@ namespace Backend.Controllers
                     Guid.TryParse(userId, out var parsedUserId) ? parsedUserId : null);
                 if (result == null || result.Data == null || result.Data.Count <= 0)
                 {
-                    return NotFound(new ApiResponse<PagedResponse<GameDto>>
+                    return Ok(new ApiResponse<PagedResponse<GameDto>>
                     {
                         Success = false,
                         Message = "No games found",
@@ -134,10 +134,11 @@ namespace Backend.Controllers
                 var similarGames = await _gameService.GetSimilarGamesAsync(id);
                 if (similarGames == null || similarGames.Count <= 0)
                 {
-                    return NotFound(new ApiResponse<List<GameDto>>
+                    return Ok(new ApiResponse<List<GameDto>>
                     {
                         Success = false,
-                        Message = "No similar games found"
+                        Message = "No similar games found",
+                        Data = [],
                     });
                 }
                 return Ok(new ApiResponse<List<GameDto>>
@@ -167,10 +168,11 @@ namespace Backend.Controllers
                 var games = await _gameService.GetGamesByFranchiseAsync(franchiseId);
                 if (games == null || games.Count <= 0)
                 {
-                    return NotFound(new ApiResponse<List<GameDto>>
+                    return Ok(new ApiResponse<List<GameDto>>
                     {
                         Success = false,
-                        Message = "No games found for this franchise"
+                        Message = "No games found for this franchise",
+                        Data = []
                     });
                 }
                 return Ok(new ApiResponse<List<GameDto>>
@@ -203,10 +205,11 @@ namespace Backend.Controllers
                             popularGamesLimit : 20);
                 if (popularGames == null || popularGames.Count <= 0)
                 {
-                    return NotFound(new ApiResponse<List<GameDto>>
+                    return Ok(new ApiResponse<List<GameDto>>
                     {
                         Success = false,
-                        Message = "No popular games found"
+                        Message = "No popular games found",
+                        Data = []
                     });
                 }
                 return Ok(new ApiResponse<List<GameDto>>
@@ -238,10 +241,11 @@ namespace Backend.Controllers
                             gamesLimit : 20);
                 if (newGames == null || newGames.Count <= 0)
                 {
-                    return NotFound(new ApiResponse<List<GameDto>>
+                    return Ok(new ApiResponse<List<GameDto>>
                     {
                         Success = false,
-                        Message = "No popular games found"
+                        Message = "No popular games found",
+                        Data = []
                     });
                 }
                 return Ok(new ApiResponse<List<GameDto>>
@@ -269,12 +273,13 @@ namespace Backend.Controllers
             {
                 var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
                 var games = await _gameService.GetGamesByGenreAsync(genreId, limit);
-                if (games == null || !games.Any())
+                if (games == null || games.Count == 0)
                 {
-                    return NotFound(new ApiResponse<List<GameDto>>
+                    return Ok(new ApiResponse<List<GameDto>>
                     {
                         Success = false,
-                        Message = "No games found for this genre"
+                        Message = "No games found for this genre",
+                        Data = []
                     });
                 }
                 return Ok(new ApiResponse<List<GameDto>>

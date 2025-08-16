@@ -1,4 +1,5 @@
 using Backend.Models.DTO.Game;
+using Backend.Models.DTO.Social;
 using Backend.Models.Game;
 using Backend.Models.Game.ReferenceModels;
 using Game.Models.ReferenceModels;
@@ -38,16 +39,15 @@ namespace Backend.Mapping
                     .Select(gc => gc.Company.ToDto(game.Id)).ToList(),
                 PlayerPerspectives = game.GamePlayerPerspectives
                     .Select(pp => pp.PlayerPerspective.ToDto()).ToList(),
-                Dlcs = game.DlcGames.Select(d => d.DlcGame.ToDto()).ToList(),
+                Dlcs = game.DlcGames.Select(d => d.DlcGame.ToRelationshipDto()).ToList(),
                 Expansions = game.ExpansionGames
-                    .Select(e => e.ExpansionGame.ToDto()).ToList(),
-                Ports = game.PortGames.Select(p => p.PortGame.ToDto()).ToList(),
-                Remakes = game.RemakeGames.Select(r => r.RemakeGame.ToDto()).ToList(),
+                    .Select(e => e.ExpansionGame.ToRelationshipDto()).ToList(),
+                Ports = game.PortGames.Select(p => p.PortGame.ToRelationshipDto()).ToList(),
+                Remakes = game.RemakeGames.Select(r => r.RemakeGame.ToRelationshipDto()).ToList(),
                 Remasters = game.RemasterGames
-                    .Select(rm => rm.RemasterGame.ToDto()).ToList(),
-                // TODO: figure out how to handle similar games
+                    .Select(rm => rm.RemasterGame.ToRelationshipDto()).ToList(),
                 SimilarGames = game.SimilarGames
-                    .Select(sg => sg.Game.ToDto()).ToList(),
+                    .Select(sg => sg.SimilarGameRef.ToRelationshipDto()).ToList(),
                 LikesCount = game.Likes.Count,
                 FavoritesCount = game.Favorites.Count,
                 // IsLikedByUser = game.Likes.Any(l => l.UserId == null), // assuming UserId is nullable
@@ -271,6 +271,53 @@ namespace Backend.Mapping
                 IgdbId = playerPerspective.IgdbId,
                 Name = playerPerspective.Name,
                 Slug = playerPerspective.Slug
+            };
+        }
+
+        // New mapping methods for summary DTOs
+        public static GameRelationshipDto ToRelationshipDto(this Backend.Models.Game.Game game)
+        {
+            return new GameRelationshipDto
+            {
+                IgdbId = game.IgdbId,
+                Name = game.Name,
+                Slug = game.Slug,
+                CoverUrl = game.Covers?.FirstOrDefault()?.Url,
+                IgdbRating = game.Rating,
+                FirstReleaseDate = game.FirstReleaseDate
+            };
+        }
+
+        public static GameSearchResultDto ToSearchResultDto(this Backend.Models.Game.Game game)
+        {
+            return new GameSearchResultDto
+            {
+                IgdbId = game.IgdbId,
+                Name = game.Name,
+                Slug = game.Slug,
+                Summary = game.Summary,
+                FirstReleaseDate = game.FirstReleaseDate,
+                IgdbRating = game.Rating,
+                Hypes = game.Hypes,
+                Genres = game.GameGenres.Select(g => g.Genre.ToDto()).ToList(),
+                Covers = game.Covers.Select(c => c.ToDto()).ToList(),
+                Platforms = game.ReleaseDates
+                    .Select(rd => rd.Platform.ToDto()).Distinct().ToList(),
+                Companies = game.GameCompanies
+                    .Select(gc => gc.Company.ToDto(game.Id)).ToList(),
+                LikesCount = game.Likes.Count,
+                FavoritesCount = game.Favorites.Count
+            };
+        }
+
+        public static GameSummaryDto ToSummaryDto(this Backend.Models.Game.Game game)
+        {
+            return new GameSummaryDto
+            {
+                IgdbId = game.IgdbId,
+                Name = game.Name,
+                Slug = game.Slug,
+                CoverUrl = game.Covers?.FirstOrDefault()?.Url
             };
         }
     }

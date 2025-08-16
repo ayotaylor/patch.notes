@@ -761,7 +761,22 @@ export const useGamesStore = defineStore("games", () => {
         return;
       }
 
-      return result;
+      const gameInstances = [];
+
+      for (const gameItem of result) {
+        try {
+          const gameInstance = createGame(gameItem);
+          if (gameInstance && gameInstance.id) {
+            // Cache with medium priority cover preloading for likes
+            cacheGame(gameInstance, null, { preloadCover: true, coverPriority: 'medium' });
+            gameInstances.push(gameInstance);
+          }
+        } catch (gameError) {
+          console.error('getUserLikes: Error creating game instance:', gameError);
+        }
+      }
+
+      return gameInstances;
     } catch (err) {
       console.error("getUserLikes: Error:", err);
       error.value = err.message;
@@ -860,7 +875,22 @@ export const useGamesStore = defineStore("games", () => {
         return;
       }
 
-      return result;
+      const gameInstances = [];
+
+      for (const gameItem of result) {
+        try {
+          const gameInstance = createGame(gameItem);
+          if (gameInstance && gameInstance.id) {
+            // Cache with medium priority cover preloading for favorites
+            cacheGame(gameInstance, null, { preloadCover: true, coverPriority: 'medium' });
+            gameInstances.push(gameInstance);
+          }
+        } catch (gameError) {
+          console.error('getUserFavorites: Error creating game instance:', gameError);
+        }
+      }
+
+      return gameInstances;
     } catch (err) {
       console.error("getUserFavorites: Error:", err);
       error.value = err.message;
