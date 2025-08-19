@@ -127,9 +127,13 @@
           :truncate-reviews="false"
           :empty-message="emptyMessage"
           :empty-sub-message="emptySubMessage"
+          :liked-reviews="likedReviews"
+          :processing-like-reviews="processingLikeReviews"
           @load-more="loadMore"
           @edit="handleEditReview"
           @delete="handleDeleteReview"
+          @toggleLike="handleToggleLike"
+          @showComments="handleShowComments"
         >
           <template #empty-actions>
             <div class="d-flex gap-2 justify-content-center">
@@ -192,6 +196,8 @@ import { useToast } from 'vue-toastification'
 import { reviewsService } from '@/services/reviewsService'
 import ReviewsList from './ReviewsList.vue'
 import ReviewForm from './ReviewForm.vue'
+import { socialService } from '@/services/socialService'
+import { commentsService } from '@/services/commentsService'
 
 // Props
 const props = defineProps({
@@ -226,6 +232,8 @@ const hasMore = ref(false)
 const totalCount = ref(0)
 const page = ref(1)
 const pageSize = 15
+const likedReviews = ref(new Set())
+const processingLikeReviews = ref(new Set())
 
 // Filters
 const searchQuery = ref('')
@@ -312,10 +320,13 @@ const loadReviews = async (pageNum = 1, append = false) => {
       }
     }
 
+    // Load comment counts for reviews
+    const reviewsWithCommentCounts = await commentsService.loadCommentCountsForReviews(response.data || [])
+
     if (append && pageNum > 1) {
-      reviews.value.push(...response.data)
+      reviews.value.push(...reviewsWithCommentCounts)
     } else {
-      reviews.value = response.data
+      reviews.value = reviewsWithCommentCounts
     }
 
     hasMore.value = response.hasNextPage || false
@@ -417,6 +428,47 @@ const closeEditModal = () => {
   showEditModal.value = false
   editingReview.value = null
   isSubmittingReview.value = false
+}
+
+const handleToggleLike = async (review) => {
+  if (!authStore.user) {
+    toast.info('Please sign in to like reviews')
+    return
+  }
+
+  const reviewId = review.id
+  const wasLiked = likedReviews.value.has(reviewId)
+
+  if (processingLikeReviews.value.has(reviewId)) return
+
+  try {
+    processingLikeReviews.value.add(reviewId)
+
+    if (wasLiked) {
+      await socialService.unlikeReview(reviewId)
+      likedReviews.value.delete(reviewId)
+    } else {
+      await socialService.likeReview(reviewId)
+      likedReviews.value.add(reviewId)
+    }
+
+    // Update like count in review
+    const targetReview = reviews.value.find(r => r.id === reviewId)
+    if (targetReview) {
+      targetReview.likeCount = (targetReview.likeCount || 0) + (wasLiked ? -1 : 1)
+    }
+
+  } catch (err) {
+    console.error('Error toggling review like:', err)
+    toast.error('Failed to update like')
+  } finally {
+    processingLikeReviews.value.delete(reviewId)
+  }
+}
+
+const handleShowComments = (review) => {
+  // Navigate to dedicated review details page
+  router.push(`/reviews/${review.id}`)
 }
 
 // Watchers

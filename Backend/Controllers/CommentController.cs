@@ -43,6 +43,29 @@ namespace Backend.Controllers
             }
         }
 
+        [HttpGet("review/{reviewId:guid}/count")]
+        public async Task<ActionResult<ApiResponse<CommentCountDto>>> GetReviewCommentCount(Guid reviewId)
+        {
+            try
+            {
+                var count = await _commentService.GetReviewCommentCountAsync(reviewId);
+                return Ok(new ApiResponse<CommentCountDto>
+                {
+                    Success = true,
+                    Data = new CommentCountDto { TotalCount = count },
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error fetching comment count for review {ReviewId}", reviewId);
+                return StatusCode(500, new ApiResponse<CommentCountDto>
+                {
+                    Success = false,
+                    Message = "An error occurred while fetching review comment count",
+                });
+            }
+        }
+
         [HttpGet("list/{gameListId:guid}")]
         public async Task<ActionResult<ApiResponse<PagedResponse<CommentDto>>>> GetGameListComments(Guid gameListId, [FromQuery] int page = 1, [FromQuery] int pageSize = 20)
         {
@@ -62,6 +85,29 @@ namespace Backend.Controllers
                 {
                     Success = false,
                     Message = "An error occurred while fetching game list comments",
+                });
+            }
+        }
+
+        [HttpGet("list/{gameListId:guid}/count")]
+        public async Task<ActionResult<ApiResponse<CommentCountDto>>> GetGameListCommentCount(Guid gameListId)
+        {
+            try
+            {
+                var count = await _commentService.GetGameListCommentCountAsync(gameListId);
+                return Ok(new ApiResponse<CommentCountDto>
+                {
+                    Success = true,
+                    Data = new CommentCountDto { TotalCount = count },
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error fetching comment count for game list {GameListId}", gameListId);
+                return StatusCode(500, new ApiResponse<CommentCountDto>
+                {
+                    Success = false,
+                    Message = "An error occurred while fetching game list comment count",
                 });
             }
         }

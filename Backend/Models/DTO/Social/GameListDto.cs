@@ -10,7 +10,7 @@ namespace Backend.Models.DTO.Social
 
         [Required]
         [StringLength(100, ErrorMessage = "List name cannot exceed 100 characters")]
-        public string Name { get; set; } = string.Empty;
+        public string Title { get; set; } = string.Empty;
 
         [StringLength(500, ErrorMessage = "Description cannot exceed 500 characters")]
         public string? Description { get; set; }

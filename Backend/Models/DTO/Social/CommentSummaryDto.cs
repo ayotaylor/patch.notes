@@ -7,6 +7,6 @@ namespace Backend.Models.DTO.Social
         public DateTime CreatedAt { get; set; }
         public string? UserDisplayName { get; set; }
         public int LikesCount { get; set; }
-        public int RepliesCount { get; set; }
+        public int ReplyCount { get; set; }
     }
 }

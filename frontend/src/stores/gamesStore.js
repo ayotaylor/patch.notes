@@ -1,6 +1,7 @@
 import { defineStore } from "pinia";
 import { ref, computed, shallowRef } from "vue";
 import { gamesService } from "@/services/gamesService";
+import { socialService } from "@/services/socialService";
 import { Game } from "@/models/Game";
 
 export const useGamesStore = defineStore("games", () => {
@@ -521,7 +522,7 @@ export const useGamesStore = defineStore("games", () => {
 
       // For new searches, show all loaded results; for appends, keep showing all
       searchResults.value = allSearchResults.value;
-      
+
       console.log('searchGames: Final results:', gameInstances.length, 'new games,', allSearchResults.value.length, 'total games');
 
       return gameInstances;
@@ -672,11 +673,11 @@ export const useGamesStore = defineStore("games", () => {
     }
   };
 
-  const removeFromLikes = async (userId, gameId) => {
-    if (!userId) {
-      console.warn('removeFromLikes: No userId provided');
-      return;
-    }
+  const removeFromLikes = async (gameId) => {
+    // if (!userId) {
+    //   console.warn('removeFromLikes: No userId provided');
+    //   return;
+    // }
     if (!gameId) {
       console.warn('removeFromLikes: No gameId provided');
       return;
@@ -685,32 +686,27 @@ export const useGamesStore = defineStore("games", () => {
       loading.value = true;
       error.value = null;
 
-      const result = await gamesService.removeFromLikes(userId, gameId)
+      const result = await socialService.removeGameLike(gameId)
 
       if(!result) {
         throw new Error("User likes operation failed")
-      }
-
-      if (typeof result !== 'boolean') {
-        console.error('removeFromLikes: Expected boolean but got:', typeof result);
-        return;
       }
 
       return result
     } catch (err) {
       console.error("removeFromLikes: Error:", err);
       error.value = err.message;
-      return [];
+      return false;
     } finally {
       loading.value = false;
     }
   };
 
-  const addToLikes = async (userId, gameId) => {
-    if (!userId) {
-      console.warn('addToLikes: No userId provided');
-      return;
-    }
+  const addToLikes = async (gameId) => {
+    // if (!userId) {
+    //   console.warn('addToLikes: No userId provided');
+    //   return;
+    // }
     if (!gameId) {
       console.warn('addToLikes: No gameId provided');
       return;
@@ -719,22 +715,17 @@ export const useGamesStore = defineStore("games", () => {
       loading.value = true;
       error.value = null;
 
-      const result = await gamesService.addToLikes(userId, gameId)
+      const result = await socialService.likeGame(gameId)
 
       if(!result) {
         throw new Error("User likes operation failed")
-      }
-
-      if (typeof result !== 'boolean') {
-        console.error('addToLikes: Expected boolean but got:', typeof result);
-        return;
       }
 
       return result
     } catch (err) {
       console.error("addToLikes: Error:", err);
       error.value = err.message;
-      return [];
+      return false;
     } finally {
       loading.value = false;
     }
@@ -750,22 +741,26 @@ export const useGamesStore = defineStore("games", () => {
       loading.value = true;
       error.value = null;
 
-      const result = await gamesService.getUserLikes(userId);
+      const result = await socialService.getUserLikes(userId);
 
       if(!result) {
         throw new Error("Get User likes operation failed");
       }
 
-      if (!Array.isArray(result)) {
-        console.error('getUserLikes: Expected list but got: ', typeof result);
-        return;
+      // Handle paginated response
+      const likes = result.data || result;
+      if (!Array.isArray(likes)) {
+        console.error('getUserLikes: Expected list but got: ', typeof likes);
+        return [];
       }
 
       const gameInstances = [];
 
-      for (const gameItem of result) {
+      for (const likeItem of likes) {
         try {
-          const gameInstance = createGame(gameItem);
+          // Extract game data from like item
+          const gameData = likeItem.game || likeItem;
+          const gameInstance = createGame(gameData);
           if (gameInstance && gameInstance.id) {
             // Cache with medium priority cover preloading for likes
             cacheGame(gameInstance, null, { preloadCover: true, coverPriority: 'medium' });
@@ -786,11 +781,11 @@ export const useGamesStore = defineStore("games", () => {
     }
   };
 
-  const removeFromFavorites = async (userId, gameId) => {
-    if (!userId) {
-      console.warn('removeFromFavorites: No userId provided');
-      return;
-    }
+  const removeFromFavorites = async (gameId) => {
+    // if (!userId) {
+    //   console.warn('removeFromFavorites: No userId provided');
+    //   return;
+    // }
     if (!gameId) {
       console.warn('removeFromFavorites: No gameId provided');
       return;
@@ -799,32 +794,27 @@ export const useGamesStore = defineStore("games", () => {
       loading.value = true;
       error.value = null;
 
-      const result = await gamesService.removeFromFavorites(userId, gameId)
+      const result = await socialService.removeFromFavorites(gameId)
 
       if(!result) {
         throw new Error("User favorite operation failed")
-      }
-
-      if (typeof result !== 'boolean') {
-        console.error('removeFromFavorites: Expected boolean but got:', typeof result);
-        return;
       }
 
       return result
     } catch (err) {
       console.error("removeFromFavorites: Error:", err);
       error.value = err.message;
-      return [];
+      return false;
     } finally {
       loading.value = false;
     }
   };
 
-  const addToFavorites = async (userId, gameId) => {
-    if (!userId) {
-      console.warn('addToFavorites: No userId provided');
-      return;
-    }
+  const addToFavorites = async (gameId) => {
+    // if (!userId) {
+    //   console.warn('addToFavorites: No userId provided');
+    //   return;
+    // }
     if (!gameId) {
       console.warn('addToFavorites: No gameId provided');
       return;
@@ -833,22 +823,17 @@ export const useGamesStore = defineStore("games", () => {
       loading.value = true;
       error.value = null;
 
-      const result = await gamesService.addToFavorites(userId, gameId)
+      const result = await socialService.addToFavorites(gameId)
 
       if(!result) {
         throw new Error("User favorite operation failed")
-      }
-
-      if (typeof result !== 'boolean') {
-        console.error('addToFavorites: Expected boolean but got:', typeof result);
-        return;
       }
 
       return result
     } catch (err) {
       console.error("addToFavorites: Error:", err);
       error.value = err.message;
-      return [];
+      return false;
     } finally {
       loading.value = false;
     }
@@ -864,22 +849,26 @@ export const useGamesStore = defineStore("games", () => {
       loading.value = true;
       error.value = null;
 
-      const result = await gamesService.getUserFavorites(userId);
+      const result = await socialService.getUserFavorites(userId);
 
       if(!result) {
         throw new Error("Get User favorites operation failed");
       }
 
-      if (!Array.isArray(result)) {
-        console.error('getUserFavorites: Expected list but got: ', typeof result);
-        return;
+      // Handle paginated response
+      const favorites = result.data || result;
+      if (!Array.isArray(favorites)) {
+        console.error('getUserFavorites: Expected list but got: ', typeof favorites);
+        return [];
       }
 
       const gameInstances = [];
 
-      for (const gameItem of result) {
+      for (const favoriteItem of favorites) {
         try {
-          const gameInstance = createGame(gameItem);
+          // Extract game data from favorite item
+          const gameData = favoriteItem.game || favoriteItem;
+          const gameInstance = createGame(gameData);
           if (gameInstance && gameInstance.id) {
             // Cache with medium priority cover preloading for favorites
             cacheGame(gameInstance, null, { preloadCover: true, coverPriority: 'medium' });
@@ -905,7 +894,7 @@ export const useGamesStore = defineStore("games", () => {
     if (!currentSearchQuery.value || !searchPagination.value.hasNextPage) {
       return;
     }
-    
+
     const nextPage = searchPagination.value.page + 1;
     await searchGames(currentSearchQuery.value, nextPage, true);
     console.log('Loaded next page:', nextPage);

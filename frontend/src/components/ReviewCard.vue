@@ -69,7 +69,7 @@
 
       <!-- Game Image (if showing game) -->
       <div v-if="showGame && review.game" class="d-flex mb-3">
-        <router-link :to="`/games/${review.game.igdbId}`" class="text-decoration-none">
+        <router-link :to="`/games/${review.game.slug}`" class="text-decoration-none">
           <img
             :src="gameImageUrl"
             :alt="review.game.name"
@@ -94,15 +94,44 @@
         </button>
       </div>
 
-      <!-- Review Footer -->
-      <div v-if="showDate || showGameName" class="mt-3 pt-3 border-top">
-        <div class="d-flex justify-content-between align-items-center text-muted small">
-          <div v-if="showGameName && review.game">
-            <i class="fas fa-gamepad me-1"></i>
-            {{ review.game.name }}
+      <!-- Review Footer with Actions -->
+      <div class="mt-3 pt-3 border-top">
+        <div class="d-flex justify-content-between align-items-center">
+          <!-- Like and Comment Actions -->
+          <div class="d-flex align-items-center">
+            <!-- Like Button -->
+            <button
+              v-if="showLikeButton"
+              @click="$emit('toggleLike', review)"
+              class="btn btn-sm btn-link text-muted p-0 me-3"
+              :class="{ 'text-primary': isLiked }"
+              :disabled="isProcessingLike"
+            >
+              <span v-if="isProcessingLike" class="spinner-border spinner-border-sm me-1" role="status" style="width: 12px; height: 12px;"></span>
+              <i class="fas fa-heart me-1"></i>
+              {{ review.likeCount || 0 }}
+            </button>
+
+            <!-- Comment Button -->
+            <button
+              v-if="showCommentButton"
+              @click="$emit('showComments', review)"
+              class="btn btn-sm btn-link text-muted p-0"
+            >
+              <i class="fas fa-comment me-1"></i>
+              {{ review.commentCount || 0 }}
+            </button>
           </div>
-          <div v-if="showDate">
-            {{ relativeDate }}
+
+          <!-- Game Name and Date -->
+          <div class="d-flex align-items-center text-muted small">
+            <div v-if="showGameName && review.game" class="me-3">
+              <i class="fas fa-gamepad me-1"></i>
+              {{ review.game.name }}
+            </div>
+            <div v-if="showDate">
+              {{ relativeDate }}
+            </div>
           </div>
         </div>
       </div>
@@ -144,11 +173,27 @@ const props = defineProps({
   maxLength: {
     type: Number,
     default: 200
+  },
+  showLikeButton: {
+    type: Boolean,
+    default: true
+  },
+  showCommentButton: {
+    type: Boolean,
+    default: true
+  },
+  isLiked: {
+    type: Boolean,
+    default: false
+  },
+  isProcessingLike: {
+    type: Boolean,
+    default: false
   }
 })
 
 // Emits
-defineEmits(['edit', 'delete'])
+defineEmits(['edit', 'delete', 'toggleLike', 'showComments'])
 
 // Composables
 const authStore = useAuthStore()

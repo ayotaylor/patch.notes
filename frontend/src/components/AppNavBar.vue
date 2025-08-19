@@ -6,13 +6,42 @@
                 Patch Notes!!!
             </router-link>
 
-            <div class="navbar-nav ms-auto">
-                <UserDropdown v-if="authStore.user" />
+            <!-- Mobile toggle button -->
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
 
-                <!-- Mobile toggle button (if you want responsive navbar) -->
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                    <span class="navbar-toggler-icon"></span>
-                </button>
+            <!-- Navigation Links -->
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <router-link class="nav-link" to="/dashboard" active-class="active">
+                            <i class="fas fa-home me-1"></i>Dashboard
+                        </router-link>
+                    </li>
+                    <li class="nav-item">
+                        <router-link class="nav-link" to="/reviews" active-class="active">
+                            <i class="fas fa-star me-1"></i>Reviews
+                        </router-link>
+                    </li>
+                    <li class="nav-item">
+                        <router-link class="nav-link" to="/lists" active-class="active">
+                            <i class="fas fa-list-ul me-1"></i>Lists
+                        </router-link>
+                    </li>
+                </ul>
+
+                <div class="navbar-nav">
+                    <UserDropdown v-if="authStore.user" />
+                    <div v-else class="d-flex">
+                        <router-link to="/login" class="btn btn-outline-light btn-sm me-2">
+                            Login
+                        </router-link>
+                        <router-link to="/register" class="btn btn-light btn-sm">
+                            Sign Up
+                        </router-link>
+                    </div>
+                </div>
             </div>
         </div>
     </nav>

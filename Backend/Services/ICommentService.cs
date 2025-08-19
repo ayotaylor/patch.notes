@@ -14,5 +14,7 @@ namespace Backend.Services
         Task<CommentDto?> UpdateCommentAsync(Guid commentId, string content);
         Task<bool> DeleteCommentAsync(Guid commentId);
         Task<bool> IsUserCommentOwnerAsync(Guid commentId, Guid userId);
+        Task<int> GetReviewCommentCountAsync(Guid reviewId);
+        Task<int> GetGameListCommentCountAsync(Guid gameListId);
     }
 }

@@ -10,7 +10,7 @@ namespace Backend.Mapping
         {
             return new FavoriteDto
             {
-                UserId = favorite.UserId,
+                //UserId = favorite.UserId,
                 GameId = favorite.Game?.IgdbId ?? 0,
                 AddedAt = favorite.AddedAt,
                 Game = favorite.Game?.ToSummaryDto(),
@@ -21,7 +21,7 @@ namespace Backend.Mapping
         {
             return new LikeDto
             {
-                UserId = like.UserId,
+                //UserId = like.UserId,
                 GameId = like.Game?.IgdbId ?? 0,
                 CreatedAt = like.CreatedAt,
                 Game = like.Game?.ToSummaryDto(),
@@ -42,6 +42,7 @@ namespace Backend.Mapping
                 UpdatedAt = review.UpdatedAt,
                 UserDisplayName = review.User?.DisplayName ?? review.User?.FirstName + " " + review.User?.LastName,
                 GameTitle = review.Game?.Name,
+                LikeCount = review.Likes?.Count,
                 User = review.User != null ? new UserSummaryDto
                 {
                     Id = Guid.Parse(review.User.UserId),
@@ -64,7 +65,7 @@ namespace Backend.Mapping
             {
                 Id = gameList.Id,
                 UserId = gameList.UserId,
-                Name = gameList.Name,
+                Title = gameList.Name,
                 Description = gameList.Description,
                 IsPublic = gameList.IsPublic,
                 CreatedAt = gameList.CreatedAt,
@@ -117,8 +118,8 @@ namespace Backend.Mapping
                 CreatedAt = comment.CreatedAt,
                 UpdatedAt = comment.UpdatedAt,
                 UserDisplayName = comment.User?.DisplayName ?? comment.User?.FirstName + " " + comment.User?.LastName,
-                LikesCount = comment.Likes?.Count ?? 0,
-                RepliesCount = comment.Replies?.Count ?? 0,
+                LikeCount = comment.Likes?.Count ?? 0,
+                ReplyCount = comment.Replies?.Count ?? 0,
                 User = comment.User != null ? new UserSummaryDto
                 {
                     Id = Guid.Parse(comment.User.UserId),
@@ -138,7 +139,7 @@ namespace Backend.Mapping
                 CreatedAt = comment.CreatedAt,
                 UserDisplayName = comment.User?.DisplayName ?? comment.User?.FirstName + " " + comment.User?.LastName,
                 LikesCount = comment.Likes?.Count ?? 0,
-                RepliesCount = comment.Replies?.Count ?? 0
+                ReplyCount = comment.Replies?.Count ?? 0
             };
         }
     }

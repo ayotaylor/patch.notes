@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using Backend.Models.DTO.Game;
 using Backend.Models.DTO.Response;
 using Backend.Models.DTO.Social;
@@ -58,7 +59,6 @@ namespace Backend.Controllers
             try
             {
                 if (favoriteDto == null
-                || favoriteDto.UserId == Guid.Empty
                     || favoriteDto.GameId <= 0)
                 {
                     return BadRequest(new ApiResponse<bool>
@@ -68,7 +68,16 @@ namespace Backend.Controllers
                         Data = false
                     });
                 }
-                var result = await _socialService.AddToFavoritesAsync(favoriteDto.UserId, favoriteDto.GameId);
+                var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (string.IsNullOrEmpty(userId) || !Guid.TryParse(userId, out var userGuid))
+                {
+                    return Unauthorized(new ApiResponse<CommentDto>
+                    {
+                        Success = false,
+                        Message = "User not authenticated",
+                    });
+                }
+                var result = await _socialService.AddToFavoritesAsync(userGuid, favoriteDto.GameId);
                 if (result)
                 {
                     return Ok(new ApiResponse<bool>
@@ -97,8 +106,7 @@ namespace Backend.Controllers
         {
             try
             {
-                if (favoriteDto == null || favoriteDto.UserId == Guid.Empty
-                    || favoriteDto.GameId <= 0)
+                if (favoriteDto == null || favoriteDto.GameId <= 0)
                 {
                     return BadRequest(new ApiResponse<bool>
                     {
@@ -107,7 +115,16 @@ namespace Backend.Controllers
                         Data = false
                     });
                 }
-                var result = await _socialService.RemoveFromFavoritesAsync(favoriteDto.UserId, favoriteDto.GameId);
+                var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (string.IsNullOrEmpty(userId) || !Guid.TryParse(userId, out var userGuid))
+                {
+                    return Unauthorized(new ApiResponse<CommentDto>
+                    {
+                        Success = false,
+                        Message = "User not authenticated",
+                    });
+                }
+                var result = await _socialService.RemoveFromFavoritesAsync(userGuid, favoriteDto.GameId);
                 if (result)
                 {
                     return Ok(new ApiResponse<bool>
@@ -174,7 +191,7 @@ namespace Backend.Controllers
         {
             try
             {
-                if (likeDto == null || likeDto.UserId == Guid.Empty || likeDto.GameId <= 0)
+                if (likeDto == null || likeDto.GameId <= 0)
                 {
                     return BadRequest(new ApiResponse<bool>
                     {
@@ -183,7 +200,16 @@ namespace Backend.Controllers
                         Data = false
                     });
                 }
-                var result = await _socialService.LikeGameAsync(likeDto.UserId, likeDto.GameId);
+                var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (string.IsNullOrEmpty(userId) || !Guid.TryParse(userId, out var userGuid))
+                {
+                    return Unauthorized(new ApiResponse<CommentDto>
+                    {
+                        Success = false,
+                        Message = "User not authenticated",
+                    });
+                }
+                var result = await _socialService.LikeGameAsync(userGuid, likeDto.GameId);
                 if (result)
                 {
                     return Ok(new ApiResponse<bool>
@@ -217,7 +243,7 @@ namespace Backend.Controllers
         {
             try
             {
-                if (likeDto == null || likeDto.UserId == Guid.Empty || likeDto.GameId <= 0)
+                if (likeDto == null || likeDto.GameId <= 0)
                 {
                     return BadRequest(new ApiResponse<bool>
                     {
@@ -226,7 +252,16 @@ namespace Backend.Controllers
                         Data = false
                     });
                 }
-                var result = await _socialService.UnlikeGameAsync(likeDto.UserId, likeDto.GameId);
+                var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (string.IsNullOrEmpty(userId) || !Guid.TryParse(userId, out var userGuid))
+                {
+                    return Unauthorized(new ApiResponse<CommentDto>
+                    {
+                        Success = false,
+                        Message = "User not authenticated",
+                    });
+                }
+                var result = await _socialService.UnlikeGameAsync(userGuid, likeDto.GameId);
                 if (result)
                 {
                     return Ok(new ApiResponse<bool>
@@ -257,11 +292,20 @@ namespace Backend.Controllers
 
         // Review Likes
         [HttpPost("reviews/{reviewId:guid}/like")]
-        public async Task<ActionResult<ApiResponse<bool>>> LikeReview(Guid reviewId, [FromBody] LikeRequest request)
+        public async Task<ActionResult<ApiResponse<bool>>> LikeReview(Guid reviewId)
         {
             try
             {
-                var result = await _socialService.LikeReviewAsync(request.UserId, reviewId);
+                var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (string.IsNullOrEmpty(userId) || !Guid.TryParse(userId, out var userGuid))
+                {
+                    return Unauthorized(new ApiResponse<CommentDto>
+                    {
+                        Success = false,
+                        Message = "User not authenticated",
+                    });
+                }
+                var result = await _socialService.LikeReviewAsync(userGuid, reviewId);
                 if (result)
                 {
                     return Ok(new ApiResponse<bool>
@@ -290,11 +334,20 @@ namespace Backend.Controllers
         }
 
         [HttpDelete("reviews/{reviewId:guid}/like")]
-        public async Task<ActionResult<ApiResponse<bool>>> UnlikeReview(Guid reviewId, [FromBody] LikeRequest request)
+        public async Task<ActionResult<ApiResponse<bool>>> UnlikeReview(Guid reviewId)
         {
             try
             {
-                var result = await _socialService.UnlikeReviewAsync(request.UserId, reviewId);
+                var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (string.IsNullOrEmpty(userId) || !Guid.TryParse(userId, out var userGuid))
+                {
+                    return Unauthorized(new ApiResponse<CommentDto>
+                    {
+                        Success = false,
+                        Message = "User not authenticated",
+                    });
+                }
+                var result = await _socialService.UnlikeReviewAsync(userGuid, reviewId);
                 if (result)
                 {
                     return Ok(new ApiResponse<bool>
@@ -324,11 +377,20 @@ namespace Backend.Controllers
 
         // GameList Likes
         [HttpPost("lists/{gameListId:guid}/like")]
-        public async Task<ActionResult<ApiResponse<bool>>> LikeGameList(Guid gameListId, [FromBody] LikeRequest request)
+        public async Task<ActionResult<ApiResponse<bool>>> LikeGameList(Guid gameListId)
         {
             try
             {
-                var result = await _socialService.LikeGameListAsync(request.UserId, gameListId);
+                var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (string.IsNullOrEmpty(userId) || !Guid.TryParse(userId, out var userGuid))
+                {
+                    return Unauthorized(new ApiResponse<CommentDto>
+                    {
+                        Success = false,
+                        Message = "User not authenticated",
+                    });
+                }
+                var result = await _socialService.LikeGameListAsync(userGuid, gameListId);
                 if (result)
                 {
                     return Ok(new ApiResponse<bool>
@@ -357,11 +419,20 @@ namespace Backend.Controllers
         }
 
         [HttpDelete("lists/{gameListId:guid}/like")]
-        public async Task<ActionResult<ApiResponse<bool>>> UnlikeGameList(Guid gameListId, [FromBody] LikeRequest request)
+        public async Task<ActionResult<ApiResponse<bool>>> UnlikeGameList(Guid gameListId)
         {
             try
             {
-                var result = await _socialService.UnlikeGameListAsync(request.UserId, gameListId);
+                var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (string.IsNullOrEmpty(userId) || !Guid.TryParse(userId, out var userGuid))
+                {
+                    return Unauthorized(new ApiResponse<CommentDto>
+                    {
+                        Success = false,
+                        Message = "User not authenticated",
+                    });
+                }
+                var result = await _socialService.UnlikeGameListAsync(userGuid, gameListId);
                 if (result)
                 {
                     return Ok(new ApiResponse<bool>
@@ -391,11 +462,20 @@ namespace Backend.Controllers
 
         // Comment Likes
         [HttpPost("comments/{commentId:guid}/like")]
-        public async Task<ActionResult<ApiResponse<bool>>> LikeComment(Guid commentId, [FromBody] LikeRequest request)
+        public async Task<ActionResult<ApiResponse<bool>>> LikeComment(Guid commentId)
         {
             try
             {
-                var result = await _socialService.LikeCommentAsync(request.UserId, commentId);
+                var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (string.IsNullOrEmpty(userId) || !Guid.TryParse(userId, out var userGuid))
+                {
+                    return Unauthorized(new ApiResponse<CommentDto>
+                    {
+                        Success = false,
+                        Message = "User not authenticated",
+                    });
+                }
+                var result = await _socialService.LikeCommentAsync(userGuid, commentId);
                 if (result)
                 {
                     return Ok(new ApiResponse<bool>
@@ -424,11 +504,20 @@ namespace Backend.Controllers
         }
 
         [HttpDelete("comments/{commentId:guid}/like")]
-        public async Task<ActionResult<ApiResponse<bool>>> UnlikeComment(Guid commentId, [FromBody] LikeRequest request)
+        public async Task<ActionResult<ApiResponse<bool>>> UnlikeComment(Guid commentId)
         {
             try
             {
-                var result = await _socialService.UnlikeCommentAsync(request.UserId, commentId);
+                var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (string.IsNullOrEmpty(userId) || !Guid.TryParse(userId, out var userGuid))
+                {
+                    return Unauthorized(new ApiResponse<CommentDto>
+                    {
+                        Success = false,
+                        Message = "User not authenticated",
+                    });
+                }
+                var result = await _socialService.UnlikeCommentAsync(userGuid, commentId);
                 if (result)
                 {
                     return Ok(new ApiResponse<bool>
@@ -457,8 +546,8 @@ namespace Backend.Controllers
         }
     }
 
-    public class LikeRequest
-    {
-        public Guid UserId { get; set; }
-    }
+    // public class LikeRequest
+    // {
+    //     public Guid UserId { get; set; }
+    // }
 }

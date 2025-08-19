@@ -305,10 +305,14 @@
                 :truncate-reviews="true"
                 :empty-message="(game.reviewsCount === 0 && gameReviews.length === 0) ? 'No reviews yet' : 'Loading reviews...'"
                 :empty-sub-message="(game.reviewsCount === 0 && gameReviews.length === 0) ? 'Be the first to share your thoughts about this game!' : ''"
+                :liked-reviews="likedReviews"
+                :processing-like-reviews="processingLikeReviews"
                 @load-more="loadMoreReviews"
                 @show-all="showAllReviews"
                 @edit="editReview"
                 @delete="deleteReview"
+                @toggleLike="handleToggleLike"
+                @showComments="handleShowComments"
               >
                 <template #empty-actions>
                   <button
@@ -342,8 +346,12 @@
                     :review="userReview"
                     :highlighted="true"
                     :truncated="false"
+                    :is-liked="likedReviews.has(userReview.id)"
+                    :is-processing-like="processingLikeReviews.has(userReview.id)"
                     @edit="showReviewForm = true"
                     @delete="deleteUserReview"
+                    @toggleLike="handleToggleLike"
+                    @showComments="handleShowComments"
                   />
                 </div>
               </div>
@@ -367,8 +375,12 @@
                   :review="userReview"
                   :highlighted="true"
                   :truncated="false"
+                  :is-liked="likedReviews.has(userReview.id)"
+                  :is-processing-like="processingLikeReviews.has(userReview.id)"
                   @edit="showReviewForm = true"
                   @delete="deleteUserReview"
+                  @toggleLike="handleToggleLike"
+                  @showComments="handleShowComments"
                 />
               </div>
             </div>
@@ -485,6 +497,8 @@ import { reviewsService } from '@/services/reviewsService'
 import ReviewCard from './ReviewCard.vue'
 import ReviewForm from './ReviewForm.vue'
 import ReviewsList from './ReviewsList.vue'
+import { socialService } from '@/services/socialService'
+import { commentsService } from '@/services/commentsService'
 
 // Props
 const props = defineProps({
@@ -527,6 +541,8 @@ const hasMoreReviews = ref(false)
 const showReviewForm = ref(false)
 const isSubmittingReview = ref(false)
 const reviewsPage = ref(1)
+const likedReviews = ref(new Set())
+const processingLikeReviews = ref(new Set())
 
 // Computed properties with safe access
 const gameIdentifier = computed(() => {
@@ -826,7 +842,7 @@ const toggleFavorites = async () => {
   if (!game.value?.id || !authStore.user?.id) return
   if (isProcessingFavorites.value) return  // prevent multiple clicks
 
-  const userId = authStore.user.id
+  //const userId = authStore.user.id
   const gameId = String(game.value.id)
   const wasInFavorites = isInFavorites.value // Capture current state before API call
 
@@ -836,14 +852,14 @@ const toggleFavorites = async () => {
 
     if (wasInFavorites) {
       // remove from favorites
-      result = await gamesStore.removeFromFavorites(userId, game.value.id);
+      result = await gamesStore.removeFromFavorites(game.value.id);
       // Only update state after successful API call
       userFavorites.value.delete(gameId);
       toast.success(`Removed "${game.value.name}" from your favorites!`)
       console.log("The game removed from favorites: ", result);
     } else {
       // add to favorites
-      result = await gamesStore.addToFavorites(userId, game.value.id);
+      result = await gamesStore.addToFavorites(game.value.id);
       // Only update state after successful API call
       userFavorites.value.add(gameId);
       toast.success(`Added "${game.value.name}" to your favorites!`)
@@ -862,7 +878,7 @@ const toggleLike = async () => {
   if (!game.value?.id || !authStore.user?.id) return
   if (isProcessingLikes.value) return  // prevent multiple clicks
 
-  const userId = authStore.user.id
+  // const userId = authStore.user.id
   const gameId = String(game.value.id)
   const wasInLikes = isInLikes.value // Capture current state before API call
 
@@ -872,14 +888,14 @@ const toggleLike = async () => {
 
     if (wasInLikes) {
       // remove from likes
-      result = await gamesStore.removeFromLikes(userId, game.value.id)
+      result = await gamesStore.removeFromLikes(game.value.id)
       // Only update state after successful API call
       userLikes.value.delete(gameId)
       toast.success(`Removed "${game.value.name}" from your likes!`)
       console.log("The game removed from likes: ", result)
     } else {
       // add to likes
-      result = await gamesStore.addToLikes(userId, game.value.id)
+      result = await gamesStore.addToLikes(game.value.id)
       // Only update state after successful API call
       userLikes.value.add(gameId)
       toast.success(`Added "${game.value.name}" to your likes!`)
@@ -926,11 +942,12 @@ const loadGameReviews = async (page = 1, append = false) => {
     }
 
     const response = await reviewsService.getGameReviews(game.value.id, page, 5)
+    const reviewsWithCommentCounts = await commentsService.loadCommentCountsForReviews(response.data)
 
     if (append && page > 1) {
-      gameReviews.value.push(...response.data)
+      gameReviews.value.push(...reviewsWithCommentCounts)
     } else {
-      gameReviews.value = response.data
+      gameReviews.value = reviewsWithCommentCounts
     }
 
     hasMoreReviews.value = response.hasNextPage
@@ -1011,6 +1028,50 @@ const deleteUserReview = async () => {
     console.error('Error deleting review:', error)
     toast.error('Failed to delete review')
   }
+}
+
+const handleToggleLike = async (review) => {
+  if (!authStore.user) {
+    toast.info('Please sign in to like reviews')
+    return
+  }
+
+  const reviewId = review.id
+  const wasLiked = likedReviews.value.has(reviewId)
+
+  if (processingLikeReviews.value.has(reviewId)) return
+
+  try {
+    processingLikeReviews.value.add(reviewId)
+
+    if (wasLiked) {
+      await socialService.unlikeReview(reviewId)
+      likedReviews.value.delete(reviewId)
+    } else {
+      await socialService.likeReview(reviewId)
+      likedReviews.value.add(reviewId)
+    }
+
+    // Update like count in review (both userReview and gameReviews)
+    if (userReview.value?.id === reviewId) {
+      userReview.value.likeCount = (userReview.value.likeCount || 0) + (wasLiked ? -1 : 1)
+    }
+    const targetReview = gameReviews.value.find(r => r.id === reviewId)
+    if (targetReview) {
+      targetReview.likeCount = (targetReview.likeCount || 0) + (wasLiked ? -1 : 1)
+    }
+
+  } catch (err) {
+    console.error('Error toggling review like:', err)
+    toast.error('Failed to update like')
+  } finally {
+    processingLikeReviews.value.delete(reviewId)
+  }
+}
+
+const handleShowComments = (review) => {
+  // Navigate to dedicated review details page
+  router.push(`/reviews/${review.id}`)
 }
 
 const loadMoreReviews = async () => {

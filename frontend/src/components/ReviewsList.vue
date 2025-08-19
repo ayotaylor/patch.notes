@@ -94,8 +94,12 @@
             :highlighted="review.id === highlightedReviewId"
             :truncated="truncateReviews"
             :max-length="maxReviewLength"
+            :is-liked="props.likedReviews?.has(review.id) || false"
+            :is-processing-like="props.processingLikeReviews?.has(review.id) || false"
             @edit="$emit('edit', review)"
             @delete="$emit('delete', review)"
+            @toggleLike="$emit('toggleLike', review)"
+            @showComments="$emit('showComments', review)"
           />
         </div>
       </div>
@@ -213,11 +217,19 @@ const props = defineProps({
   sortBy: {
     type: String,
     default: 'newest'
+  },
+  likedReviews: {
+    type: Set,
+    default: () => new Set()
+  },
+  processingLikeReviews: {
+    type: Set,
+    default: () => new Set()
   }
 })
 
 // Emits
-const emits = defineEmits(['load-more', 'show-all', 'sort-change', 'edit', 'delete'])
+const emits = defineEmits(['load-more', 'show-all', 'sort-change', 'edit', 'delete', 'toggleLike', 'showComments'])
 
 // Computed
 const displayedReviews = computed(() => {

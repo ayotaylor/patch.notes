@@ -21,7 +21,7 @@ namespace Backend.Services
         public async Task<PagedResponse<CommentDto>> GetReviewCommentsAsync(Guid reviewId, int page = 1, int pageSize = 20)
         {
             var totalCount = await _context.Comments
-                .Where(c => c.ReviewId == reviewId && c.ParentCommentId == null)
+                .Where(c => c.ReviewId == reviewId)
                 .CountAsync();
 
             var totalPages = (int)Math.Ceiling((double)totalCount / pageSize);
@@ -52,7 +52,7 @@ namespace Backend.Services
         public async Task<PagedResponse<CommentDto>> GetGameListCommentsAsync(Guid gameListId, int page = 1, int pageSize = 20)
         {
             var totalCount = await _context.Comments
-                .Where(c => c.GameListId == gameListId && c.ParentCommentId == null)
+                .Where(c => c.GameListId == gameListId)
                 .CountAsync();
 
             var totalPages = (int)Math.Ceiling((double)totalCount / pageSize);
@@ -235,6 +235,21 @@ namespace Backend.Services
 
             return await _context.Comments
                 .AnyAsync(c => c.Id == commentId && c.UserId == userProfileId);
+        }
+
+        public async Task<int> GetReviewCommentCountAsync(Guid reviewId)
+        {
+            // Count all comments for this review (both parent comments and replies)
+            return await _context.Comments
+                .Where(c => c.ReviewId == reviewId)
+                .CountAsync();
+        }
+
+        public async Task<int> GetGameListCommentCountAsync(Guid gameListId)
+        {
+            return await _context.Comments
+                .Where(c => c.GameListId == gameListId)
+                .CountAsync();
         }
     }
 }

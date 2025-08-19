@@ -11,6 +11,8 @@ const DashboardComponent = () => import("@/components/DashboardComponent.vue");
 const ProfileComponent = () => import("@/components/ProfileComponent.vue");
 const GameDetailsComponent = () => import("@/components/GameDetailsComponent.vue");
 const ReviewsListPage = () => import("@/components/ReviewsListPage.vue");
+const ListsPage = () => import("@/components/ListsPage.vue");
+const ListDetailsPage = () => import("@/components/ListDetailsPage.vue");
 // const ForgotPassword = () => import('@/views/ForgotPassword.vue')
 // const ResetPassword = () => import('@/views/ResetPassword.vue')
 
@@ -143,6 +145,54 @@ const routes = [
       requiresAuth: false,
       validateToken: "never",
       title: "User Reviews - Patch Notes",
+    },
+  },
+  {
+    path: "/reviews/:reviewId",
+    name: "ReviewDetails",
+    component: () => import("@/components/ReviewDetailsPage.vue"),
+    props: true,
+    meta: {
+      requiresAuth: false,
+      validateToken: "never",
+      title: "Review Details - Patch Notes",
+    },
+  },
+  
+  // Lists routes
+  {
+    path: "/lists",
+    name: "AllLists",
+    component: ListsPage,
+    meta: {
+      requiresAuth: false,
+      validateToken: "never",
+      title: "Game Lists - Patch Notes",
+    },
+  },
+  {
+    path: "/lists/:listId",
+    name: "ListDetails",
+    component: ListDetailsPage,
+    props: true,
+    meta: {
+      requiresAuth: false,
+      validateToken: "never",
+      title: "List Details - Patch Notes",
+    },
+  },
+  {
+    path: "/profile/:userId/lists",
+    name: "UserLists",
+    component: ListsPage,
+    props: (route) => ({
+      userId: route.params.userId,
+      userName: route.query.name || ''
+    }),
+    meta: {
+      requiresAuth: false,
+      validateToken: "never",
+      title: "User Lists - Patch Notes",
     },
   },
 

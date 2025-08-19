@@ -233,6 +233,28 @@ export const reviewsService = {
     }
   },
 
+  // Get a single review by ID
+  async getReview(reviewId) {
+    try {
+      if (!reviewId || (typeof reviewId !== "string" && typeof reviewId !== "number")) {
+        throw new Error("Review ID must be a non-empty string or number");
+      }
+
+      const response = await apiClient.get(`/reviews/${reviewId}`);
+      const review = response.data.data;
+      // Process single review if it has a game object
+      if (review && review.game) {
+        review.game = new Game(review.game);
+      }
+      return review;
+    } catch (error) {
+      console.error("Error fetching review:", error);
+      throw new Error(
+        error.response?.data?.message || "Failed to fetch review"
+      );
+    }
+  },
+
   // Check if user has reviewed a game
   async getUserGameReview(userId, gameId) {
     try {

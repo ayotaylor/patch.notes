@@ -14,13 +14,13 @@ namespace Backend.Models.DTO.Social
         public Guid? ReviewId { get; set; }
         public Guid? GameListId { get; set; }
         public Guid? ParentCommentId { get; set; }
-        
+
         public DateTime CreatedAt { get; set; }
         public DateTime? UpdatedAt { get; set; }
 
         public string? UserDisplayName { get; set; }
-        public int LikesCount { get; set; }
-        public int RepliesCount { get; set; }
+        public int LikeCount { get; set; }
+        public int ReplyCount { get; set; }
 
         public UserSummaryDto? User { get; set; }
         public List<CommentSummaryDto>? Replies { get; set; }

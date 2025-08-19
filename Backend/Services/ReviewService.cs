@@ -48,6 +48,7 @@ namespace Backend.Services
             var reviews = await _context.Reviews
                 .Include(r => r.User)
                 .Include(r => r.Game).ThenInclude(c => c.Covers)
+                .Include(r => r.Likes)
                 .Where(r => r.GameId == gameGuid)
                 .OrderByDescending(r => r.CreatedAt)
                 .Skip((page - 1) * pageSize)
@@ -96,6 +97,7 @@ namespace Backend.Services
             var reviews = await _context.Reviews
                 .Include(r => r.User)
                 .Include(r => r.Game).ThenInclude(c => c.Covers)
+                .Include(r => r.Likes)
                 .Where(r => r.UserId == userProfileId)
                 .OrderByDescending(r => r.CreatedAt)
                 .Skip((page - 1) * pageSize)
@@ -122,6 +124,7 @@ namespace Backend.Services
             var reviews = await _context.Reviews
                 .Include(r => r.User)
                 .Include(r => r.Game).ThenInclude(c => c.Covers)
+                .Include(r => r.Likes)   // TODO: maybe remove this as we might not need it on the reviews list page
                 .OrderByDescending(r => r.CreatedAt)
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
@@ -143,7 +146,8 @@ namespace Backend.Services
         {
             var review = await _context.Reviews
                 .Include(r => r.User)
-                .Include(r => r.Game)
+                .Include(r => r.Game).ThenInclude(c => c.Covers)
+                .Include(r => r.Likes)
                 .FirstOrDefaultAsync(r => r.Id == reviewId);
 
             return review?.ToDto();
@@ -169,6 +173,7 @@ namespace Backend.Services
             var review = await _context.Reviews
                 .Include(r => r.User)
                 .Include(r => r.Game).ThenInclude(c => c.Covers)
+                .Include(r => r.Likes)
                 .FirstOrDefaultAsync(r => r.UserId == userProfileId && r.GameId == gameGuid);
 
             return review?.ToDto();

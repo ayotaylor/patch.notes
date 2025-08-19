@@ -256,6 +256,10 @@
                     :show-game="true"
                     :truncated="true"
                     :max-length="120"
+                    :is-liked="likedReviews.has(review.id)"
+                    :is-processing-like="processingLikeReviews.has(review.id)"
+                    @toggleLike="handleToggleLike"
+                    @showComments="handleShowComments"
                   />
                 </div>
               </div>
@@ -328,6 +332,8 @@ import GameSearchComponent from '@/components/GameSearchComponent.vue'
 import ReviewCard from '@/components/ReviewCard.vue'
 import { useImageFallback, FALLBACK_TYPES } from '@/composables/useImageFallback'
 import { reviewsService } from '@/services/reviewsService'
+import { socialService } from '@/services/socialService'
+import { commentsService } from '@/services/commentsService'
 
 // Composables
 const router = useRouter()
@@ -351,6 +357,8 @@ const userLibrary = ref(new Set())
 // Reviews state
 const latestReviews = ref([])
 const loadingReviews = ref(false)
+const likedReviews = ref(new Set())
+const processingLikeReviews = ref(new Set())
 
 // Computed
 const popularGames = computed(() => gamesStore.popularGames)
@@ -438,13 +446,55 @@ const loadLatestReviews = async () => {
   try {
     loadingReviews.value = true
     const reviews = await reviewsService.getLatestReviews()
-    latestReviews.value = reviews
+    const reviewsWithCommentCounts = await commentsService.loadCommentCountsForReviews(reviews)
+    latestReviews.value = reviewsWithCommentCounts
   } catch (error) {
     console.error('Error loading latest reviews:', error)
     toast.error('Failed to load latest reviews')
   } finally {
     loadingReviews.value = false
   }
+}
+
+const handleToggleLike = async (review) => {
+  if (!authStore.user) {
+    toast.info('Please sign in to like reviews')
+    return
+  }
+
+  const reviewId = review.id
+  const wasLiked = likedReviews.value.has(reviewId)
+
+  if (processingLikeReviews.value.has(reviewId)) return
+
+  try {
+    processingLikeReviews.value.add(reviewId)
+
+    if (wasLiked) {
+      await socialService.unlikeReview(reviewId)
+      likedReviews.value.delete(reviewId)
+    } else {
+      await socialService.likeReview(reviewId)
+      likedReviews.value.add(reviewId)
+    }
+
+    // Update like count in review
+    const targetReview = latestReviews.value.find(r => r.id === reviewId)
+    if (targetReview) {
+      targetReview.likeCount = (targetReview.likeCount || 0) + (wasLiked ? -1 : 1)
+    }
+
+  } catch (err) {
+    console.error('Error toggling review like:', err)
+    toast.error('Failed to update like')
+  } finally {
+    processingLikeReviews.value.delete(reviewId)
+  }
+}
+
+const handleShowComments = (review) => {
+  // Navigate to dedicated review details page
+  router.push(`/reviews/${review.id}`)
 }
 
 // Quick action methods

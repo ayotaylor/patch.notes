@@ -419,6 +419,10 @@
                     :show-date="true"
                     :truncated="true"
                     :max-length="150"
+                    :is-liked="likedReviews.has(review.id)"
+                    :is-processing-like="processingLikeReviews.has(review.id)"
+                    @toggleLike="handleToggleLike"
+                    @showComments="handleShowComments"
                   />
                 </div>
               </div>
@@ -467,7 +471,7 @@
 <script setup>
 import { ref, reactive, computed, onMounted, watch } from 'vue'
 import { defineProps } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
 import { useProfileStore } from '@/stores/profileStore'
 import { useGamesStore } from '@/stores/gamesStore'
@@ -476,6 +480,8 @@ import { useImageFallback, FALLBACK_TYPES } from '@/composables/useImageFallback
 import GameSearchComponent from '@/components/GameSearchComponent.vue'
 import ReviewCard from '@/components/ReviewCard.vue'
 import { reviewsService } from '@/services/reviewsService'
+import { socialService } from '@/services/socialService'
+import { commentsService } from '@/services/commentsService'
 
 // Props for viewing other users' profiles
 const props = defineProps({
@@ -487,6 +493,7 @@ const props = defineProps({
 
 // Composables
 const route = useRoute()
+const router = useRouter()
 const authStore = useAuthStore()
 const profileStore = useProfileStore()
 const gamesStore = useGamesStore()
@@ -504,6 +511,8 @@ const userReviews = ref([])
 const loadingReviews = ref(false)
 const totalReviews = ref(0)
 const displayedReviewsLimit = 3
+const likedReviews = ref(new Set())
+const processingLikeReviews = ref(new Set())
 
 // Editing state
 const isEditing = ref(false)
@@ -592,7 +601,8 @@ const loadUserReviews = async () => {
   try {
     loadingReviews.value = true
     const response = await reviewsService.getUserReviews(profileUserId.value, 1, displayedReviewsLimit + 5)
-    userReviews.value = response.data || []
+    const reviewsWithCommentCounts = await commentsService.loadCommentCountsForReviews(response.data || [])
+    userReviews.value = reviewsWithCommentCounts
     totalReviews.value = response.totalCount || 0
   } catch (error) {
     console.error('Error loading user reviews:', error)
@@ -723,7 +733,7 @@ const saveTopGames = async () => {
       const isInFavorites = userFavorites.value.some(fav => fav.id === game.id)
       if (!isInFavorites) {
         // Add to favorites first
-        await gamesStore.addToFavorites(userId, game.id)
+        await gamesStore.addToFavorites(game.id)
       }
     }
 
@@ -734,7 +744,7 @@ const saveTopGames = async () => {
     for (const originalGameId of originalTopGameIds) {
       if (!newTopGameIds.includes(originalGameId)) {
         console.log('Removing game from favorites:', originalGameId)
-        await gamesStore.removeFromFavorites(userId, originalGameId)
+        await gamesStore.removeFromFavorites(originalGameId)
       }
     }
 
@@ -787,6 +797,47 @@ const moveGameDown = (index) => {
 
 const isGameInTop5 = (gameId) => {
   return editTopGames.value.some(game => game.id === gameId)
+}
+
+const handleToggleLike = async (review) => {
+  if (!authStore.user) {
+    toast.info('Please sign in to like reviews')
+    return
+  }
+
+  const reviewId = review.id
+  const wasLiked = likedReviews.value.has(reviewId)
+
+  if (processingLikeReviews.value.has(reviewId)) return
+
+  try {
+    processingLikeReviews.value.add(reviewId)
+
+    if (wasLiked) {
+      await socialService.unlikeReview(reviewId)
+      likedReviews.value.delete(reviewId)
+    } else {
+      await socialService.likeReview(reviewId)
+      likedReviews.value.add(reviewId)
+    }
+
+    // Update like count in review
+    const targetReview = userReviews.value.find(r => r.id === reviewId)
+    if (targetReview) {
+      targetReview.likeCount = (targetReview.likeCount || 0) + (wasLiked ? -1 : 1)
+    }
+
+  } catch (err) {
+    console.error('Error toggling review like:', err)
+    toast.error('Failed to update like')
+  } finally {
+    processingLikeReviews.value.delete(reviewId)
+  }
+}
+
+const handleShowComments = (review) => {
+  // Navigate to dedicated review details page
+  router.push(`/reviews/${review.id}`)
 }
 
 // Watchers
