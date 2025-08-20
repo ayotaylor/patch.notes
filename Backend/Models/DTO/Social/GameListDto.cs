@@ -21,8 +21,8 @@ namespace Backend.Models.DTO.Social
 
         public string? UserDisplayName { get; set; }
         public int GameCount { get; set; }
-        public int CommentsCount { get; set; }
-        public int LikesCount { get; set; }
+        public int CommentCount { get; set; }
+        public int LikeCount { get; set; }
 
         public UserSummaryDto? User { get; set; }
         public List<GameListItemDto>? Games { get; set; }

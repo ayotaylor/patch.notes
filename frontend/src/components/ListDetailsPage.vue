@@ -208,6 +208,9 @@ const loadList = async () => {
 
     list.value = await listsService.getList(listId.value)
     
+    // Initialize comment count from API response
+    commentCount.value = list.value?.commentCount || 0
+    
     // Load like status if user is authenticated
     if (authStore.user) {
       await loadLikeStatus()
@@ -225,11 +228,10 @@ const loadLikeStatus = async () => {
   if (!authStore.user || !list.value) return
 
   try {
-    // This would need to be implemented - check if user has liked this list
-    // For now, assume not liked
-    isLiked.value = false
+    isLiked.value = await socialService.isListLiked(list.value.id)
   } catch (err) {
     console.error('Error loading like status:', err)
+    isLiked.value = false
   }
 }
 
@@ -397,11 +399,15 @@ const isGameInList = (gameId) => {
 }
 
 const getGameImageUrl = (game) => {
-  return game?.primaryImageUrl || game?.cover?.imageUrl || '/placeholder-game.png'
+  return game?.coverUrl || game?.primaryImageUrl || game?.cover?.imageUrl || 'data:image/svg+xml;charset=UTF-8,<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 200 200"><rect width="200" height="200" fill="%23f8f9fa"/><text x="50%" y="50%" text-anchor="middle" dy=".3em" fill="%236c757d" font-family="Arial" font-size="14">Game Cover</text></svg>'
 }
 
 const handleGameImageError = (e) => {
-  e.target.src = '/placeholder-game.png'
+  // Prevent infinite loading loop
+  if (!e.target.dataset.errorHandled) {
+    e.target.dataset.errorHandled = 'true'
+    e.target.src = 'data:image/svg+xml;charset=UTF-8,<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 200 200"><rect width="200" height="200" fill="%23f8f9fa"/><text x="50%" y="50%" text-anchor="middle" dy=".3em" fill="%236c757d" font-family="Arial" font-size="14">Game Cover</text></svg>'
+  }
 }
 
 // Lifecycle

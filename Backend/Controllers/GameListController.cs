@@ -114,7 +114,7 @@ namespace Backend.Controllers
                     });
                 }
 
-                var gameList = await _gameListService.CreateGameListAsync(userGuid, request.Title, request.Description, request.IsPublic);
+                var gameList = await _gameListService.CreateGameListAsync(userGuid, request.Title, request.Description, request.IsPublic, request.GameIds);
                 if (gameList == null)
                 {
                     return BadRequest(new ApiResponse<GameListDto>
@@ -341,6 +341,7 @@ namespace Backend.Controllers
         public string Title { get; set; } = string.Empty;
         public string? Description { get; set; }
         public bool IsPublic { get; set; } = true;
+        public List<int>? GameIds { get; set; }
     }
 
     public class UpdateGameListRequest

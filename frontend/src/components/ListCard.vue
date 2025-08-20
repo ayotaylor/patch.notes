@@ -74,7 +74,7 @@
       <div v-if="displayGames.length > 0" class="mb-3">
         <div class="row g-2">
           <div v-for="game in displayGames" :key="game.id" class="col-auto">
-            <router-link :to="`/games/${game.slug}`" class="text-decoration-none">
+            <router-link :to="`/games/${game.slug || game.id}`" class="text-decoration-none">
               <img
                 :src="getGameImageUrl(game)"
                 :alt="game.name"
@@ -85,10 +85,10 @@
               >
             </router-link>
           </div>
-          
+
           <!-- Show count if more games -->
           <div v-if="list.games && list.games.length > maxGamesToShow" class="col-auto d-flex align-items-center">
-            <div class="rounded bg-light d-flex align-items-center justify-content-center" 
+            <div class="rounded bg-light d-flex align-items-center justify-content-center"
                  style="width: 60px; height: 60px;">
               <small class="text-muted fw-semibold">+{{ list.games.length - maxGamesToShow }}</small>
             </div>
@@ -111,9 +111,9 @@
 
         <div class="d-flex align-items-center">
           <!-- Like Button -->
-          <button 
+          <button
             v-if="showLikeButton"
-            @click="$emit('toggleLike', list)" 
+            @click="$emit('toggleLike', list)"
             class="btn btn-sm btn-outline-primary me-2"
             :class="{ 'btn-primary text-white': isLiked }"
             :disabled="isProcessingLike"
@@ -123,9 +123,9 @@
           </button>
 
           <!-- Comment Button -->
-          <button 
+          <button
             v-if="showCommentButton"
-            @click="$emit('showComments', list)" 
+            @click="$emit('showComments', list)"
             class="btn btn-sm btn-outline-secondary"
           >
             <i class="fas fa-comment me-1"></i>
@@ -187,7 +187,7 @@ defineEmits(['edit', 'delete', 'toggleLike', 'showComments'])
 
 // Composables
 const authStore = useAuthStore()
-const { handleImageError: handleImgError, createReactiveImageUrl } = useImageFallback()
+const { handleImageError: handleImgError, createReactiveImageUrl, getImageUrl } = useImageFallback()
 
 // State
 const expanded = ref(false)
@@ -229,11 +229,16 @@ const handleImageError = (e) => {
 }
 
 const getGameImageUrl = (game) => {
-  return game?.primaryImageUrl || game?.cover?.imageUrl || '/placeholder-game.png'
+  const url = game?.coverUrl || game?.primaryImageUrl || game?.cover?.imageUrl
+  return getImageUrl(url, 'game', 'list_item')
 }
 
 const handleGameImageError = (e) => {
-  e.target.src = '/placeholder-game.png'
+  // Prevent infinite loading loop
+  if (!e.target.dataset.errorHandled) {
+    e.target.dataset.errorHandled = 'true'
+    e.target.src = 'data:image/svg+xml;charset=UTF-8,<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 200 200"><rect width="200" height="200" fill="%23f8f9fa"/><text x="50%" y="50%" text-anchor="middle" dy=".3em" fill="%236c757d" font-family="Arial" font-size="14">Game Cover</text></svg>'
+  }
 }
 </script>
 

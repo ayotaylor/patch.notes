@@ -227,7 +227,7 @@
                   <!-- Game Image -->
                   <div class="me-3">
                     <img
-                      :src="getImageUrl(game.primaryImageUrl, FALLBACK_TYPES.GAME_ICON)"
+                      :src="getImageUrl(game.primaryImageUrl, FALLBACK_TYPES.GAME_ICON, IMAGE_CONTEXTS.PROFILE_GAME)"
                       :alt="game.name"
                       class="rounded"
                       style="width: 60px; height: 60px; object-fit: cover;"
@@ -306,7 +306,7 @@
                     <div class="d-flex align-items-center">
                       <span class="badge bg-primary me-3">{{ index + 1 }}</span>
                       <img
-                        :src="getImageUrl(game.primaryImageUrl, 'gameIcon')"
+                        :src="getImageUrl(game.primaryImageUrl, 'gameIcon', IMAGE_CONTEXTS.PROFILE_GAME)"
                         :alt="game.name"
                         class="rounded me-3"
                         style="width: 40px; height: 40px; object-fit: cover;"

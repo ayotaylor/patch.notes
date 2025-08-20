@@ -198,6 +198,7 @@ import ReviewsList from './ReviewsList.vue'
 import ReviewForm from './ReviewForm.vue'
 import { socialService } from '@/services/socialService'
 import { commentsService } from '@/services/commentsService'
+import { useAuthRedirect } from '@/utils/authRedirect'
 
 // Props
 const props = defineProps({
@@ -223,6 +224,7 @@ const props = defineProps({
 const router = useRouter()
 const authStore = useAuthStore()
 const toast = useToast()
+const { requireAuth } = useAuthRedirect()
 
 // State
 const reviews = ref([])
@@ -332,6 +334,11 @@ const loadReviews = async (pageNum = 1, append = false) => {
     hasMore.value = response.hasNextPage || false
     totalCount.value = response.totalCount || 0
     page.value = pageNum
+
+    // Load like status for authenticated users
+    if (authStore.user && reviews.value.length > 0) {
+      await loadLikeStatus()
+    }
   } catch (error) {
     console.error('Error loading reviews:', error)
     toast.error('Failed to load reviews')
@@ -431,8 +438,7 @@ const closeEditModal = () => {
 }
 
 const handleToggleLike = async (review) => {
-  if (!authStore.user) {
-    toast.info('Please sign in to like reviews')
+  if (requireAuth(authStore.isAuthenticated, 'Please sign in to like reviews')) {
     return
   }
 
@@ -466,6 +472,32 @@ const handleToggleLike = async (review) => {
   }
 }
 
+const loadLikeStatus = async () => {
+  if (!authStore.user || reviews.value.length === 0) return
+
+  try {
+    // Clear existing liked reviews
+    likedReviews.value.clear()
+    
+    // Check like status for each review
+    const likeStatusPromises = reviews.value.map(async (review) => {
+      try {
+        const isLiked = await socialService.isReviewLiked(review.id)
+        if (isLiked) {
+          likedReviews.value.add(review.id)
+        }
+      } catch (error) {
+        console.warn(`Failed to check like status for review ${review.id}:`, error)
+      }
+    })
+
+    // Wait for all like status checks to complete
+    await Promise.all(likeStatusPromises)
+  } catch (err) {
+    console.error('Error loading like status:', err)
+  }
+}
+
 const handleShowComments = (review) => {
   // Navigate to dedicated review details page
   router.push(`/reviews/${review.id}`)
@@ -478,6 +510,20 @@ watch([searchQuery, ratingFilter, sortBy], () => {
   window.reviewFilterTimeout = setTimeout(() => {
     applyFilters()
   }, 500)
+})
+
+// Watch for authentication changes to reload like status
+watch(() => authStore.user, async (newUser, oldUser) => {
+  // If user logs in or out, reload like status
+  if (!!newUser !== !!oldUser) {
+    if (newUser && reviews.value.length > 0) {
+      // User logged in - load like status
+      await loadLikeStatus()
+    } else {
+      // User logged out - clear like status
+      likedReviews.value.clear()
+    }
+  }
 })
 
 // Lifecycle

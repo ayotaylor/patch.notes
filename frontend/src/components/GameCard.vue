@@ -175,12 +175,13 @@ const props = defineProps({
 defineEmits(['click', 'add-to-library', 'add-to-wishlist', 'show-details'])
 
 // Image fallback composable
-const { handleImageError, createReactiveImageUrl } = useImageFallback()
+const { handleImageError, createReactiveImageUrl, IMAGE_CONTEXTS } = useImageFallback()
 
 // Computed properties
 const gameImageUrl = createReactiveImageUrl(
     computed(() => props.game.primaryImageUrl), 
-    FALLBACK_TYPES.GAME_SMALL
+    FALLBACK_TYPES.GAME_SMALL,
+    IMAGE_CONTEXTS.GAME_CARD
 )
 
 const truncatedSummary = computed(() => {

@@ -290,6 +290,72 @@ namespace Backend.Controllers
             }
         }
 
+        // Check if game is favorited
+        [HttpGet("favorites/games/{gameId:int}/status")]
+        public async Task<ActionResult<ApiResponse<bool>>> IsGameFavorite(int gameId)
+        {
+            try
+            {
+                var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (string.IsNullOrEmpty(userId) || !Guid.TryParse(userId, out var userGuid))
+                {
+                    return Unauthorized(new ApiResponse<bool>
+                    {
+                        Success = false,
+                        Message = "User not authenticated",
+                    });
+                }
+                var isFavorite = await _socialService.IsGameFavoriteAsync(userGuid, gameId);
+                return Ok(new ApiResponse<bool>
+                {
+                    Success = true,
+                    Data = isFavorite
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error checking if game {GameId} is favorited", gameId);
+                return StatusCode(500, new ApiResponse<bool>
+                {
+                    Success = false,
+                    Message = "An error occurred while checking favorite status"
+                });
+            }
+        }
+
+        // Check if game is liked
+        [HttpGet("likes/games/{gameId:int}/status")]
+        public async Task<ActionResult<ApiResponse<bool>>> IsGameLiked(int gameId)
+        {
+            try
+            {
+                var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (string.IsNullOrEmpty(userId) || !Guid.TryParse(userId, out var userGuid))
+                {
+                    return Unauthorized(new ApiResponse<bool>
+                    {
+                        Success = false,
+                        Message = "User not authenticated",
+                    });
+                }
+                var isLiked = await _socialService.IsGameLikedAsync(userGuid, gameId);
+                return Ok(new ApiResponse<bool>
+                {
+                    Success = true,
+                    Data = isLiked
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error checking if game {GameId} is liked", gameId);
+                return StatusCode(500, new ApiResponse<bool>
+                {
+                    Success = false,
+                    Message = "An error occurred while checking like status"
+                });
+            }
+        }
+
         // Review Likes
         [HttpPost("reviews/{reviewId:guid}/like")]
         public async Task<ActionResult<ApiResponse<bool>>> LikeReview(Guid reviewId)
@@ -329,6 +395,39 @@ namespace Backend.Controllers
                 {
                     Success = false,
                     Message = "An error occurred while liking the review"
+                });
+            }
+        }
+
+        // Check if review is liked
+        [HttpGet("reviews/{reviewId:guid}/liked")]
+        public async Task<ActionResult<ApiResponse<bool>>> IsReviewLiked(Guid reviewId)
+        {
+            try
+            {
+                var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (string.IsNullOrEmpty(userId) || !Guid.TryParse(userId, out var userGuid))
+                {
+                    return Unauthorized(new ApiResponse<bool>
+                    {
+                        Success = false,
+                        Message = "User not authenticated",
+                    });
+                }
+                var isLiked = await _socialService.IsReviewLikedAsync(userGuid, reviewId);
+                return Ok(new ApiResponse<bool>
+                {
+                    Success = true,
+                    Data = isLiked
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error checking if review {ReviewId} is liked", reviewId);
+                return StatusCode(500, new ApiResponse<bool>
+                {
+                    Success = false,
+                    Message = "An error occurred while checking like status"
                 });
             }
         }
@@ -418,6 +517,39 @@ namespace Backend.Controllers
             }
         }
 
+        // Check if list is liked
+        [HttpGet("lists/{gameListId:guid}/liked")]
+        public async Task<ActionResult<ApiResponse<bool>>> IsGameListLiked(Guid gameListId)
+        {
+            try
+            {
+                var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (string.IsNullOrEmpty(userId) || !Guid.TryParse(userId, out var userGuid))
+                {
+                    return Unauthorized(new ApiResponse<bool>
+                    {
+                        Success = false,
+                        Message = "User not authenticated",
+                    });
+                }
+                var isLiked = await _socialService.IsGameListLikedAsync(userGuid, gameListId);
+                return Ok(new ApiResponse<bool>
+                {
+                    Success = true,
+                    Data = isLiked
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error checking if game list {GameListId} is liked", gameListId);
+                return StatusCode(500, new ApiResponse<bool>
+                {
+                    Success = false,
+                    Message = "An error occurred while checking like status"
+                });
+            }
+        }
+
         [HttpDelete("lists/{gameListId:guid}/like")]
         public async Task<ActionResult<ApiResponse<bool>>> UnlikeGameList(Guid gameListId)
         {
@@ -499,6 +631,39 @@ namespace Backend.Controllers
                 {
                     Success = false,
                     Message = "An error occurred while liking the comment"
+                });
+            }
+        }
+
+        // Check if comment is liked
+        [HttpGet("comments/{commentId:guid}/liked")]
+        public async Task<ActionResult<ApiResponse<bool>>> IsCommentLiked(Guid commentId)
+        {
+            try
+            {
+                var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (string.IsNullOrEmpty(userId) || !Guid.TryParse(userId, out var userGuid))
+                {
+                    return Unauthorized(new ApiResponse<bool>
+                    {
+                        Success = false,
+                        Message = "User not authenticated",
+                    });
+                }
+                var isLiked = await _socialService.IsCommentLikedAsync(userGuid, commentId);
+                return Ok(new ApiResponse<bool>
+                {
+                    Success = true,
+                    Data = isLiked
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error checking if comment {CommentId} is liked", commentId);
+                return StatusCode(500, new ApiResponse<bool>
+                {
+                    Success = false,
+                    Message = "An error occurred while checking like status"
                 });
             }
         }

@@ -492,6 +492,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { useGamesStore } from '@/stores/gamesStore'
 import { useToast } from 'vue-toastification'
 import { useAuthStore } from '@/stores/authStore'
+import { useAuthRedirect } from '@/utils/authRedirect'
 import { useImageFallback, FALLBACK_TYPES } from '@/composables/useImageFallback'
 import { reviewsService } from '@/services/reviewsService'
 import ReviewCard from './ReviewCard.vue'
@@ -518,7 +519,8 @@ const router = useRouter()
 const gamesStore = useGamesStore()
 const authStore = useAuthStore()
 const toast = useToast()
-const { handleImageError, createReactiveImageUrl, getImageUrl } = useImageFallback()
+const { requireAuth } = useAuthRedirect()
+const { handleImageError, createReactiveImageUrl, getImageUrl, IMAGE_CONTEXTS } = useImageFallback()
 
 // State
 const game = ref(null)
@@ -569,10 +571,11 @@ const isInWishlist = computed(() => {
   return id && userWishlist.value.has(String(id))
 })
 
-// Safe property accessors
+// Safe property accessors with IGDB sizing
 const gameImageUrl = createReactiveImageUrl(
   computed(() => game.value?.primaryImageUrl),
-  FALLBACK_TYPES.GAME
+  FALLBACK_TYPES.GAME,
+  IMAGE_CONTEXTS.GAME_DETAIL_MAIN
 )
 
 const gameRating = computed(() => {
@@ -625,7 +628,10 @@ const screenshotUrls = computed(() => {
     if (!game.value?.screenshots) return []
     const screenshots = game.value.screenshots
     if (!Array.isArray(screenshots)) return []
-    return screenshots.map(screenshot => screenshot.imageUrl || screenshot.url).filter(Boolean)
+    return screenshots.map(screenshot => {
+      const url = screenshot.imageUrl || screenshot.url
+      return url ? getImageUrl(url, FALLBACK_TYPES.GAME, IMAGE_CONTEXTS.SCREENSHOT_THUMBNAIL) : null
+    }).filter(Boolean)
   } catch (error) {
     console.warn('Error getting screenshot URLs:', error)
     return []
@@ -730,9 +736,9 @@ const formatNumber = (num) => {
 
 const getSimilarGameImage = (similarGame) => {
   try {
-    return getImageUrl(similarGame.primaryImageUrl, FALLBACK_TYPES.GAME_ICON)
+    return getImageUrl(similarGame.primaryImageUrl, FALLBACK_TYPES.GAME_ICON, IMAGE_CONTEXTS.SIMILAR_GAME)
   } catch (error) {
-    return getImageUrl(null, FALLBACK_TYPES.GAME_ICON)
+    return getImageUrl(null, FALLBACK_TYPES.GAME_ICON, IMAGE_CONTEXTS.SIMILAR_GAME)
   }
 }
 
@@ -839,7 +845,10 @@ const loadUserLikesStatus = async () => {
 }
 
 const toggleFavorites = async () => {
-  if (!game.value?.id || !authStore.user?.id) return
+  if (!game.value?.id) return
+  if (requireAuth(authStore.isAuthenticated, 'Please sign in to add games to your favorites')) {
+    return
+  }
   if (isProcessingFavorites.value) return  // prevent multiple clicks
 
   //const userId = authStore.user.id
@@ -875,7 +884,10 @@ const toggleFavorites = async () => {
 }
 
 const toggleLike = async () => {
-  if (!game.value?.id || !authStore.user?.id) return
+  if (!game.value?.id) return
+  if (requireAuth(authStore.isAuthenticated, 'Please sign in to like games')) {
+    return
+  }
   if (isProcessingLikes.value) return  // prevent multiple clicks
 
   // const userId = authStore.user.id
@@ -1031,8 +1043,7 @@ const deleteUserReview = async () => {
 }
 
 const handleToggleLike = async (review) => {
-  if (!authStore.user) {
-    toast.info('Please sign in to like reviews')
+  if (requireAuth(authStore.isAuthenticated, 'Please sign in to like reviews')) {
     return
   }
 
@@ -1113,7 +1124,8 @@ const viewGame = (id) => {
 }
 
 const openImageModal = (imageUrl) => {
-  selectedImage.value = imageUrl
+  // Use high-resolution version for modal
+  selectedImage.value = getImageUrl(imageUrl, FALLBACK_TYPES.GAME, IMAGE_CONTEXTS.SCREENSHOT_MODAL)
 }
 
 const closeImageModal = () => {

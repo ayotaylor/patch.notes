@@ -98,7 +98,7 @@
                   <!-- Game Image -->
                   <div class="me-3">
                     <img
-                      :src="getImageUrl(game.primaryImageUrl, FALLBACK_TYPES.GAME_ICON)"
+                      :src="getImageUrl(game.primaryImageUrl, FALLBACK_TYPES.GAME_ICON, IMAGE_CONTEXTS.GAME_CARD)"
                       :alt="game.name"
                       class="rounded"
                       style="width: 50px; height: 50px; object-fit: cover;"
@@ -182,7 +182,7 @@
                   class="card border-0 bg-light cursor-pointer game-hover-card"
                 >
                   <img
-                    :src="getImageUrl(game.primaryImageUrl, 'gameSmall')"
+                    :src="getImageUrl(game.primaryImageUrl, FALLBACK_TYPES.GAME_SMALL, IMAGE_CONTEXTS.GAME_CARD)"
                     :alt="game.name"
                     class="card-img-top"
                     style="height: 120px; object-fit: cover;"
@@ -276,6 +276,66 @@
       </div>
     </div>
 
+    <!-- Latest Lists -->
+    <div class="row mt-4">
+      <div class="col-12">
+        <div class="card shadow-sm border-0">
+          <div class="card-header bg-white border-bottom">
+            <div class="d-flex justify-content-between align-items-center">
+              <h3 class="h5 mb-0 fw-bold">
+                <i class="fas fa-list text-success me-2"></i>
+                Latest Lists
+              </h3>
+              <router-link to="/lists" class="btn btn-sm btn-outline-primary">
+                View All Lists
+                <i class="fas fa-arrow-right ms-2"></i>
+              </router-link>
+            </div>
+          </div>
+          <div class="card-body p-4">
+            <!-- Loading State -->
+            <div v-if="loadingLists" class="text-center py-5">
+              <div class="spinner-border text-primary mb-3"></div>
+              <p class="text-muted">Loading latest lists...</p>
+            </div>
+
+            <!-- Lists Grid -->
+            <div v-else-if="latestLists.length > 0">
+              <div class="row g-3">
+                <div
+                  v-for="list in latestLists.slice(0, 3)"
+                  :key="list.id"
+                  class="col-12"
+                  :class="{ 'col-lg-6': latestLists.length > 1, 'col-xl-4': latestLists.length > 2 }"
+                >
+                  <ListCard
+                    :list="list"
+                    :truncated="true"
+                    :max-length="150"
+                    :max-games-to-show="4"
+                    :show-like-button="false"
+                    @edit="handleEditList"
+                    @delete="handleDeleteList"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <!-- Empty State -->
+            <div v-else class="text-center py-5">
+              <i class="fas fa-list-ul text-muted mb-3" style="font-size: 2rem;"></i>
+              <p class="text-muted">No public lists available yet.</p>
+              <p class="text-muted small">Create the first list and share your favorite games!</p>
+              <router-link to="/lists/create" class="btn btn-primary mt-2">
+                <i class="fas fa-plus me-2"></i>
+                Create List
+              </router-link>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Quick Actions -->
     <div class="row mt-4">
       <div class="col-12">
@@ -330,10 +390,12 @@ import { useProfileStore } from '@/stores/profileStore'
 import { useToast } from 'vue-toastification'
 import GameSearchComponent from '@/components/GameSearchComponent.vue'
 import ReviewCard from '@/components/ReviewCard.vue'
+import ListCard from '@/components/ListCard.vue'
 import { useImageFallback, FALLBACK_TYPES } from '@/composables/useImageFallback'
 import { reviewsService } from '@/services/reviewsService'
 import { socialService } from '@/services/socialService'
 import { commentsService } from '@/services/commentsService'
+import { listsService } from '@/services/listsService'
 
 // Composables
 const router = useRouter()
@@ -341,7 +403,7 @@ const authStore = useAuthStore()
 const gamesStore = useGamesStore()
 const profileStore = useProfileStore()
 const toast = useToast()
-const { handleImageError, getImageUrl } = useImageFallback()
+const { handleImageError, getImageUrl, IMAGE_CONTEXTS } = useImageFallback()
 
 // State
 const error = ref('')
@@ -359,6 +421,10 @@ const latestReviews = ref([])
 const loadingReviews = ref(false)
 const likedReviews = ref(new Set())
 const processingLikeReviews = ref(new Set())
+
+// Lists state
+const latestLists = ref([])
+const loadingLists = ref(false)
 
 // Computed
 const popularGames = computed(() => gamesStore.popularGames)
@@ -456,6 +522,19 @@ const loadLatestReviews = async () => {
   }
 }
 
+const loadLatestLists = async () => {
+  try {
+    loadingLists.value = true
+    const response = await listsService.getPublicLists(1, 6) // Get 6 latest public lists
+    latestLists.value = response.data || []
+  } catch (error) {
+    console.error('Error loading latest lists:', error)
+    toast.error('Failed to load latest lists')
+  } finally {
+    loadingLists.value = false
+  }
+}
+
 const handleToggleLike = async (review) => {
   if (!authStore.user) {
     toast.info('Please sign in to like reviews')
@@ -497,6 +576,17 @@ const handleShowComments = (review) => {
   router.push(`/reviews/${review.id}`)
 }
 
+// List handlers
+const handleEditList = (list) => {
+  router.push(`/lists/${list.id}/edit`)
+}
+
+const handleDeleteList = (list) => {
+  // This would typically show a confirmation dialog
+  // For now, just navigate to the list page
+  router.push(`/lists/${list.id}`)
+}
+
 // Quick action methods
 const viewLibrary = () => {
   router.push('/library')
@@ -521,7 +611,8 @@ onMounted(async () => {
       gamesStore.fetchPopularGames(10),
       gamesStore.fetchNewGames(8),
       loadUserStats(),
-      loadLatestReviews()
+      loadLatestReviews(),
+      loadLatestLists()
     ])
   } catch (err) {
     error.value = 'Failed to load dashboard data'

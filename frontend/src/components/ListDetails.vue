@@ -34,7 +34,7 @@
         <div class="d-flex justify-content-between align-items-start mb-3">
           <div class="flex-grow-1">
             <h1 class="mb-2">{{ list.title }}</h1>
-            
+
             <!-- List Metadata -->
             <div class="d-flex align-items-center flex-wrap text-muted mb-2">
               <span class="me-3">
@@ -69,9 +69,9 @@
           <!-- Action Buttons -->
           <div class="d-flex align-items-start gap-2">
             <!-- Like Button -->
-            <button 
+            <button
               v-if="showSocialActions"
-              @click="toggleLike" 
+              @click="toggleLike"
               class="btn btn-outline-primary"
               :class="{ 'btn-primary text-white': isLiked }"
               :disabled="isProcessingLike"
@@ -115,7 +115,7 @@
       <div class="col">
         <div class="d-flex justify-content-between align-items-center mb-3">
           <h3>Games ({{ list.games ? list.games.length : 0 }})</h3>
-          
+
           <!-- Add Game Button (for owners) -->
           <button v-if="canEdit" @click="$emit('addGames')" class="btn btn-outline-primary">
             <i class="fas fa-plus me-2"></i>Add Games
@@ -126,7 +126,7 @@
         <div v-if="list.games && list.games.length > 0" class="row g-3">
           <div v-for="game in list.games" :key="game.id" class="col-6 col-md-4 col-lg-3 col-xl-2">
             <div class="game-card h-100">
-              <router-link :to="`/games/${game.slug}`" class="text-decoration-none">
+              <router-link :to="`/games/${game.slug || game.id}`" class="text-decoration-none">
                 <div class="card h-100 border-0 shadow-sm">
                   <img
                     :src="getGameImageUrl(game)"
@@ -135,7 +135,7 @@
                     style="height: 200px; object-fit: cover;"
                     @error="handleGameImageError"
                   >
-                  
+
                   <!-- Remove button for owner -->
                   <button
                     v-if="canEdit"
@@ -146,7 +146,7 @@
                   >
                     <i class="fas fa-times"></i>
                   </button>
-                  
+
                   <div class="card-body p-2">
                     <h6 class="card-title mb-1 text-dark" style="font-size: 0.875rem; line-height: 1.2;">
                       {{ game.name }}
@@ -273,11 +273,15 @@ const handleImageError = (e) => {
 }
 
 const getGameImageUrl = (game) => {
-  return game?.primaryImageUrl || game?.cover?.imageUrl || '/placeholder-game.png'
+  return game?.coverUrl || game?.primaryImageUrl || game?.cover?.imageUrl || 'data:image/svg+xml;charset=UTF-8,<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 200 200"><rect width="200" height="200" fill="%23f8f9fa"/><text x="50%" y="50%" text-anchor="middle" dy=".3em" fill="%236c757d" font-family="Arial" font-size="14">Game Cover</text></svg>'
 }
 
 const handleGameImageError = (e) => {
-  e.target.src = '/placeholder-game.png'
+  // Prevent infinite loading loop
+  if (!e.target.dataset.errorHandled) {
+    e.target.dataset.errorHandled = 'true'
+    e.target.src = 'data:image/svg+xml;charset=UTF-8,<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 200 200"><rect width="200" height="200" fill="%23f8f9fa"/><text x="50%" y="50%" text-anchor="middle" dy=".3em" fill="%236c757d" font-family="Arial" font-size="14">Game Cover</text></svg>'
+  }
 }
 
 const toggleLike = () => {
@@ -285,7 +289,7 @@ const toggleLike = () => {
     // Redirect to login or show message
     return
   }
-  
+
   emit('toggleLike', props.list)
 }
 
@@ -334,12 +338,12 @@ const removeGame = (game) => {
   .list-details {
     padding: 0 1rem;
   }
-  
+
   .col-6 {
     flex: 0 0 50%;
     max-width: 50%;
   }
-  
+
   .card-img-top {
     height: 150px !important;
   }
@@ -350,7 +354,7 @@ const removeGame = (game) => {
     flex-direction: column;
     align-items: flex-start !important;
   }
-  
+
   .d-flex.align-items-start.gap-2 {
     margin-top: 1rem;
     align-self: stretch;

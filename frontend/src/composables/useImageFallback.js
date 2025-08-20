@@ -1,4 +1,5 @@
 import { ref, computed } from 'vue'
+import { getContextualIgdbImage, IMAGE_CONTEXTS, IGDB_IMAGE_SIZES } from '@/utils/igdbImageSizing'
 
 /**
  * Unified Image Fallback Composable
@@ -91,15 +92,22 @@ export function useImageFallback() {
   const failedImages = ref(new Set())
 
   /**
-   * Get the appropriate image URL with fallback
+   * Get the appropriate image URL with fallback and IGDB sizing
    * @param {string|null|undefined} imageUrl - The primary image URL
    * @param {string} fallbackType - Type of fallback ('game', 'gameSmall', 'gameIcon', 'avatar', 'generic')
+   * @param {string} context - IGDB image context for sizing (optional)
+   * @param {string} customSize - Custom IGDB size override (optional)
    * @returns {string} - The image URL to use
    */
-  const getImageUrl = (imageUrl, fallbackType = 'generic') => {
+  const getImageUrl = (imageUrl, fallbackType = 'generic', context = null, customSize = null) => {
     // If no image URL provided, return fallback immediately
     if (!imageUrl || failedImages.value.has(imageUrl)) {
       return fallbackImages[fallbackType] || fallbackImages.generic
+    }
+    
+    // Apply IGDB sizing if context is provided
+    if (context) {
+      return getContextualIgdbImage(imageUrl, context, customSize)
     }
     
     return imageUrl
@@ -124,15 +132,17 @@ export function useImageFallback() {
   }
 
   /**
-   * Create a reactive image URL that automatically handles fallbacks
+   * Create a reactive image URL that automatically handles fallbacks and IGDB sizing
    * @param {Ref|ComputedRef|string} imageUrlRef - Reactive reference to the image URL
    * @param {string} fallbackType - Type of fallback to use
-   * @returns {ComputedRef} - Reactive image URL with fallback
+   * @param {string} context - IGDB image context for sizing (optional)
+   * @param {string} customSize - Custom IGDB size override (optional)
+   * @returns {ComputedRef} - Reactive image URL with fallback and sizing
    */
-  const createReactiveImageUrl = (imageUrlRef, fallbackType = 'generic') => {
+  const createReactiveImageUrl = (imageUrlRef, fallbackType = 'generic', context = null, customSize = null) => {
     return computed(() => {
       const url = typeof imageUrlRef === 'string' ? imageUrlRef : imageUrlRef.value
-      return getImageUrl(url, fallbackType)
+      return getImageUrl(url, fallbackType, context, customSize)
     })
   }
 
@@ -178,7 +188,11 @@ export function useImageFallback() {
     fallbackImages: Object.freeze(fallbackImages),
     
     // Reactive failed images set (read-only)
-    failedImages: computed(() => Array.from(failedImages.value))
+    failedImages: computed(() => Array.from(failedImages.value)),
+    
+    // IGDB sizing utilities
+    IMAGE_CONTEXTS,
+    IGDB_IMAGE_SIZES
   }
 }
 

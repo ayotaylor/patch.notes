@@ -89,7 +89,7 @@
                 </div>
 
                 <!-- Search Results -->
-                <div v-if="gameSearchResults.length > 0" class="mt-2 border rounded p-2" style="max-height: 200px; overflow-y: auto;">
+                <div v-if="gameSearchResults.length > 0" class="mt-2 border rounded p-2" style="max-height: 200px; overflow-y: auto;" @scroll="handleSearchScroll" ref="searchResultsContainer">
                   <div 
                     v-for="game in gameSearchResults" 
                     :key="game.id"
@@ -116,6 +116,19 @@
                       <i class="fas" :class="isGameInList(game.id) ? 'fa-check' : 'fa-plus'"></i>
                       {{ isGameInList(game.id) ? 'Added' : 'Add' }}
                     </button>
+                  </div>
+                  
+                  <!-- Load more indicator -->
+                  <div v-if="loadingMore" class="text-center p-2">
+                    <div class="spinner-border spinner-border-sm" role="status">
+                      <span class="visually-hidden">Loading more...</span>
+                    </div>
+                    <small class="ms-2">Loading more games...</small>
+                  </div>
+                  
+                  <!-- End of results indicator -->
+                  <div v-else-if="gameSearchResults.length > 0 && !gamesStore.canLoadMore" class="text-center text-muted p-2">
+                    <small>No more results</small>
                   </div>
                 </div>
 
@@ -164,6 +177,11 @@
               <div v-else class="text-center text-muted py-4">
                 <i class="fas fa-gamepad fa-2x mb-2 opacity-50"></i>
                 <p class="mb-0">No games added yet. Search and add games to your list.</p>
+              </div>
+
+              <!-- Error message for games -->
+              <div v-if="errors.games" class="invalid-feedback d-block mt-2">
+                {{ errors.games }}
               </div>
             </div>
           </div>
@@ -223,6 +241,8 @@ const gameSearchQuery = ref('')
 const gameSearchResults = ref([])
 const searchLoading = ref(false)
 const searchTimeout = ref(null)
+const loadingMore = ref(false)
+const searchResultsContainer = ref(null)
 
 // Computed
 const isEditing = computed(() => !!props.list)
@@ -230,7 +250,8 @@ const isEditing = computed(() => !!props.list)
 const isFormValid = computed(() => {
   return formData.value.title.trim().length > 0 && 
          formData.value.title.length <= 100 &&
-         formData.value.description.length <= 500
+         formData.value.description.length <= 500 &&
+         formData.value.games.length > 0
 })
 
 // Methods
@@ -273,6 +294,10 @@ const validateForm = () => {
     errors.value.description = 'Description must be 500 characters or less'
   }
 
+  if (!formData.value.games || formData.value.games.length === 0) {
+    errors.value.games = 'Please add at least one game to your list'
+  }
+
   return Object.keys(errors.value).length === 0
 }
 
@@ -306,13 +331,14 @@ const searchGames = async () => {
   searchTimeout.value = setTimeout(async () => {
     if (!gameSearchQuery.value.trim()) {
       gameSearchResults.value = []
+      gamesStore.clearSearchResults()
       return
     }
 
     try {
       searchLoading.value = true
-      const results = await gamesStore.searchGames(gameSearchQuery.value.trim(), 1)
-      gameSearchResults.value = results.slice(0, 10) // Limit to 10 results
+      await gamesStore.searchGames(gameSearchQuery.value.trim(), 1)
+      gameSearchResults.value = gamesStore.allSearchResults
     } catch (error) {
       console.error('Error searching games:', error)
       gameSearchResults.value = []
@@ -325,6 +351,29 @@ const searchGames = async () => {
 const clearGameSearch = () => {
   gameSearchQuery.value = ''
   gameSearchResults.value = []
+  gamesStore.clearSearchResults()
+}
+
+const handleSearchScroll = async (event) => {
+  const container = event.target
+  const scrollTop = container.scrollTop
+  const scrollHeight = container.scrollHeight
+  const clientHeight = container.clientHeight
+  
+  // Check if scrolled near bottom (within 50px)
+  if (scrollTop + clientHeight >= scrollHeight - 50) {
+    if (gamesStore.canLoadMore && !loadingMore.value && !searchLoading.value) {
+      try {
+        loadingMore.value = true
+        await gamesStore.loadMoreSearchResults()
+        gameSearchResults.value = gamesStore.allSearchResults
+      } catch (error) {
+        console.error('Error loading more search results:', error)
+      } finally {
+        loadingMore.value = false
+      }
+    }
+  }
 }
 
 const addGameToList = (game) => {
@@ -344,11 +393,15 @@ const isGameInList = (gameId) => {
 }
 
 const getGameImageUrl = (game) => {
-  return game?.primaryImageUrl || game?.cover?.imageUrl || '/placeholder-game.png'
+  return game?.coverUrl || game?.primaryImageUrl || game?.cover?.imageUrl || 'data:image/svg+xml;charset=UTF-8,<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 200 200"><rect width="200" height="200" fill="%23f8f9fa"/><text x="50%" y="50%" text-anchor="middle" dy=".3em" fill="%236c757d" font-family="Arial" font-size="14">Game Cover</text></svg>'
 }
 
 const handleGameImageError = (e) => {
-  e.target.src = '/placeholder-game.png'
+  // Prevent infinite loading loop
+  if (!e.target.dataset.errorHandled) {
+    e.target.dataset.errorHandled = 'true'
+    e.target.src = 'data:image/svg+xml;charset=UTF-8,<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 200 200"><rect width="200" height="200" fill="%23f8f9fa"/><text x="50%" y="50%" text-anchor="middle" dy=".3em" fill="%236c757d" font-family="Arial" font-size="14">Game Cover</text></svg>'
+  }
 }
 
 // Expose methods for parent component

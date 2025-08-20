@@ -162,11 +162,13 @@ import { listsService } from '@/services/listsService'
 import { socialService } from '@/services/socialService'
 import ListCard from './ListCard.vue'
 import ListForm from './ListForm.vue'
+import { useAuthRedirect } from '@/utils/authRedirect'
 
 // Composables
 const route = useRoute()
 const router = useRouter()
 const authStore = useAuthStore()
+const { requireAuth } = useAuthRedirect()
 
 // State
 const lists = ref([])
@@ -276,14 +278,26 @@ const loadMoreLists = () => {
 }
 
 const loadLikeStatus = async () => {
-  if (!authStore.user) return
+  if (!authStore.user || lists.value.length === 0) return
 
   try {
-    // This would need to be implemented in the API to get user's liked lists
-    // For now, we'll assume no lists are liked initially
-    // In a real implementation, you'd call something like:
-    // const userLikes = await socialService.getUserLikes(authStore.user.id)
-    // and filter for lists
+    // Clear existing liked lists
+    likedLists.value.clear()
+    
+    // Check like status for each list
+    const likeStatusPromises = lists.value.map(async (list) => {
+      try {
+        const isLiked = await socialService.isListLiked(list.id)
+        if (isLiked) {
+          likedLists.value.add(list.id)
+        }
+      } catch (error) {
+        console.warn(`Failed to check like status for list ${list.id}:`, error)
+      }
+    })
+
+    // Wait for all like status checks to complete
+    await Promise.all(likeStatusPromises)
   } catch (err) {
     console.error('Error loading like status:', err)
   }
@@ -379,8 +393,7 @@ const confirmDeleteList = async () => {
 }
 
 const handleToggleLike = async (list) => {
-  if (!authStore.user) {
-    // Redirect to login or show message
+  if (requireAuth(authStore.isAuthenticated, 'Please sign in to like lists')) {
     return
   }
 
@@ -427,6 +440,20 @@ watch(() => route.query, () => {
 // Watch for tab changes
 watch(activeTab, () => {
   resetAndLoadLists()
+})
+
+// Watch for authentication changes to reload like status
+watch(() => authStore.user, async (newUser, oldUser) => {
+  // If user logs in or out, reload like status
+  if (!!newUser !== !!oldUser) {
+    if (newUser && lists.value.length > 0) {
+      // User logged in - load like status
+      await loadLikeStatus()
+    } else {
+      // User logged out - clear like status
+      likedLists.value.clear()
+    }
+  }
 })
 
 // Lifecycle

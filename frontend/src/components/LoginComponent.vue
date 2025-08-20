@@ -85,16 +85,17 @@
 
 <script setup>
 import { ref } from 'vue'
-import { useRouter, useRoute } from 'vue-router'
+import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
 import { useProfileStore } from '@/stores/profileStore'
 import { useToast } from 'vue-toastification'
+import { useAuthRedirect } from '@/utils/authRedirect'
 
 const router = useRouter()
-const route = useRoute()
 const authStore = useAuthStore()
 const profileStore = useProfileStore()
 const toast = useToast()
+const { getRedirectPath } = useAuthRedirect()
 
 const loginForm = ref({
   email: '',
@@ -123,8 +124,8 @@ const login = async () => {
           return
         }
         // Redirect to intended route or dashboard
-        const redirect = route.query.redirect || '/dashboard'
-        router.push(redirect)
+        const redirectPath = getRedirectPath()
+        router.push(redirectPath)
       } else {
         error.value = profileResponse.message || 'Failed to fetch user profile'
         toast.error(error.value)

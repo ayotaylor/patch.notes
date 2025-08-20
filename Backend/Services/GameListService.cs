@@ -49,6 +49,7 @@ namespace Backend.Services
                 .Include(gl => gl.User)
                 .Include(gl => gl.GameListItems)
                     .ThenInclude(gli => gli.Game)
+                    .ThenInclude(g => g.Covers)
                 .Include(gl => gl.Comments)
                 .Include(gl => gl.Likes)
                 .Where(gl => gl.UserId == userProfileId)
@@ -81,6 +82,7 @@ namespace Backend.Services
                 .Include(gl => gl.User)
                 .Include(gl => gl.GameListItems)
                     .ThenInclude(gli => gli.Game)
+                    .ThenInclude(g => g.Covers)
                 .Include(gl => gl.Comments)
                 .Include(gl => gl.Likes)
                 .Where(gl => gl.IsPublic)
@@ -107,6 +109,7 @@ namespace Backend.Services
                 .Include(gl => gl.User)
                 .Include(gl => gl.GameListItems)
                     .ThenInclude(gli => gli.Game)
+                    .ThenInclude(g => g.Covers)
                 .Include(gl => gl.Comments)
                     .ThenInclude(c => c.User)
                 .Include(gl => gl.Likes)
@@ -115,7 +118,7 @@ namespace Backend.Services
             return gameList?.ToDto();
         }
 
-        public async Task<GameListDto?> CreateGameListAsync(Guid userId, string name, string? description = null, bool isPublic = true)
+        public async Task<GameListDto?> CreateGameListAsync(Guid userId, string name, string? description = null, bool isPublic = true, List<int>? gameIds = null)
         {
             var userProfileId = await _context.UserProfiles
                 .Where(u => u.UserId == userId.ToString())
@@ -137,6 +140,36 @@ namespace Backend.Services
 
             _context.GameLists.Add(gameList);
             await _context.SaveChangesAsync();
+
+            // Add games to the list if provided
+            if (gameIds != null && gameIds.Count > 0)
+            {
+                var gameGuids = await _context.Games
+                    .Where(g => gameIds.Contains(g.IgdbId))
+                    .Select(g => new { g.Id, g.IgdbId })
+                    .ToListAsync();
+
+                var gameListItems = new List<GameListItem>();
+                for (int i = 0; i < gameIds.Count; i++)
+                {
+                    var gameGuid = gameGuids.FirstOrDefault(g => g.IgdbId == gameIds[i])?.Id;
+                    if (gameGuid.HasValue)
+                    {
+                        gameListItems.Add(new GameListItem
+                        {
+                            GameListId = gameList.Id,
+                            GameId = gameGuid.Value,
+                            Order = i + 1
+                        });
+                    }
+                }
+
+                if (gameListItems.Count > 0)
+                {
+                    _context.GameListItems.AddRange(gameListItems);
+                    await _context.SaveChangesAsync();
+                }
+            }
 
             return await GetGameListAsync(gameList.Id);
         }

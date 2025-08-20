@@ -182,7 +182,7 @@ export const socialService = {
       const response = await apiClient.delete("/social/likes", {
         data: {
           //userId: userId,
-          itemId: gameId,
+          gameId: gameId,
         },
       });
 
@@ -190,6 +190,46 @@ export const socialService = {
     } catch (error) {
       console.error("Error removing like:", error);
       throw new Error(error.response?.data?.message || "Failed to remove like");
+    }
+  },
+
+  // Check if game is favorited
+  async isGameFavorited(gameId) {
+    try {
+      if (
+        !gameId ||
+        (typeof gameId !== "string" && typeof gameId !== "number")
+      ) {
+        throw new Error("Game ID must be a non-empty string or number");
+      }
+
+      const response = await apiClient.get(`/social/favorites/games/${gameId}/status`);
+      return response.data.data;
+    } catch (error) {
+      console.error("Error checking if game is favorited:", error);
+      throw new Error(
+        error.response?.data?.message || "Failed to check favorite status"
+      );
+    }
+  },
+
+  // Check if game is liked
+  async isGameLiked(gameId) {
+    try {
+      if (
+        !gameId ||
+        (typeof gameId !== "string" && typeof gameId !== "number")
+      ) {
+        throw new Error("Game ID must be a non-empty string or number");
+      }
+
+      const response = await apiClient.get(`/social/likes/games/${gameId}/status`);
+      return response.data.data;
+    } catch (error) {
+      console.error("Error checking if game is liked:", error);
+      throw new Error(
+        error.response?.data?.message || "Failed to check like status"
+      );
     }
   },
 
@@ -208,6 +248,26 @@ export const socialService = {
     } catch (error) {
       console.error("Error liking review:", error);
       throw new Error(error.response?.data?.message || "Failed to like review");
+    }
+  },
+
+  // Check if review is liked
+  async isReviewLiked(reviewId) {
+    try {
+      if (
+        !reviewId ||
+        (typeof reviewId !== "string" && typeof reviewId !== "number")
+      ) {
+        throw new Error("Review ID must be a non-empty string or number");
+      }
+
+      const response = await apiClient.get(`/social/reviews/${reviewId}/liked`);
+      return response.data.data;
+    } catch (error) {
+      console.error("Error checking if review is liked:", error);
+      throw new Error(
+        error.response?.data?.message || "Failed to check review like status"
+      );
     }
   },
 
@@ -251,6 +311,26 @@ export const socialService = {
     }
   },
 
+  // Check if list is liked
+  async isListLiked(gameListId) {
+    try {
+      if (
+        !gameListId ||
+        (typeof gameListId !== "string" && typeof gameListId !== "number")
+      ) {
+        throw new Error("Game list ID must be a non-empty string or number");
+      }
+
+      const response = await apiClient.get(`/social/lists/${gameListId}/liked`);
+      return response.data.data;
+    } catch (error) {
+      console.error("Error checking if list is liked:", error);
+      throw new Error(
+        error.response?.data?.message || "Failed to check list like status"
+      );
+    }
+  },
+
   // Unlike a list
   async unlikeList(gameListId) {
     try {
@@ -289,6 +369,26 @@ export const socialService = {
       console.error("Error liking comment:", error);
       throw new Error(
         error.response?.data?.message || "Failed to like comment"
+      );
+    }
+  },
+
+  // Check if comment is liked
+  async isCommentLiked(commentId) {
+    try {
+      if (
+        !commentId ||
+        (typeof commentId !== "string" && typeof commentId !== "number")
+      ) {
+        throw new Error("Comment ID must be a non-empty string or number");
+      }
+
+      const response = await apiClient.get(`/social/comments/${commentId}/liked`);
+      return response.data.data;
+    } catch (error) {
+      console.error("Error checking if comment is liked:", error);
+      throw new Error(
+        error.response?.data?.message || "Failed to check comment like status"
       );
     }
   },

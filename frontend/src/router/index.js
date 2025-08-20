@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory } from "vue-router";
 import { useAuthStore } from "@/stores/authStore";
 import { getStoredToken, clearAuthData } from "@/utils/authUtils";
+import { buildRedirectPath } from "@/utils/authRedirect";
 import CompleteProfile from "@/components/CompleteProfile.vue";
 
 // Import your views/components
@@ -46,8 +47,8 @@ const routes = [
     name: "Dashboard",
     component: DashboardComponent,
     meta: {
-      requiresAuth: true,
-      validateToken: "cache",
+      requiresAuth: false,
+      validateToken: "never",
       title: "Dashboard - Patch Notes",
     },
   },
@@ -158,7 +159,7 @@ const routes = [
       title: "Review Details - Patch Notes",
     },
   },
-  
+
   // Lists routes
   {
     path: "/lists",
@@ -256,7 +257,8 @@ router.beforeEach(async (to, from, next) => {
     authStore.clearAuthState(); // Clear store state
 
     if (to.meta.requiresAuth) {
-      return next("/login");
+      const redirectPath = buildRedirectPath(to);
+      return next(`/login?redirect=${encodeURIComponent(redirectPath)}`);
     }
     return next();
   }
@@ -268,7 +270,8 @@ router.beforeEach(async (to, from, next) => {
 
   // Route-specific logic
   if (to.meta.requiresAuth && !authStore.isAuthenticated) {
-    return next("/login");
+    const redirectPath = buildRedirectPath(to);
+    return next(`/login?redirect=${encodeURIComponent(redirectPath)}`);
   }
 
   if (to.meta.requiresGuest && authStore.isAuthenticated) {
@@ -296,7 +299,8 @@ router.beforeEach(async (to, from, next) => {
         if (!isValid) {
           clearAuthData();
           authStore.clearAuthState();
-          return next("/login");
+          const redirectPath = buildRedirectPath(to);
+          return next(`/login?redirect=${encodeURIComponent(redirectPath)}`);
         }
       }
       // Check if token was recently validated (within last 5 minutes)
@@ -304,7 +308,8 @@ router.beforeEach(async (to, from, next) => {
       console.error("Token validation error:", error);
       clearAuthData();
       authStore.clearAuth();
-      return next("/login");
+      const redirectPath = buildRedirectPath(to);
+      return next(`/login?redirect=${encodeURIComponent(redirectPath)}`);
     }
   }
 

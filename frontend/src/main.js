@@ -5,7 +5,8 @@ import router from '@/router'
 import Toast from 'vue-toastification'
 import 'vue-toastification/dist/index.css'
 import 'bootstrap/dist/css/bootstrap.min.css'
-import 'bootstrap/dist/js/bootstrap.bundle.min.js'
+import * as bootstrap from 'bootstrap'
+window.bootstrap = bootstrap
 //import '@assets/styles/main.css'
 
 // Font Awesome

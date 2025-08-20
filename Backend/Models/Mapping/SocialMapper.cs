@@ -72,8 +72,8 @@ namespace Backend.Mapping
                 UpdatedAt = gameList.UpdatedAt,
                 UserDisplayName = gameList.User?.DisplayName ?? gameList.User?.FirstName + " " + gameList.User?.LastName,
                 GameCount = gameList.GameListItems?.Count ?? 0,
-                CommentsCount = gameList.Comments?.Count ?? 0,
-                LikesCount = gameList.Likes?.Count ?? 0,
+                CommentCount = gameList.Comments?.Count ?? 0,
+                LikeCount = gameList.Likes?.Count ?? 0,
                 User = gameList.User != null ? new UserSummaryDto
                 {
                     Id = Guid.Parse(gameList.User.UserId),
@@ -138,7 +138,7 @@ namespace Backend.Mapping
                 Content = comment.Content,
                 CreatedAt = comment.CreatedAt,
                 UserDisplayName = comment.User?.DisplayName ?? comment.User?.FirstName + " " + comment.User?.LastName,
-                LikesCount = comment.Likes?.Count ?? 0,
+                LikeCount = comment.Likes?.Count ?? 0,
                 ReplyCount = comment.Replies?.Count ?? 0
             };
         }

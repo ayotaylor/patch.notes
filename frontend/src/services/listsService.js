@@ -8,7 +8,11 @@ const processLists = (lists) => {
   return lists.map(list => ({
     ...list,
     // Convert game objects to Game instances if they exist
-    games: list.games ? list.games.map(game => new Game(game)) : []
+    games: list.games ? list.games.map(gameListItem => {
+      // GameListItemDto has a nested Game property (GameSummaryDto)
+      const gameData = gameListItem.game || gameListItem;
+      return new Game(gameData);
+    }) : []
   }));
 };
 
@@ -18,7 +22,11 @@ const processList = (list) => {
   
   return {
     ...list,
-    games: list.games ? list.games.map(game => new Game(game)) : []
+    games: list.games ? list.games.map(gameListItem => {
+      // GameListItemDto has a nested Game property (GameSummaryDto)
+      const gameData = gameListItem.game || gameListItem;
+      return new Game(gameData);
+    }) : []
   };
 };
 
@@ -113,11 +121,18 @@ export const listsService = {
         throw new Error("List title is required");
       }
 
-      const response = await apiClient.post("/lists", {
+      const payload = {
         title: listData.title.trim(),
         description: listData.description ? listData.description.trim() : "",
         isPublic: Boolean(listData.isPublic)
-      });
+      };
+
+      // Add games array if provided
+      if (listData.games && Array.isArray(listData.games) && listData.games.length > 0) {
+        payload.gameIds = listData.games.map(game => game.id);
+      }
+
+      const response = await apiClient.post("/lists", payload);
 
       return processList(response.data.data);
     } catch (error) {

@@ -143,6 +143,7 @@ import { useImageFallback, FALLBACK_TYPES } from '@/composables/useImageFallback
 import { commentsService } from '@/services/commentsService'
 import { socialService } from '@/services/socialService'
 import CommentCard from './CommentCard.vue'
+import { useAuthRedirect } from '@/utils/authRedirect'
 
 // Props
 const props = defineProps({
@@ -167,6 +168,7 @@ const emit = defineEmits(['commentAdded', 'commentUpdated', 'commentDeleted', 'c
 // Composables
 const authStore = useAuthStore()
 const { createReactiveImageUrl } = useImageFallback()
+const { requireAuth } = useAuthRedirect()
 
 // State
 const comments = ref([])
@@ -235,6 +237,11 @@ const loadComments = async () => {
 
     hasMoreComments.value = result.hasNextPage || false
     emit('countChanged', result.totalCount || comments.value.length)
+
+    // Load like status for authenticated users
+    if (authStore.user && comments.value.length > 0) {
+      await loadLikeStatus()
+    }
 
   } catch (err) {
     console.error('Error loading comments:', err)
@@ -362,7 +369,9 @@ const handleDeleteComment = async (comment) => {
 }
 
 const handleToggleLike = async (comment) => {
-  if (!canComment.value) return
+  if (requireAuth(authStore.isAuthenticated, 'Please sign in to like comments')) {
+    return
+  }
 
   const commentId = comment.id
   const wasLiked = likedComments.value.has(commentId)
@@ -436,6 +445,32 @@ const handleHideReplies = (comment) => {
   showRepliesForComment.value.delete(comment.id)
 }
 
+const loadLikeStatus = async () => {
+  if (!authStore.user || comments.value.length === 0) return
+
+  try {
+    // Clear existing liked comments
+    likedComments.value.clear()
+    
+    // Check like status for each comment
+    const likeStatusPromises = comments.value.map(async (comment) => {
+      try {
+        const isLiked = await socialService.isCommentLiked(comment.id)
+        if (isLiked) {
+          likedComments.value.add(comment.id)
+        }
+      } catch (error) {
+        console.warn(`Failed to check like status for comment ${comment.id}:`, error)
+      }
+    })
+
+    // Wait for all like status checks to complete
+    await Promise.all(likeStatusPromises)
+  } catch (err) {
+    console.error('Error loading like status:', err)
+  }
+}
+
 
 // Watch for prop changes
 watch(() => [props.itemType, props.itemId], () => {
@@ -443,6 +478,20 @@ watch(() => [props.itemType, props.itemId], () => {
     resetAndLoadComments()
   }
 }, { immediate: true })
+
+// Watch for authentication changes to reload like status
+watch(() => authStore.user, async (newUser, oldUser) => {
+  // If user logs in or out, reload like status
+  if (!!newUser !== !!oldUser) {
+    if (newUser && comments.value.length > 0) {
+      // User logged in - load like status
+      await loadLikeStatus()
+    } else {
+      // User logged out - clear like status
+      likedComments.value.clear()
+    }
+  }
+})
 
 // Expose methods for parent component
 defineExpose({
