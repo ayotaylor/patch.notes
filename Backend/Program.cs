@@ -21,6 +21,7 @@ builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IUserProfileService, UserProfileService>();
 builder.Services.AddScoped<IGameService, GameService>();
 builder.Services.AddScoped<ISocialService, SocialService>();
+builder.Services.AddScoped<IFollowService, FollowService>();
 builder.Services.AddScoped<IReviewService, ReviewService>();
 builder.Services.AddScoped<IGameListService, GameListService>();
 builder.Services.AddScoped<ICommentService, CommentService>();

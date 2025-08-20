@@ -1,4 +1,5 @@
 using Backend.Models.Auth;
+using Backend.Models.DTO.Social;
 
 namespace Backend.Mapping
 {
@@ -136,6 +137,16 @@ namespace Backend.Mapping
                 DateOfBirth = updateDto.DateOfBirth,
                 PhoneNumber = updateDto.PhoneNumber,
                 Email = updateDto.Email,
+            };
+        }
+
+        public static UserSummaryDto ToSummaryDto(this UserProfile userProfile)
+        {
+            return new UserSummaryDto
+            {
+                Id = userProfile.Id,
+                DisplayName = userProfile.DisplayName ?? $"{userProfile.FirstName} {userProfile.LastName}".Trim(),
+                ProfileUrlImageUrl = userProfile.ProfileUrlImageUrl
             };
         }
     }

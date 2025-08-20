@@ -63,6 +63,7 @@ namespace Backend.Data
         public DbSet<ReviewLike> ReviewLikes { get; set; }
         public DbSet<GameListLike> GameListLikes { get; set; }
         public DbSet<CommentLike> CommentLikes { get; set; }
+        public DbSet<Follow> Follows { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
@@ -167,6 +168,10 @@ namespace Backend.Data
 
             builder.Entity<CommentLike>()
                 .HasIndex(cl => new { cl.UserId, cl.CommentId })
+                .IsUnique();
+
+            builder.Entity<Follow>()
+                .HasIndex(f => new { f.FollowerId, f.FollowingId })
                 .IsUnique();
 
             // Comment constraints
