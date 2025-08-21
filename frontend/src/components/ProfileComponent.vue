@@ -100,7 +100,31 @@
                   </div>
 
                   <!-- Action Buttons -->
-                  <div v-if="isOwnProfile" class="ms-3">
+                  <div class="ms-3">
+                    <!-- Follow Button for Other Users -->
+                    <div v-if="!isOwnProfile && authStore.user" class="mb-2">
+                      <button
+                        @click="toggleFollow"
+                        :disabled="followingInProgress"
+                        class="btn"
+                        :class="isFollowed ? 'btn-success' : 'btn-primary'"
+                      >
+                        <span v-if="followingInProgress" class="spinner-border spinner-border-sm me-2"></span>
+                        <i v-else :class="isFollowed ? 'fas fa-check' : 'fas fa-plus'" class="me-2"></i>
+                        {{ isFollowed ? 'Following' : 'Follow' }}
+                      </button>
+                    </div>
+
+                    <!-- Login Prompt for Non-Authenticated Users -->
+                    <div v-else-if="!isOwnProfile && !authStore.user" class="mb-2">
+                      <router-link to="/login" class="btn btn-outline-primary">
+                        <i class="fas fa-sign-in-alt me-2"></i>
+                        Login to Follow
+                      </router-link>
+                    </div>
+
+                    <!-- Edit Profile Button for Own Profile -->
+                  <div v-if="isOwnProfile">
                     <template v-if="!isEditing">
                       <button @click="startEditing" class="btn btn-outline-primary">
                         <i class="fas fa-edit me-2"></i>
@@ -124,6 +148,7 @@
                         </button>
                       </div>
                     </template>
+                  </div>
                   </div>
                 </div>
 
@@ -477,6 +502,7 @@ import { useProfileStore } from '@/stores/profileStore'
 import { useGamesStore } from '@/stores/gamesStore'
 import { useToast } from 'vue-toastification'
 import { useImageFallback, FALLBACK_TYPES } from '@/composables/useImageFallback'
+import { useAuthRedirect } from '@/utils/authRedirect'
 import GameSearchComponent from '@/components/GameSearchComponent.vue'
 import ReviewCard from '@/components/ReviewCard.vue'
 import { reviewsService } from '@/services/reviewsService'
@@ -498,7 +524,8 @@ const authStore = useAuthStore()
 const profileStore = useProfileStore()
 const gamesStore = useGamesStore()
 const toast = useToast()
-const { handleImageError, getImageUrl } = useImageFallback()
+const { handleImageError, getImageUrl, IMAGE_CONTEXTS } = useImageFallback()
+const { redirectToLoginWithReturn } = useAuthRedirect()
 
 // State
 const profile = ref(null)
@@ -533,6 +560,10 @@ const editTopGames = ref([])
 const originalTopGames = ref([]) // Track original games for comparison
 const isSavingGames = ref(false)
 const imageInput = ref(null)
+
+// Follow state
+const isFollowed = ref(false)
+const followingInProgress = ref(false)
 
 // Computed properties
 const profileUserId = computed(() => props.userId || route.params.userId || authStore.user?.id)
@@ -573,6 +604,11 @@ const fetchProfile = async () => {
 
     // Load user's reviews
     await loadUserReviews()
+
+    // Check follow status if viewing another user's profile
+    if (!isOwnProfile.value && authStore.user) {
+      await checkFollowStatus()
+    }
   } catch (err) {
     error.value = err.message || 'Failed to load profile'
     console.error('Error fetching profile:', err)
@@ -604,6 +640,22 @@ const loadUserReviews = async () => {
     const reviewsWithCommentCounts = await commentsService.loadCommentCountsForReviews(response.data || [])
     userReviews.value = reviewsWithCommentCounts
     totalReviews.value = response.totalCount || 0
+
+    // Load like status for each review if current user is authenticated
+    if (authStore.user) {
+      likedReviews.value.clear()
+      const likeStatusPromises = userReviews.value.map(async (review) => {
+        try {
+          const isLiked = await socialService.isReviewLiked(review.id)
+          if (isLiked) {
+            likedReviews.value.add(review.id)
+          }
+        } catch (error) {
+          console.warn(`Failed to check like status for review ${review.id}:`, error)
+        }
+      })
+      await Promise.all(likeStatusPromises)
+    }
   } catch (error) {
     console.error('Error loading user reviews:', error)
     userReviews.value = []
@@ -838,6 +890,45 @@ const handleToggleLike = async (review) => {
 const handleShowComments = (review) => {
   // Navigate to dedicated review details page
   router.push(`/reviews/${review.id}`)
+}
+
+// Follow methods
+const checkFollowStatus = async () => {
+  if (!profileUserId.value || isOwnProfile.value || !authStore.user) return
+
+  try {
+    const response = await socialService.isUserFollowed(profileUserId.value)
+    isFollowed.value = response
+  } catch (error) {
+    console.error('Error checking follow status:', error)
+    isFollowed.value = false
+  }
+}
+
+const toggleFollow = async () => {
+  if (!authStore.user) {
+    redirectToLoginWithReturn('Please login to follow users')
+    return
+  }
+
+  followingInProgress.value = true
+
+  try {
+    if (isFollowed.value) {
+      await socialService.unfollowUser(profileUserId.value)
+      isFollowed.value = false
+      toast.success(`Unfollowed ${profile.value.displayName}`)
+    } else {
+      await socialService.followUser(profileUserId.value)
+      isFollowed.value = true
+      toast.success(`Now following ${profile.value.displayName}`)
+    }
+  } catch (error) {
+    console.error('Error toggling follow:', error)
+    toast.error(error.message || 'Failed to update follow status')
+  } finally {
+    followingInProgress.value = false
+  }
 }
 
 // Watchers

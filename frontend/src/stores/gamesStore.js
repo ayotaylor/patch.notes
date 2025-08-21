@@ -293,6 +293,24 @@ export const useGamesStore = defineStore("games", () => {
     if (games.value.has(primaryKey)) {
       const cachedInstance = games.value.get(primaryKey);
 
+      // For detailed game views, update social data even if cached
+      if (options.updateSocialData && gameData) {
+        console.log('cacheGame: Updating social data for cached game');
+        // Update social data properties
+        if (typeof gameData.likesCount !== 'undefined') {
+          cachedInstance.likesCount = gameData.likesCount;
+        }
+        if (typeof gameData.favoritesCount !== 'undefined') {
+          cachedInstance.favoritesCount = gameData.favoritesCount;
+        }
+        if (typeof gameData.isLikedByUser !== 'undefined') {
+          cachedInstance.isLikedByUser = gameData.isLikedByUser;
+        }
+        if (typeof gameData.isFavoritedByUser !== 'undefined') {
+          cachedInstance.isFavoritedByUser = gameData.isFavoritedByUser;
+        }
+      }
+
       // Still preload cover for already cached games if requested
       if (options.preloadCover !== false) {
         const priority = options.coverPriority || 'low';
@@ -338,47 +356,53 @@ export const useGamesStore = defineStore("games", () => {
     return Date.now() - timestamp < CACHE_DURATION;
   };
 
-  const getCachedGame = (identifier) => {
-    if (!identifier) return null;
+  // const getCachedGame = (identifier, skipSocialDataCheck = false) => {
+  //   if (!identifier) return null;
 
-    const key = String(identifier);
-    console.log('getCachedGame: looking for key:', key);
+  //   const key = String(identifier);
+  //   console.log('getCachedGame: looking for key:', key);
 
-    // Check direct cache hit
-    if (games.value.has(key) && isCacheValid(key)) {
-      const cachedGame = games.value.get(key);
-      console.log('getCachedGame: found cached game:', cachedGame);
+  //   // For game details, don't use cache to ensure fresh social data
+  //   if (!skipSocialDataCheck) {
+  //     console.log('getCachedGame: Skipping cache for fresh social data');
+  //     return null;
+  //   }
 
-      // Trigger immediate cover preload for accessed cached games
-      if (ENABLE_COVER_PRECACHING && cachedGame) {
-        preloadGameCover(cachedGame, 'high').catch(() => {
-          // Silently handle preload failures
-        });
-      }
+  //   // Check direct cache hit (only for non-detail views)
+  //   if (games.value.has(key) && isCacheValid(key)) {
+  //     const cachedGame = games.value.get(key);
+  //     console.log('getCachedGame: found cached game:', cachedGame);
 
-      return cachedGame;
-    }
+  //     // Trigger immediate cover preload for accessed cached games
+  //     if (ENABLE_COVER_PRECACHING && cachedGame) {
+  //       preloadGameCover(cachedGame, 'high').catch(() => {
+  //         // Silently handle preload failures
+  //       });
+  //     }
 
-    // Check by slug if identifier is not numeric
-    if (isNaN(identifier)) {
-      const gameBySlug = getGameBySlug.value(identifier);
-      if (gameBySlug) {
-        console.log('getCachedGame: found game by slug:', gameBySlug);
+  //     return cachedGame;
+  //   }
 
-        // Trigger immediate cover preload for accessed cached games
-        if (ENABLE_COVER_PRECACHING && gameBySlug) {
-          preloadGameCover(gameBySlug, 'high').catch(() => {
-            // Silently handle preload failures
-          });
-        }
+  //   // Check by slug if identifier is not numeric
+  //   if (isNaN(identifier)) {
+  //     const gameBySlug = getGameBySlug.value(identifier);
+  //     if (gameBySlug) {
+  //       console.log('getCachedGame: found game by slug:', gameBySlug);
 
-        return gameBySlug;
-      }
-    }
+  //       // Trigger immediate cover preload for accessed cached games
+  //       if (ENABLE_COVER_PRECACHING && gameBySlug) {
+  //         preloadGameCover(gameBySlug, 'high').catch(() => {
+  //           // Silently handle preload failures
+  //         });
+  //       }
 
-    console.log('getCachedGame: no cached game found');
-    return null;
-  };
+  //       return gameBySlug;
+  //     }
+  //   }
+
+  //   console.log('getCachedGame: no cached game found');
+  //   return null;
+  // };
 
   // Actions
   const fetchGameDetails = async (identifier) => {
@@ -390,14 +414,8 @@ export const useGamesStore = defineStore("games", () => {
     }
 
     try {
-      // Check cache first
-      const cachedGame = getCachedGame(identifier);
-      if (cachedGame) {
-        console.log("fetchGameDetails: Found in cache:", cachedGame);
-        return cachedGame;
-      }
-
-      console.log('fetchGameDetails: Not in cache, fetching from API');
+      // Always fetch fresh data for detailed views to ensure social data is current
+      console.log('fetchGameDetails: Fetching fresh data from API');
       loading.value = true;
       error.value = null;
 
@@ -415,7 +433,8 @@ export const useGamesStore = defineStore("games", () => {
       console.log('fetchGameDetails: Caching game data');
       const gameInstance = cacheGame(gameData, identifier, {
         preloadCover: true,
-        coverPriority: 'high'
+        coverPriority: 'high',
+        updateSocialData: true
       });
       console.log('fetchGameDetails: Cached game instance:', gameInstance);
       console.log('fetchGameDetails: Instance type:', typeof gameInstance);

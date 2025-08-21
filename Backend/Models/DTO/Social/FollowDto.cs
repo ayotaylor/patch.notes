@@ -3,8 +3,10 @@ namespace Backend.Models.DTO.Social
     public class FollowDto
     {
         public Guid Id { get; set; }
-        public UserSummaryDto Follower { get; set; } = null!;
-        public UserSummaryDto Following { get; set; } = null!;
+        public Guid? FollowerUserId { get; set; }
+        public Guid? FollowingUserId { get; set; }
+        public UserSummaryDto? Follower { get; set; } = null;
+        public UserSummaryDto? Following { get; set; } = null;
         public DateTime FollowedAt { get; set; }
     }
 

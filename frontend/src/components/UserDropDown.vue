@@ -33,11 +33,14 @@
 
 <script setup>
 import { useAuthStore } from '@/stores/authStore'
+import { useAuthRedirect } from '@/utils/authRedirect'
 
 const authStore = useAuthStore()
+const { getLogoutRedirect } = useAuthRedirect()
 
 const handleLogout = async () => {
-  await authStore.logout()
+  const redirectPath = getLogoutRedirect()
+  await authStore.logout(redirectPath)
 }
 </script>
 

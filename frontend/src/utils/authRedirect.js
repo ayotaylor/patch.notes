@@ -52,6 +52,34 @@ export function isAuthPage(path) {
 }
 
 /**
+ * Checks if a route requires authentication
+ * @param {string} path - Route path to check
+ * @returns {boolean}
+ */
+export function requiresAuthentication(path) {
+  // Routes that require authentication
+  const authRequiredPaths = ['/profile', '/complete-profile']
+  return authRequiredPaths.some(authPath => path === authPath || path.startsWith(authPath + '/'))
+}
+
+/**
+ * Determines appropriate redirect path after logout
+ * @param {Object} route - Current route object
+ * @returns {string} - Appropriate redirect path
+ */
+export function getLogoutRedirectPath(route) {
+  const currentPath = route.path
+  
+  // If current page requires auth, redirect to dashboard
+  if (requiresAuthentication(currentPath)) {
+    return '/dashboard'
+  }
+  
+  // Otherwise, allow user to stay on current page
+  return currentPath
+}
+
+/**
  * Composable for authentication redirect functionality
  * @returns {Object} - Object with redirect utilities
  */
@@ -87,10 +115,19 @@ export function useAuthRedirect() {
     
     return '/dashboard'
   }
+
+  /**
+   * Gets the appropriate redirect path after logout
+   * @returns {string} - Path to redirect to after logout
+   */
+  const getLogoutRedirect = () => {
+    return getLogoutRedirectPath(route)
+  }
   
   return {
     requireAuth,
     getRedirectPath,
+    getLogoutRedirect,
     redirectToLoginWithReturn: (message) => redirectToLoginWithReturn(router, route, message),
     buildRedirectPath: () => buildRedirectPath(route)
   }

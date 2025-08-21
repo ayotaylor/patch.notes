@@ -153,12 +153,10 @@ const loadLikeStatus = async () => {
 
   try {
     // Check if user has liked this review
-    // This would need to be implemented in the API
-    // For now, assume not liked
-    // const isLiked = await socialService.isReviewLiked(review.value.id)
-    // if (isLiked) {
-    //   likedReviews.value.add(review.value.id)
-    // }
+    const isLiked = await socialService.isReviewLiked(review.value.id)
+    if (isLiked) {
+      likedReviews.value.add(review.value.id)
+    }
   } catch (err) {
     console.error('Error loading like status:', err)
   }

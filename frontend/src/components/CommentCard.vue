@@ -84,11 +84,11 @@
             v-if="showLikeButton"
             @click="$emit('toggleLike', comment)" 
             class="btn btn-sm btn-link text-muted p-0 me-3"
-            :class="{ 'text-primary': isLiked }"
+            :class="{ 'text-danger': isLiked }"
             :disabled="isProcessingLike"
           >
             <span v-if="isProcessingLike" class="spinner-border spinner-border-sm me-1" role="status" style="width: 12px; height: 12px;"></span>
-            <i class="fas fa-heart me-1"></i>
+            <i class="fas fa-heart me-1" :class="{ 'text-danger': isLiked }"></i>
             {{ comment.likeCount || 0 }}
           </button>
 

@@ -34,9 +34,9 @@
     <!-- Login Prompt -->
     <div v-else-if="!authStore.user" class="text-center py-3 mb-4 border rounded">
       <p class="mb-2">Join the conversation!</p>
-      <router-link to="/login" class="btn btn-primary btn-sm">
+      <button @click="redirectToLogin" class="btn btn-primary btn-sm">
         Sign In to Comment
-      </router-link>
+      </button>
     </div>
 
     <!-- Comments List -->
@@ -168,7 +168,7 @@ const emit = defineEmits(['commentAdded', 'commentUpdated', 'commentDeleted', 'c
 // Composables
 const authStore = useAuthStore()
 const { createReactiveImageUrl } = useImageFallback()
-const { requireAuth } = useAuthRedirect()
+const { requireAuth, redirectToLoginWithReturn } = useAuthRedirect()
 
 // State
 const comments = ref([])
@@ -471,6 +471,9 @@ const loadLikeStatus = async () => {
   }
 }
 
+const redirectToLogin = () => {
+  redirectToLoginWithReturn('Please login to comment')
+}
 
 // Watch for prop changes
 watch(() => [props.itemType, props.itemId], () => {

@@ -130,22 +130,22 @@
                 </div>
 
                 <!-- Engagement Stats -->
-                <div v-if="hasEngagementStats" class="row g-3 mb-4">
-                  <div class="col-4" v-if="game.hypes > 0">
+                <div v-if="game" class="row g-3 mb-4">
+                  <div :class="game.hypes > 0 ? 'col-4' : 'col-6'" v-if="game.hypes > 0">
                     <div class="text-center">
                       <div class="h5 mb-0 fw-bold text-danger">{{ formatNumber(game.hypes) }}</div>
                       <small class="text-muted">Hypes</small>
                     </div>
                   </div>
-                  <div class="col-4" v-if="game.likesCount > 0">
+                  <div :class="game.hypes > 0 ? 'col-4' : 'col-6'">
                     <div class="text-center">
-                      <div class="h5 mb-0 fw-bold text-primary">{{ formatNumber(game.likesCount) }}</div>
+                      <div class="h5 mb-0 fw-bold text-primary">{{ formatNumber(game.likesCount || 0) }}</div>
                       <small class="text-muted">Likes</small>
                     </div>
                   </div>
-                  <div class="col-4" v-if="game.favoritesCount > 0">
+                  <div :class="game.hypes > 0 ? 'col-4' : 'col-6'">
                     <div class="text-center">
-                      <div class="h5 mb-0 fw-bold text-warning">{{ formatNumber(game.favoritesCount) }}</div>
+                      <div class="h5 mb-0 fw-bold text-warning">{{ formatNumber(game.favoritesCount || 0) }}</div>
                       <small class="text-muted">Favorites</small>
                     </div>
                   </div>
@@ -716,14 +716,14 @@ const franchisesList = computed(() => {
   }
 })
 
-const hasEngagementStats = computed(() => {
-  try {
-    return game.value && (game.value.hypes > 0 || game.value.likesCount > 0 || game.value.favoritesCount > 0)
-  } catch (error) {
-    console.warn('Error checking engagement stats:', error)
-    return false
-  }
-})
+// const hasEngagementStats = computed(() => {
+//   try {
+//     return !!game.value
+//   } catch (error) {
+//     console.warn('Error checking engagement stats:', error)
+//     return false
+//   }
+// })
 
 // Helper methods
 const formatNumber = (num) => {
@@ -782,6 +782,14 @@ const loadGameDetails = async () => {
 
     game.value = gameData
 
+    // Initialize engagement counts if not present (handle undefined and null)
+    if (typeof game.value.likesCount === 'undefined' || game.value.likesCount === null) {
+      game.value.likesCount = 0
+    }
+    if (typeof game.value.favoritesCount === 'undefined' || game.value.favoritesCount === null) {
+      game.value.favoritesCount = 0
+    }
+
     // Load similar games if available
     if (game.value.id && game.value.similarGames && game.value.similarGames.length > 0) {
       await loadSimilarGames()
@@ -835,10 +843,15 @@ const loadUserFavoritesStatus = async () => {
 const loadUserLikesStatus = async () => {
   try {
     const userId = authStore.user.id;
-    if (!userId) return;
+    if (!userId || !game.value?.id) return;
 
-    const userLikesResult = await gamesStore.getUserLikes(userId);
-    userLikes.value = new Set(userLikesResult.map(game=>String(game.igdbId)));
+    // Check if the current game is liked by the user
+    const isLiked = await socialService.isGameLiked(game.value.id);
+    if (isLiked) {
+      userLikes.value.add(String(game.value.id));
+    } else {
+      userLikes.value.delete(String(game.value.id));
+    }
   } catch (err) {
     console.error('Error loading user likes status:', err)
   }
@@ -864,6 +877,10 @@ const toggleFavorites = async () => {
       result = await gamesStore.removeFromFavorites(game.value.id);
       // Only update state after successful API call
       userFavorites.value.delete(gameId);
+      // Update favorites count in game object
+      if (game.value) {
+        game.value.favoritesCount = Math.max(0, (game.value.favoritesCount || 0) - 1)
+      }
       toast.success(`Removed "${game.value.name}" from your favorites!`)
       console.log("The game removed from favorites: ", result);
     } else {
@@ -871,6 +888,10 @@ const toggleFavorites = async () => {
       result = await gamesStore.addToFavorites(game.value.id);
       // Only update state after successful API call
       userFavorites.value.add(gameId);
+      // Update favorites count in game object
+      if (game.value) {
+        game.value.favoritesCount = (game.value.favoritesCount || 0) + 1
+      }
       toast.success(`Added "${game.value.name}" to your favorites!`)
       console.log("The game added to favorites: ", result)
     }
@@ -903,6 +924,10 @@ const toggleLike = async () => {
       result = await gamesStore.removeFromLikes(game.value.id)
       // Only update state after successful API call
       userLikes.value.delete(gameId)
+      // Update like count in game object
+      if (game.value) {
+        game.value.likesCount = Math.max(0, (game.value.likesCount || 0) - 1)
+      }
       toast.success(`Removed "${game.value.name}" from your likes!`)
       console.log("The game removed from likes: ", result)
     } else {
@@ -910,6 +935,10 @@ const toggleLike = async () => {
       result = await gamesStore.addToLikes(game.value.id)
       // Only update state after successful API call
       userLikes.value.add(gameId)
+      // Update like count in game object
+      if (game.value) {
+        game.value.likesCount = (game.value.likesCount || 0) + 1
+      }
       toast.success(`Added "${game.value.name}" to your likes!`)
       console.log("The game added to likes: ", result)
     }
@@ -964,6 +993,24 @@ const loadGameReviews = async (page = 1, append = false) => {
 
     hasMoreReviews.value = response.hasNextPage
     reviewsPage.value = page
+
+    // Load like status for each review if user is authenticated
+    if (authStore.user) {
+      if (page === 1) {
+        likedReviews.value.clear()
+      }
+      const likeStatusPromises = reviewsWithCommentCounts.map(async (review) => {
+        try {
+          const isLiked = await socialService.isReviewLiked(review.id)
+          if (isLiked) {
+            likedReviews.value.add(review.id)
+          }
+        } catch (error) {
+          console.warn(`Failed to check like status for review ${review.id}:`, error)
+        }
+      })
+      await Promise.all(likeStatusPromises)
+    }
   } catch (error) {
     console.error('Error loading game reviews:', error)
     toast.error('Failed to load reviews')
@@ -979,6 +1026,18 @@ const loadUserReview = async () => {
   try {
     const review = await reviewsService.getUserGameReview(authStore.user.id, game.value.id)
     userReview.value = review
+
+    // Load like status for user's review if it exists
+    if (review) {
+      try {
+        const isLiked = await socialService.isReviewLiked(review.id)
+        if (isLiked) {
+          likedReviews.value.add(review.id)
+        }
+      } catch (error) {
+        console.warn(`Failed to check like status for user review ${review.id}:`, error)
+      }
+    }
   } catch (error) {
     // User hasn't reviewed this game, which is fine
     userReview.value = null

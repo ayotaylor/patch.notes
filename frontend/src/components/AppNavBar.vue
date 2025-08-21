@@ -29,6 +29,11 @@
                             <i class="fas fa-list-ul me-1"></i>Lists
                         </router-link>
                     </li>
+                    <li class="nav-item">
+                        <router-link class="nav-link" to="/members" active-class="active">
+                            <i class="fas fa-users me-1"></i>Members
+                        </router-link>
+                    </li>
                 </ul>
 
                 <div class="navbar-nav">

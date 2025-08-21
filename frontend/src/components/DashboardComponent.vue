@@ -116,6 +116,9 @@
                       <span v-if="game.rating">
                         <i class="fas fa-star text-warning me-1"></i>{{ game.rating }}/5
                       </span>
+                      <span v-if="game.likesCount > 0">
+                        <i class="fas fa-heart text-primary me-1"></i>{{ game.likesCount }}
+                      </span>
                       <!-- <span v-if="game.players">
                         <i class="fas fa-users me-1"></i>{{ game.players }}
                       </span> -->
@@ -192,10 +195,16 @@
                     <h6 class="card-title mb-1 fw-semibold small">{{ game.name }}</h6>
                     <p class="card-text small text-muted mb-2">{{ game.primaryGenre }}</p>
                     <div class="d-flex justify-content-between align-items-center">
-                      <small class="text-muted">
-                        <i class="fas fa-calendar me-1"></i>
-                        {{ formatReleaseDate(game.firstReleaseDate) }}
-                      </small>
+                      <div class="d-flex flex-column small">
+                        <small class="text-muted">
+                          <i class="fas fa-calendar me-1"></i>
+                          {{ formatReleaseDate(game.firstReleaseDate) }}
+                        </small>
+                        <small v-if="game.likesCount > 0" class="text-muted">
+                          <i class="fas fa-heart text-primary me-1"></i>
+                          {{ game.likesCount }}
+                        </small>
+                      </div>
                       <button
                         @click.stop="addToLibrary(game)"
                         class="btn btn-sm btn-outline-primary"
@@ -314,8 +323,10 @@
                     :max-length="150"
                     :max-games-to-show="4"
                     :show-like-button="false"
+                    :show-comment-button="true"
                     @edit="handleEditList"
                     @delete="handleDeleteList"
+                    @showComments="handleShowListComments"
                   />
                 </div>
               </div>
@@ -514,6 +525,22 @@ const loadLatestReviews = async () => {
     const reviews = await reviewsService.getLatestReviews()
     const reviewsWithCommentCounts = await commentsService.loadCommentCountsForReviews(reviews)
     latestReviews.value = reviewsWithCommentCounts
+    
+    // Load like status for each review if user is authenticated
+    if (authStore.user) {
+      likedReviews.value.clear()
+      const likeStatusPromises = latestReviews.value.map(async (review) => {
+        try {
+          const isLiked = await socialService.isReviewLiked(review.id)
+          if (isLiked) {
+            likedReviews.value.add(review.id)
+          }
+        } catch (error) {
+          console.warn(`Failed to check like status for review ${review.id}:`, error)
+        }
+      })
+      await Promise.all(likeStatusPromises)
+    }
   } catch (error) {
     console.error('Error loading latest reviews:', error)
     toast.error('Failed to load latest reviews')
@@ -584,6 +611,11 @@ const handleEditList = (list) => {
 const handleDeleteList = (list) => {
   // This would typically show a confirmation dialog
   // For now, just navigate to the list page
+  router.push(`/lists/${list.id}`)
+}
+
+const handleShowListComments = (list) => {
+  // Navigate to the list details page where comments can be viewed
   router.push(`/lists/${list.id}`)
 }
 

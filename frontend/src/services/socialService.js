@@ -414,4 +414,185 @@ export const socialService = {
       );
     }
   },
+
+  // Follow functionality
+  async followUser(userId) {
+    try {
+      if (
+        !userId ||
+        (typeof userId !== "string" && typeof userId !== "number")
+      ) {
+        throw new Error("User ID must be a non-empty string or number");
+      }
+
+      const response = await apiClient.post(`/follow`, {
+        followId: userId,
+      });
+      return response.data.data;
+    } catch (error) {
+      console.error("Error following user:", error);
+      throw new Error(
+        error.response?.data?.message || "Failed to follow user"
+      );
+    }
+  },
+
+  async unfollowUser(userId) {
+    try {
+      if (
+        !userId ||
+        (typeof userId !== "string" && typeof userId !== "number")
+      ) {
+        throw new Error("User ID must be a non-empty string or number");
+      }
+
+      const response = await apiClient.delete(`/follow`, {
+        data: {
+          followId: userId,
+        },
+      });
+      return response.data.data;
+    } catch (error) {
+      console.error("Error unfollowing user:", error);
+      throw new Error(
+        error.response?.data?.message || "Failed to unfollow user"
+      );
+    }
+  },
+
+  async isUserFollowed(userId) {
+    try {
+      if (
+        !userId ||
+        (typeof userId !== "string" && typeof userId !== "number")
+      ) {
+        throw new Error("User ID must be a non-empty string or number");
+      }
+
+      const response = await apiClient.get(`/follow/${userId}/is-following`);
+      return response.data.data;
+    } catch (error) {
+      console.error("Error checking if user is followed:", error);
+      throw new Error(
+        error.response?.data?.message || "Failed to check follow status"
+      );
+    }
+  },
+
+  async getFollowing(userId, page = 1, pageSize = 20) {
+    try {
+      if (
+        !userId ||
+        (typeof userId !== "string" && typeof userId !== "number")
+      ) {
+        throw new Error("User ID must be a non-empty string or number");
+      }
+
+      const response = await apiClient.get(
+        `/follow/${userId}/following?page=${page}&pageSize=${pageSize}`
+      );
+      return (
+        response.data.data || {
+          data: [],
+          page: 1,
+          pageSize: pageSize,
+          totalCount: 0,
+          totalPages: 0,
+          hasNextPage: false,
+          hasPreviousPage: false,
+        }
+      );
+    } catch (error) {
+      console.error("Error fetching following:", error);
+      throw new Error(
+        error.response?.data?.message || "Failed to fetch following"
+      );
+    }
+  },
+
+  async getFollowers(userId, page = 1, pageSize = 20) {
+    try {
+      if (
+        !userId ||
+        (typeof userId !== "string" && typeof userId !== "number")
+      ) {
+        throw new Error("User ID must be a non-empty string or number");
+      }
+
+      const response = await apiClient.get(
+        `/follow/${userId}/followers?page=${page}&pageSize=${pageSize}`
+      );
+      return (
+        response.data.data || {
+          data: [],
+          page: 1,
+          pageSize: pageSize,
+          totalCount: 0,
+          totalPages: 0,
+          hasNextPage: false,
+          hasPreviousPage: false,
+        }
+      );
+    } catch (error) {
+      console.error("Error fetching followers:", error);
+      throw new Error(
+        error.response?.data?.message || "Failed to fetch followers"
+      );
+    }
+  },
+
+  // Get all users with pagination
+  async getAllUsers(page = 1, pageSize = 20) {
+    try {
+      const response = await apiClient.get(
+        `/users?page=${page}&pageSize=${pageSize}`
+      );
+      return (
+        response.data.data || {
+          data: [],
+          page: 1,
+          pageSize: pageSize,
+          totalCount: 0,
+          totalPages: 0,
+          hasNextPage: false,
+          hasPreviousPage: false,
+        }
+      );
+    } catch (error) {
+      console.error("Error fetching users:", error);
+      throw new Error(
+        error.response?.data?.message || "Failed to fetch users"
+      );
+    }
+  },
+
+  // Get featured users
+  async getFeaturedUsers(limit = 5) {
+    try {
+      const response = await apiClient.get(
+        `/users/featured?limit=${limit}`
+      );
+      return response.data.data || [];
+    } catch (error) {
+      console.error("Error fetching featured users:", error);
+      throw new Error(
+        error.response?.data?.message || "Failed to fetch featured users"
+      );
+    }
+  },
+
+  // Get popular users
+  async getPopularUsers(limit = 5) {
+    try {
+      const response = await apiClient.get(
+        `/users/popular?limit=${limit}`
+      );
+      return response.data.data || [];
+    } catch (error) {
+      console.error("Error fetching popular users:", error);
+      throw new Error(
+        error.response?.data?.message || "Failed to fetch popular users"
+      );
+    }
+  },
 };

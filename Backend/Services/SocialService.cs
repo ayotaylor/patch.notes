@@ -62,10 +62,22 @@ namespace Backend.Services
                 .Select(g => g.Id)
                 .FirstOrDefaultAsync();
 
+            if (favoriteGameId == Guid.Empty)
+            {
+                _logger.LogWarning("Game {GameId} not found in database", gameId);
+                return false;
+            }
+
             var userProfileId = await _context.UserProfiles
                 .Where(u => u.UserId == userId.ToString())
                 .Select(u => u.Id)
                 .FirstOrDefaultAsync();
+
+            if (userProfileId == Guid.Empty)
+            {
+                _logger.LogWarning("User profile not found for user {UserId}", userId);
+                return false;
+            }
 
             var existingFavorite = await _context.Favorites
                 .FirstOrDefaultAsync(f => f.UserId == userProfileId && f.GameId == favoriteGameId);

@@ -25,8 +25,8 @@ export class Game {
     this.gameType = data.gameType || "";
     this.hypes = data.hypes || 0;
     this.igdbRating = data.igdbRating || 0.0;
-    this.likesCount = data.likesCount || 0;
-    this.favoritesCount = data.favoritesCount || 0;
+    this.likesCount = data.likesCount !== undefined && data.likesCount !== null ? data.likesCount : 0;
+    this.favoritesCount = data.favoritesCount !== undefined && data.favoritesCount !== null ? data.favoritesCount : 0;
     this.isLikedByUser = Boolean(data.isLikedByUser);
     this.isFavoritedByUser = Boolean(data.isFavoritedByUser);
     
@@ -710,8 +710,8 @@ export class Game {
         "gameType",
         "hypes",
         "igdbRating",
-        "likes",
-        "favorites",
+        "likesCount",
+        "favoritesCount",
         "isLikedByUser",
         "isFavoritedByUser",
         "reviewsCount",
@@ -751,8 +751,8 @@ export class Game {
         "gameType",
         "hypes",
         "igdbRating",
-        "likes",
-        "favorites",
+        "likesCount",
+        "favoritesCount",
         "isLikedByUser",
         "isFavoritedByUser",
         "reviewsCount",

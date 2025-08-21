@@ -14,6 +14,7 @@ const GameDetailsComponent = () => import("@/components/GameDetailsComponent.vue
 const ReviewsListPage = () => import("@/components/ReviewsListPage.vue");
 const ListsPage = () => import("@/components/ListsPage.vue");
 const ListDetailsPage = () => import("@/components/ListDetailsPage.vue");
+const MembersPage = () => import("@/components/MembersPage.vue");
 // const ForgotPassword = () => import('@/views/ForgotPassword.vue')
 // const ResetPassword = () => import('@/views/ResetPassword.vue')
 
@@ -194,6 +195,18 @@ const routes = [
       requiresAuth: false,
       validateToken: "never",
       title: "User Lists - Patch Notes",
+    },
+  },
+
+  // Members route
+  {
+    path: "/members",
+    name: "Members",
+    component: MembersPage,
+    meta: {
+      requiresAuth: false,
+      validateToken: "never",
+      title: "Members - Patch Notes",
     },
   },
 

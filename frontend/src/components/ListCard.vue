@@ -114,8 +114,8 @@
           <button
             v-if="showLikeButton"
             @click="$emit('toggleLike', list)"
-            class="btn btn-sm btn-outline-primary me-2"
-            :class="{ 'btn-primary text-white': isLiked }"
+            class="btn btn-sm me-2"
+            :class="isLiked ? 'btn-danger text-white' : 'btn-outline-danger'"
             :disabled="isProcessingLike"
           >
             <i class="fas fa-heart me-1"></i>

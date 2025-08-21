@@ -30,7 +30,7 @@ namespace Backend.Services
 
             if (followerProfileId == Guid.Empty || followingProfileId == Guid.Empty)
             {
-                _logger.LogWarning("Invalid user profiles for follow operation. Follower: {FollowerId}, Following: {FollowingId}", 
+                _logger.LogWarning("Invalid user profiles for follow operation. Follower: {FollowerId}, Following: {FollowingId}",
                     followerId, followingId);
                 return false;
             }
@@ -65,7 +65,7 @@ namespace Backend.Services
 
             if (followerProfileId == Guid.Empty || followingProfileId == Guid.Empty)
             {
-                _logger.LogWarning("Invalid user profiles for unfollow operation. Follower: {FollowerId}, Following: {FollowingId}", 
+                _logger.LogWarning("Invalid user profiles for unfollow operation. Follower: {FollowerId}, Following: {FollowingId}",
                     followerId, followingId);
                 return false;
             }
@@ -97,18 +97,18 @@ namespace Backend.Services
             var isFollowing = await _context.Follows
                 .AnyAsync(f => f.FollowerId == followerProfileId && f.FollowingId == followingProfileId);
 
-            _logger.LogInformation("User {FollowerId} is {Status} following {FollowingId}", 
+            _logger.LogInformation("User {FollowerId} is {Status} following {FollowingId}",
                 followerId, isFollowing ? "" : "not", followingId);
             return isFollowing;
         }
 
-        public async Task<List<UserSummaryDto>> GetFollowersAsync(Guid userId, int page = 1, int pageSize = 20)
+        public async Task<List<FollowDto>> GetFollowersAsync(Guid userId, int page = 1, int pageSize = 20)
         {
             var userProfileId = await GetUserProfileIdAsync(userId);
             if (userProfileId == Guid.Empty)
             {
                 _logger.LogWarning("Invalid user profile for getting followers: {UserId}", userId);
-                return new List<UserSummaryDto>();
+                return new List<FollowDto>();
             }
 
             var followEntities = await _context.Follows
@@ -117,20 +117,20 @@ namespace Backend.Services
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
                 .ToListAsync();
-            
-            var followers = followEntities.Select(f => f.Follower.ToSummaryDto()).ToList();
+
+            var followers = followEntities.Select(f => f.FollowerToDto()).ToList();
 
             _logger.LogInformation("Retrieved {Count} followers for user {UserId}", followers.Count, userId);
             return followers;
         }
 
-        public async Task<List<UserSummaryDto>> GetFollowingAsync(Guid userId, int page = 1, int pageSize = 20)
+        public async Task<List<FollowDto>> GetFollowingAsync(Guid userId, int page = 1, int pageSize = 20)
         {
             var userProfileId = await GetUserProfileIdAsync(userId);
             if (userProfileId == Guid.Empty)
             {
                 _logger.LogWarning("Invalid user profile for getting following: {UserId}", userId);
-                return new List<UserSummaryDto>();
+                return new List<FollowDto>();
             }
 
             var followingEntities = await _context.Follows
@@ -139,8 +139,8 @@ namespace Backend.Services
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
                 .ToListAsync();
-            
-            var following = followingEntities.Select(f => f.Following.ToSummaryDto()).ToList();
+
+            var following = followingEntities.Select(f => f.FollowingToDto()).ToList();
 
             _logger.LogInformation("Retrieved {Count} following for user {UserId}", following.Count, userId);
             return following;
@@ -156,7 +156,7 @@ namespace Backend.Services
 
             var followersCount = await GetFollowersCountAsync(userId);
             var followingCount = await GetFollowingCountAsync(userId);
-            
+
             var isFollowing = false;
             if (currentUserId.HasValue && currentUserId.Value != userId)
             {

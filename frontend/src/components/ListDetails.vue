@@ -72,8 +72,8 @@
             <button
               v-if="showSocialActions"
               @click="toggleLike"
-              class="btn btn-outline-primary"
-              :class="{ 'btn-primary text-white': isLiked }"
+              class="btn"
+              :class="isLiked ? 'btn-danger text-white' : 'btn-outline-danger'"
               :disabled="isProcessingLike"
             >
               <span v-if="isProcessingLike" class="spinner-border spinner-border-sm me-2" role="status"></span>

@@ -142,5 +142,29 @@ namespace Backend.Mapping
                 ReplyCount = comment.Replies?.Count ?? 0
             };
         }
+
+        public static FollowDto FollowerToDto(this Follow follow)
+        {
+            return new FollowDto
+            {
+                Id = follow.Id,
+                FollowerUserId = !string.IsNullOrWhiteSpace(follow.Follower.UserId) ?
+                    Guid.Parse(follow.Follower.UserId) : null,
+                FollowedAt = follow.FollowedAt,
+                Follower = follow.Follower?.ToSummaryDto() ?? null,
+            };
+        }
+
+        public static FollowDto FollowingToDto(this Follow follow)
+        {
+            return new FollowDto
+            {
+                Id = follow.Id,
+                FollowingUserId = !string.IsNullOrWhiteSpace(follow.Following.UserId) ?
+                    Guid.Parse(follow.Following.UserId) : null,
+                FollowedAt = follow.FollowedAt,
+                Following = follow.Following?.ToSummaryDto() ?? null
+            };
+        }
     }
 }

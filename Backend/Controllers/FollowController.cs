@@ -21,8 +21,8 @@ namespace Backend.Controllers
             _logger = logger;
         }
 
-        [HttpPost("{userId:guid}")]
-        public async Task<ActionResult<ApiResponse<bool>>> FollowUser(Guid userId)
+        [HttpPost()]
+        public async Task<ActionResult<ApiResponse<bool>>> FollowUser([FromBody] CreateFollowDto request)
         {
             try
             {
@@ -36,7 +36,16 @@ namespace Backend.Controllers
                     });
                 }
 
-                var result = await _followService.FollowUserAsync(currentUserGuid, userId);
+                if (request == null || request.FollowingId == Guid.Empty)
+                {
+                    return BadRequest(new ApiResponse<ReviewDto>
+                    {
+                        Success = false,
+                        Message = "Invalid user"
+                    });
+                }
+
+                var result = await _followService.FollowUserAsync(currentUserGuid, request.FollowingId);
                 if (result)
                 {
                     return Ok(new ApiResponse<bool>
@@ -56,7 +65,7 @@ namespace Backend.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error following user {UserId}", userId);
+                _logger.LogError(ex, "Error following user {UserId}", request.FollowingId);
                 return StatusCode(500, new ApiResponse<bool>
                 {
                     Success = false,
@@ -65,8 +74,8 @@ namespace Backend.Controllers
             }
         }
 
-        [HttpDelete("{userId:guid}")]
-        public async Task<ActionResult<ApiResponse<bool>>> UnfollowUser(Guid userId)
+        [HttpDelete()]
+        public async Task<ActionResult<ApiResponse<bool>>> UnfollowUser([FromBody] CreateFollowDto request)
         {
             try
             {
@@ -79,8 +88,16 @@ namespace Backend.Controllers
                         Message = "User not authenticated"
                     });
                 }
+                if (request == null || request.FollowingId == Guid.Empty)
+                {
+                    return BadRequest(new ApiResponse<ReviewDto>
+                    {
+                        Success = false,
+                        Message = "Invalid user"
+                    });
+                }
 
-                var result = await _followService.UnfollowUserAsync(currentUserGuid, userId);
+                var result = await _followService.UnfollowUserAsync(currentUserGuid, request.FollowingId);
                 if (result)
                 {
                     return Ok(new ApiResponse<bool>
@@ -100,7 +117,7 @@ namespace Backend.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error unfollowing user {UserId}", userId);
+                _logger.LogError(ex, "Error unfollowing user {UserId}", request.FollowingId);
                 return StatusCode(500, new ApiResponse<bool>
                 {
                     Success = false,
@@ -111,12 +128,12 @@ namespace Backend.Controllers
 
         [HttpGet("{userId:guid}/followers")]
         [AllowAnonymous]
-        public async Task<ActionResult<ApiResponse<List<UserSummaryDto>>>> GetFollowers(Guid userId, int page = 1, int pageSize = 20)
+        public async Task<ActionResult<ApiResponse<List<FollowDto>>>> GetFollowers(Guid userId, int page = 1, int pageSize = 20)
         {
             try
             {
                 var followers = await _followService.GetFollowersAsync(userId, page, pageSize);
-                return Ok(new ApiResponse<List<UserSummaryDto>>
+                return Ok(new ApiResponse<List<FollowDto>>
                 {
                     Success = true,
                     Data = followers
@@ -135,12 +152,12 @@ namespace Backend.Controllers
 
         [HttpGet("{userId:guid}/following")]
         [AllowAnonymous]
-        public async Task<ActionResult<ApiResponse<List<UserSummaryDto>>>> GetFollowing(Guid userId, int page = 1, int pageSize = 20)
+        public async Task<ActionResult<ApiResponse<List<FollowDto>>>> GetFollowing(Guid userId, int page = 1, int pageSize = 20)
         {
             try
             {
                 var following = await _followService.GetFollowingAsync(userId, page, pageSize);
-                return Ok(new ApiResponse<List<UserSummaryDto>>
+                return Ok(new ApiResponse<List<FollowDto>>
                 {
                     Success = true,
                     Data = following
@@ -149,7 +166,7 @@ namespace Backend.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error fetching following for user {UserId}", userId);
-                return StatusCode(500, new ApiResponse<List<UserSummaryDto>>
+                return StatusCode(500, new ApiResponse<List<FollowDto>>
                 {
                     Success = false,
                     Message = "An error occurred while fetching following users"

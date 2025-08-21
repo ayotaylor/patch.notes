@@ -155,7 +155,7 @@ export const useAuthStore = defineStore("auth", () => {
     }
   }
 
-  async function logout() {
+  async function logout(redirectPath = '/dashboard') {
     loading.value = true;
     try {
       // Clear local storage
@@ -164,8 +164,8 @@ export const useAuthStore = defineStore("auth", () => {
       // Reset user state
       clearAuthState();
 
-      // Redirect to login
-      await router.push("/login");
+      // Redirect to appropriate page
+      await router.push(redirectPath);
 
       toast.success("Logged out successfully");
     } catch (error) {
