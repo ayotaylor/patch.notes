@@ -227,11 +227,6 @@ const platformsText = computed(() => {
     border-radius: 15px 15px 0 0;
 }
 
-.text-truncate {
-    overflow: hidden;
-    white-space: nowrap;
-    text-overflow: ellipsis;
-}
 
 @media (max-width: 576px) {
     .card-img-top {

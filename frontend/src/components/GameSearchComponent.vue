@@ -566,196 +566,22 @@ defineExpose({
   background-color: #fafafa;
 }
 
-/* Better responsive behavior for search input */
-.game-search-component .search-input-group {
-  display: flex;
-  flex-wrap: nowrap;
-  width: 100%;
-}
-
-.game-search-component .search-input-group .input-group-text {
-  flex-shrink: 0;
-}
-
-.game-search-component .search-input-group .form-control {
-  flex: 1;
-  min-width: 0;
-}
-
-.game-search-component .search-input-group .btn {
-  flex-shrink: 0;
-  white-space: nowrap;
-}
-
-/* Default button text visibility */
-.game-search-component .search-button-text {
-  display: inline;
-}
-
-/* Tablet landscape and smaller laptops */
-@media (max-width: 991px) {
-  .game-search-component .search-input-group .btn {
-    min-width: 100px;
-    padding-left: 1rem;
-    padding-right: 1rem;
-  }
-}
-
-/* Specific fix for tablet portrait (768px x 834px and similar) */
-@media (max-width: 850px) and (min-width: 641px) {
-  .game-search-component .search-input-group .btn {
-    font-size: 0.9rem;
-    padding: 0.7rem 0.8rem;
-    min-width: 90px;
-  }
-  
-  .game-search-component .search-input-group .btn .fas {
-    margin-right: 0.25rem !important;
-  }
-  
-  /* Ensure horizontal layout is maintained */
-  .game-search-component .search-input-group {
-    flex-direction: row !important;
-    flex-wrap: nowrap !important;
-  }
-}
-
-/* Additional safety for the problematic 768px range */
-@media (max-width: 780px) and (min-width: 641px) {
-  .game-search-component .search-input-group .btn {
-    padding: 0.65rem 0.7rem;
-    font-size: 0.85rem;
-  }
-  
-  /* Hide button text and show only icon for very tight spaces */
-  .game-search-component .search-button-text {
-    display: none;
-  }
-  
-  .game-search-component .search-button .fas {
-    margin-right: 0 !important;
-  }
-  
-  .game-search-component .search-button {
-    min-width: 50px;
-    padding: 0.75rem 1rem;
-  }
-}
-
-/* Stack vertically only on smaller screens */
-@media (max-width: 640px) {
-  .game-search-component .search-input-group {
-    flex-direction: column !important;
-  }
-
-  .game-search-component .search-input-group .input-group-text {
-    border-radius: 0.375rem 0.375rem 0 0 !important;
-    border-bottom: none;
-  }
-
-  .game-search-component .search-input-group .form-control {
-    border-radius: 0 !important;
-    border-top: none;
-    border-bottom: none;
-  }
-
-  .game-search-component .search-input-group .btn {
-    border-radius: 0 0 0.375rem 0.375rem !important;
-    margin-top: 0;
-    border-top: none;
-    min-width: auto;
-    padding: 0.75rem 1rem;
-  }
-  
-  /* Show button text on mobile */
-  .game-search-component .search-button-text {
-    display: inline !important;
-  }
-  
-  .game-search-component .search-button .fas {
-    margin-right: 0.5rem !important;
-  }
-}
-
+/* Responsive card body padding */
 @media (max-width: 576px) {
   .game-search-component .card-body {
     padding: 1.5rem !important;
   }
-  
-  .game-search-component .search-input-group .btn {
-    padding: 0.75rem 1rem;
-    font-size: 0.9rem;
-  }
-  
-  /* Ensure full width on mobile */
-  .game-search-component .search-input-group .input-group-text,
-  .game-search-component .search-input-group .form-control,
-  .game-search-component .search-input-group .btn {
-    width: 100%;
-  }
 }
 
-/* Extra small mobile screens */
 @media (max-width: 480px) {
   .game-search-component .card-body {
     padding: 1rem !important;
   }
-  
-  .game-search-component .search-input-group .btn {
-    padding: 0.7rem 1rem;
-    font-size: 0.85rem;
-  }
-  
-  .game-search-component .search-input-group .input-group-text {
-    padding: 0.7rem 0.75rem;
-  }
-  
-  .game-search-component .search-input-group .form-control {
-    padding: 0.7rem 0.75rem;
-    font-size: 0.9rem;
-  }
 }
 
-/* Very narrow screens */
 @media (max-width: 360px) {
   .game-search-component .card-body {
     padding: 0.75rem !important;
-  }
-  
-  .game-search-component .search-input-group .btn {
-    padding: 0.6rem 0.8rem;
-    font-size: 0.8rem;
-  }
-}
-
-/* Inline search component responsive styles */
-.game-search-component .input-group {
-  width: 100%;
-}
-
-.game-search-component .input-group .form-control {
-  flex: 1;
-}
-
-.game-search-component .input-group .btn {
-  flex-shrink: 0;
-}
-
-/* Mobile responsive for inline search */
-@media (max-width: 576px) {
-  .game-search-component .input-group {
-    flex-direction: row; /* Keep horizontal layout for inline version */
-  }
-  
-  .game-search-component .input-group .btn {
-    min-width: 50px;
-    padding: 0.375rem 0.75rem;
-  }
-}
-
-@media (max-width: 480px) {
-  .game-search-component .input-group .btn {
-    padding: 0.375rem 0.5rem;
   }
 }
 
@@ -806,26 +632,7 @@ defineExpose({
 }
 
 /* Responsive adjustments for embedded clear button */
-@media (max-width: 640px) {
-  .game-search-component .btn-clear-embedded {
-    right: 0.75rem;
-    width: 1.5rem;
-    height: 1.5rem;
-  }
-  
-  .game-search-component .btn-clear-embedded-inline {
-    right: 0.5rem;
-    width: 1.25rem;
-    height: 1.25rem;
-  }
-  
-  .game-search-component .btn-clear-embedded i,
-  .game-search-component .btn-clear-embedded-inline i {
-    font-size: 0.7rem;
-  }
-}
-
-@media (max-width: 480px) {
+@media (max-width: 576px) {
   .game-search-component .btn-clear-embedded,
   .game-search-component .btn-clear-embedded-inline {
     right: 0.5rem;
@@ -835,7 +642,7 @@ defineExpose({
   
   .game-search-component .btn-clear-embedded i,
   .game-search-component .btn-clear-embedded-inline i {
-    font-size: 0.65rem;
+    font-size: 0.7rem;
   }
 }
 
@@ -866,7 +673,7 @@ defineExpose({
 }
 
 /* Responsive adjustments for loading indicator */
-@media (max-width: 640px) {
+@media (max-width: 576px) {
   .game-search-component .search-loading-indicator {
     right: 2rem;
   }

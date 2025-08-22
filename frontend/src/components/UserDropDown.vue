@@ -53,10 +53,6 @@ const handleLogout = async () => {
   background-color: #f8f9fa;
 }
 
-.dropdown-item.text-danger:hover {
-  background-color: #f5c6cb;
-  color: #721c24 !important;
-}
 
 .nav-link {
   cursor: pointer;

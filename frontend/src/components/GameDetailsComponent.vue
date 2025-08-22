@@ -1246,9 +1246,6 @@ onMounted(async () => {
   border-radius: 15px 15px 0 0 !important;
 }
 
-.progress {
-  border-radius: 10px;
-}
 
 .modal {
   background-color: rgba(0, 0, 0, 0.8);

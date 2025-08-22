@@ -79,27 +79,6 @@ onUnmounted(() => {
   box-shadow: 0 2px 4px rgba(0,0,0,.1);
 }
 
-/* Route transition animations */
-.router-enter-active,
-.router-leave-active {
-  transition: opacity 0.3s ease;
-}
-
-.router-enter-from,
-.router-leave-to {
-  opacity: 0;
-}
-
-/* Utility classes */
-.text-truncate {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.shadow-sm {
-  box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075) !important;
-}
 
 /* Responsive adjustments */
 @media (max-width: 768px) {
