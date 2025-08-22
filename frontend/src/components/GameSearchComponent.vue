@@ -11,28 +11,32 @@
         </div>
         <div class="card-body p-4">
           <div class="row">
-            <div class="col-lg-8 mx-auto">
-              <div class="input-group input-group-lg">
-                <span class="input-group-text bg-light border-end-0">
-                  <i class="fas fa-search text-muted"></i>
-                </span>
+            <div class="col-12 col-sm-11 col-md-10 col-lg-8 mx-auto">
+              <div class="position-relative">
                 <input
                   v-model="searchQuery"
-                  @keyup.enter="performSearch"
                   type="text"
-                  class="form-control border-start-0 ps-0"
+                  class="form-control form-control-lg pe-5"
                   :placeholder="placeholder"
                   :disabled="gamesStore.searchLoading"
                 >
+                <!-- Embedded clear button -->
                 <button
-                  @click="performSearch"
-                  :disabled="!searchQuery.trim() || gamesStore.searchLoading"
-                  class="btn btn-primary px-4"
+                  v-if="searchQuery.trim() || hasResults"
+                  @click="clearSearch"
+                  class="btn-clear-embedded"
+                  type="button"
+                  title="Clear search"
                 >
-                  <span v-if="gamesStore.searchLoading" class="spinner-border spinner-border-sm me-2"></span>
-                  <i v-else class="fas fa-search me-2"></i>
-                  {{ gamesStore.searchLoading ? 'Searching...' : 'Search' }}
+                  <i class="fas fa-times"></i>
                 </button>
+                <!-- Loading indicator -->
+                <div
+                  v-if="gamesStore.searchLoading"
+                  class="search-loading-indicator"
+                >
+                  <span class="spinner-border spinner-border-sm text-primary"></span>
+                </div>
               </div>
             </div>
           </div>
@@ -151,17 +155,31 @@
         <div class="mb-3" v-if="showTitle">
           <label class="form-label fw-bold">{{ title }}</label>
         </div>
-        <div class="input-group">
+        <div class="position-relative">
           <input
             v-model="searchQuery"
             @input="handleSearchInput"
             type="text"
-            class="form-control"
+            class="form-control pe-4"
             :placeholder="placeholder"
           >
-          <button class="btn btn-outline-secondary" type="button">
-            <i class="fas fa-search"></i>
+          <!-- Embedded clear button for inline version -->
+          <button
+            v-if="searchQuery.trim() || hasResults"
+            @click="clearSearch"
+            class="btn-clear-embedded-inline"
+            type="button"
+            title="Clear search"
+          >
+            <i class="fas fa-times"></i>
           </button>
+          <!-- Loading indicator for inline version -->
+          <div
+            v-if="gamesStore.searchLoading"
+            class="search-loading-indicator-inline"
+          >
+            <span class="spinner-border spinner-border-sm text-primary"></span>
+          </div>
         </div>
 
         <!-- Inline Results -->
@@ -428,6 +446,11 @@ const clearSearchResults = () => {
   currentPage.value = 1
 }
 
+const clearSearch = () => {
+  searchQuery.value = ''
+  clearSearchResults()
+}
+
 // Infinite scroll functionality
 const handleScroll = async () => {
   if (props.paginationMode !== 'infinite-scroll' || isLoadingMore.value || !gamesStore.canLoadMore) return
@@ -463,8 +486,12 @@ const cleanupInfiniteScroll = () => {
 
 // Watchers
 let searchTimeout
-watch(searchQuery, () => {
-  if (props.autoSearch) {
+watch(searchQuery, (newValue) => {
+  // Clear results if search query is empty
+  if (!newValue.trim()) {
+    clearSearchResults()
+  } else {
+    // Always auto-search since there's no manual search button
     handleSearchInput()
   }
 })
@@ -476,6 +503,8 @@ onMounted(() => {
 
 onUnmounted(() => {
   cleanupInfiniteScroll()
+  // Clear search results when component is unmounted (page navigation)
+  clearSearchResults()
 })
 
 watch(() => props.paginationMode, () => {
@@ -497,6 +526,7 @@ watch(() => displayedResults.value.length, () => {
 defineExpose({
   performSearch,
   clearSearchResults,
+  clearSearch,
   searchQuery,
   goToNextPage,
   goToPrevPage,
@@ -536,14 +566,328 @@ defineExpose({
   background-color: #fafafa;
 }
 
-@media (max-width: 768px) {
-  .game-search-component .input-group-lg {
-    flex-direction: column;
+/* Better responsive behavior for search input */
+.game-search-component .search-input-group {
+  display: flex;
+  flex-wrap: nowrap;
+  width: 100%;
+}
+
+.game-search-component .search-input-group .input-group-text {
+  flex-shrink: 0;
+}
+
+.game-search-component .search-input-group .form-control {
+  flex: 1;
+  min-width: 0;
+}
+
+.game-search-component .search-input-group .btn {
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+/* Default button text visibility */
+.game-search-component .search-button-text {
+  display: inline;
+}
+
+/* Tablet landscape and smaller laptops */
+@media (max-width: 991px) {
+  .game-search-component .search-input-group .btn {
+    min-width: 100px;
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+}
+
+/* Specific fix for tablet portrait (768px x 834px and similar) */
+@media (max-width: 850px) and (min-width: 641px) {
+  .game-search-component .search-input-group .btn {
+    font-size: 0.9rem;
+    padding: 0.7rem 0.8rem;
+    min-width: 90px;
+  }
+  
+  .game-search-component .search-input-group .btn .fas {
+    margin-right: 0.25rem !important;
+  }
+  
+  /* Ensure horizontal layout is maintained */
+  .game-search-component .search-input-group {
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+  }
+}
+
+/* Additional safety for the problematic 768px range */
+@media (max-width: 780px) and (min-width: 641px) {
+  .game-search-component .search-input-group .btn {
+    padding: 0.65rem 0.7rem;
+    font-size: 0.85rem;
+  }
+  
+  /* Hide button text and show only icon for very tight spaces */
+  .game-search-component .search-button-text {
+    display: none;
+  }
+  
+  .game-search-component .search-button .fas {
+    margin-right: 0 !important;
+  }
+  
+  .game-search-component .search-button {
+    min-width: 50px;
+    padding: 0.75rem 1rem;
+  }
+}
+
+/* Stack vertically only on smaller screens */
+@media (max-width: 640px) {
+  .game-search-component .search-input-group {
+    flex-direction: column !important;
   }
 
-  .game-search-component .input-group-lg .btn {
-    border-radius: 0.375rem !important;
-    margin-top: 0.5rem;
+  .game-search-component .search-input-group .input-group-text {
+    border-radius: 0.375rem 0.375rem 0 0 !important;
+    border-bottom: none;
   }
+
+  .game-search-component .search-input-group .form-control {
+    border-radius: 0 !important;
+    border-top: none;
+    border-bottom: none;
+  }
+
+  .game-search-component .search-input-group .btn {
+    border-radius: 0 0 0.375rem 0.375rem !important;
+    margin-top: 0;
+    border-top: none;
+    min-width: auto;
+    padding: 0.75rem 1rem;
+  }
+  
+  /* Show button text on mobile */
+  .game-search-component .search-button-text {
+    display: inline !important;
+  }
+  
+  .game-search-component .search-button .fas {
+    margin-right: 0.5rem !important;
+  }
+}
+
+@media (max-width: 576px) {
+  .game-search-component .card-body {
+    padding: 1.5rem !important;
+  }
+  
+  .game-search-component .search-input-group .btn {
+    padding: 0.75rem 1rem;
+    font-size: 0.9rem;
+  }
+  
+  /* Ensure full width on mobile */
+  .game-search-component .search-input-group .input-group-text,
+  .game-search-component .search-input-group .form-control,
+  .game-search-component .search-input-group .btn {
+    width: 100%;
+  }
+}
+
+/* Extra small mobile screens */
+@media (max-width: 480px) {
+  .game-search-component .card-body {
+    padding: 1rem !important;
+  }
+  
+  .game-search-component .search-input-group .btn {
+    padding: 0.7rem 1rem;
+    font-size: 0.85rem;
+  }
+  
+  .game-search-component .search-input-group .input-group-text {
+    padding: 0.7rem 0.75rem;
+  }
+  
+  .game-search-component .search-input-group .form-control {
+    padding: 0.7rem 0.75rem;
+    font-size: 0.9rem;
+  }
+}
+
+/* Very narrow screens */
+@media (max-width: 360px) {
+  .game-search-component .card-body {
+    padding: 0.75rem !important;
+  }
+  
+  .game-search-component .search-input-group .btn {
+    padding: 0.6rem 0.8rem;
+    font-size: 0.8rem;
+  }
+}
+
+/* Inline search component responsive styles */
+.game-search-component .input-group {
+  width: 100%;
+}
+
+.game-search-component .input-group .form-control {
+  flex: 1;
+}
+
+.game-search-component .input-group .btn {
+  flex-shrink: 0;
+}
+
+/* Mobile responsive for inline search */
+@media (max-width: 576px) {
+  .game-search-component .input-group {
+    flex-direction: row; /* Keep horizontal layout for inline version */
+  }
+  
+  .game-search-component .input-group .btn {
+    min-width: 50px;
+    padding: 0.375rem 0.75rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .game-search-component .input-group .btn {
+    padding: 0.375rem 0.5rem;
+  }
+}
+
+/* Embedded clear button styling */
+.game-search-component .btn-clear-embedded,
+.game-search-component .btn-clear-embedded-inline {
+  position: absolute;
+  top: 50%;
+  right: 0.75rem;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: #6c757d;
+  padding: 0.25rem;
+  border-radius: 50%;
+  width: 1.5rem;
+  height: 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  z-index: 10;
+}
+
+.game-search-component .btn-clear-embedded:hover,
+.game-search-component .btn-clear-embedded-inline:hover {
+  color: #dc3545;
+  background-color: rgba(220, 53, 69, 0.1);
+  transform: translateY(-50%) scale(1.1);
+}
+
+.game-search-component .btn-clear-embedded:focus,
+.game-search-component .btn-clear-embedded-inline:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(220, 53, 69, 0.2);
+}
+
+/* Adjust for card version (larger input) */
+.game-search-component .btn-clear-embedded {
+  right: 1rem;
+  width: 1.75rem;
+  height: 1.75rem;
+}
+
+.game-search-component .btn-clear-embedded i,
+.game-search-component .btn-clear-embedded-inline i {
+  font-size: 0.75rem;
+}
+
+/* Responsive adjustments for embedded clear button */
+@media (max-width: 640px) {
+  .game-search-component .btn-clear-embedded {
+    right: 0.75rem;
+    width: 1.5rem;
+    height: 1.5rem;
+  }
+  
+  .game-search-component .btn-clear-embedded-inline {
+    right: 0.5rem;
+    width: 1.25rem;
+    height: 1.25rem;
+  }
+  
+  .game-search-component .btn-clear-embedded i,
+  .game-search-component .btn-clear-embedded-inline i {
+    font-size: 0.7rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .game-search-component .btn-clear-embedded,
+  .game-search-component .btn-clear-embedded-inline {
+    right: 0.5rem;
+    width: 1.25rem;
+    height: 1.25rem;
+  }
+  
+  .game-search-component .btn-clear-embedded i,
+  .game-search-component .btn-clear-embedded-inline i {
+    font-size: 0.65rem;
+  }
+}
+
+/* Loading indicator styling */
+.game-search-component .search-loading-indicator {
+  position: absolute;
+  top: 50%;
+  right: 2.5rem;
+  transform: translateY(-50%);
+  z-index: 15;
+}
+
+.game-search-component .search-loading-indicator-inline {
+  position: absolute;
+  top: 50%;
+  right: 2rem;
+  transform: translateY(-50%);
+  z-index: 15;
+}
+
+/* Adjust clear button position when loading */
+.game-search-component .btn-clear-embedded {
+  z-index: 20;
+}
+
+.game-search-component .btn-clear-embedded-inline {
+  z-index: 20;
+}
+
+/* Responsive adjustments for loading indicator */
+@media (max-width: 640px) {
+  .game-search-component .search-loading-indicator {
+    right: 2rem;
+  }
+  
+  .game-search-component .search-loading-indicator-inline {
+    right: 1.5rem;
+  }
+}
+
+/* Results container improvements */
+.game-search-component .list-group {
+  border-radius: 0.375rem;
+}
+
+.game-search-component .list-group .list-group-item:first-child {
+  border-top-left-radius: 0.375rem;
+  border-top-right-radius: 0.375rem;
+}
+
+.game-search-component .list-group .list-group-item:last-child {
+  border-bottom-left-radius: 0.375rem;
+  border-bottom-right-radius: 0.375rem;
 }
 </style>

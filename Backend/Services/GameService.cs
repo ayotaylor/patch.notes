@@ -286,6 +286,53 @@ namespace Backend.Services
                 .FirstOrDefaultAsync();
             if (game == null) return false;
 
+            // Delete related entities first to avoid foreign key constraint violations
+            var gameId = game.Id;
+
+            // Delete reviews and their dependencies
+            var reviews = await _context.Reviews
+                .Where(r => r.GameId == gameId)
+                .ToListAsync();
+            
+            foreach (var review in reviews)
+            {
+                var reviewLikes = await _context.ReviewLikes
+                    .Where(rl => rl.ReviewId == review.Id)
+                    .ToListAsync();
+                _context.ReviewLikes.RemoveRange(reviewLikes);
+
+                var comments = await _context.Comments
+                    .Where(c => c.ReviewId == review.Id)
+                    .ToListAsync();
+                
+                foreach (var comment in comments)
+                {
+                    var commentLikes = await _context.CommentLikes
+                        .Where(cl => cl.CommentId == comment.Id)
+                        .ToListAsync();
+                    _context.CommentLikes.RemoveRange(commentLikes);
+                }
+                
+                _context.Comments.RemoveRange(comments);
+            }
+            _context.Reviews.RemoveRange(reviews);
+
+            // Delete other game-related entities
+            var likes = await _context.Likes
+                .Where(l => l.GameId == gameId)
+                .ToListAsync();
+            _context.Likes.RemoveRange(likes);
+
+            var favorites = await _context.Favorites
+                .Where(f => f.GameId == gameId)
+                .ToListAsync();
+            _context.Favorites.RemoveRange(favorites);
+
+            var gameListItems = await _context.GameListItems
+                .Where(gli => gli.GameId == gameId)
+                .ToListAsync();
+            _context.GameListItems.RemoveRange(gameListItems);
+
             _context.Games.Remove(game);
             await _context.SaveChangesAsync();
             return true;

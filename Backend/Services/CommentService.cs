@@ -215,6 +215,17 @@ namespace Backend.Services
                 return false;
             }
 
+            // Delete related entities first to avoid foreign key constraint violations
+            var commentLikes = await _context.CommentLikes
+                .Where(cl => cl.CommentId == commentId)
+                .ToListAsync();
+            _context.CommentLikes.RemoveRange(commentLikes);
+
+            var childComments = await _context.Comments
+                .Where(c => c.ParentCommentId == commentId)
+                .ToListAsync();
+            _context.Comments.RemoveRange(childComments);
+
             _context.Comments.Remove(comment);
             await _context.SaveChangesAsync();
 

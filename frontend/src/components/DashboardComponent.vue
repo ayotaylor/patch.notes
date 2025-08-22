@@ -35,196 +35,73 @@
     <!-- Search Section -->
     <div class="row mb-4">
       <div class="col-12">
-        <GameSearchComponent
-          :show-card="true"
-          :show-title="true"
-          :show-results="true"
-          :show-load-more="true"
-          title="Search Games"
-          placeholder="Search for games by title, genre, or developer..."
-          results-mode="grid"
-          pagination-mode="pages"
-          :games-per-page="8"
-          :auto-search="true"
-          @select-game="handleGameSelect"
-          @add-to-library="addToLibrary"
-        />
+        <div class="card shadow-sm border-0">
+          <div class="card-header bg-white border-bottom">
+            <h3 class="h5 mb-0 fw-bold">
+              <i class="fas fa-search text-primary me-2"></i>
+              Search Games
+            </h3>
+          </div>
+          <div class="card-body p-4">
+            <GameSearchComponent
+              :show-card="false"
+              :show-title="false"
+              :show-results="true"
+              :show-load-more="false"
+              placeholder="Search for games by title, genre, or developer..."
+              results-mode="compact"
+              pagination-mode="infinite-scroll"
+              max-height="400px"
+              :auto-search="true"
+              :debounce-ms="500"
+              @select-game="handleGameSelect"
+              @add-to-library="addToLibrary"
+            />
+          </div>
+        </div>
       </div>
     </div>
 
-    <!-- Main Content Grid -->
+    <!-- Game Sections -->
     <div class="row g-4">
       <!-- Popular Games -->
-      <div class="col-lg-6">
-        <div class="card shadow-sm border-0 h-100">
-          <div class="card-header bg-white border-bottom">
-            <div class="d-flex justify-content-between align-items-center">
-              <h3 class="h5 mb-0 fw-bold">
-                <i class="fas fa-fire text-danger me-2"></i>
-                Popular Games
-              </h3>
-              <button
-                @click="refreshPopularGames"
-                :disabled="gamesStore.loading"
-                class="btn btn-sm btn-outline-secondary"
-              >
-                <i class="fas fa-sync-alt" :class="{ 'fa-spin': gamesStore.loading }"></i>
-              </button>
-            </div>
-          </div>
-          <div class="card-body p-0">
-            <!-- Loading State -->
-            <div v-if="gamesStore.loading && popularGames.length === 0" class="text-center py-5">
-              <div class="spinner-border text-primary mb-3"></div>
-              <p class="text-muted">Loading popular games...</p>
-            </div>
-
-            <!-- Popular Games List -->
-            <div v-else-if="popularGames.length > 0" class="list-group list-group-flush">
-              <div
-                v-for="(game, index) in popularGames.slice(0, 5)"
-                :key="game.id"
-                @click="() => viewGameDetails(game.id)"
-                class="list-group-item list-group-item-action border-0 py-3 cursor-pointer"
-              >
-                <div class="d-flex align-items-center">
-                  <!-- Rank -->
-                  <div class="me-3">
-                    <span class="badge bg-primary rounded-circle d-flex align-items-center justify-content-center" style="width: 30px; height: 30px;">
-                      {{ index + 1 }}
-                    </span>
-                  </div>
-
-                  <!-- Game Image -->
-                  <div class="me-3">
-                    <img
-                      :src="getImageUrl(game.primaryImageUrl, FALLBACK_TYPES.GAME_ICON, IMAGE_CONTEXTS.GAME_CARD)"
-                      :alt="game.name"
-                      class="rounded"
-                      style="width: 50px; height: 50px; object-fit: cover;"
-                      @error="(e) => handleImageError(e, 'gameIcon')"
-                    >
-                  </div>
-
-                  <!-- Game Info -->
-                  <div class="flex-grow-1">
-                    <h6 class="mb-1 fw-semibold">{{ game.name }}</h6>
-                    <div class="d-flex align-items-center gap-3 small text-muted">
-                      <span v-if="game.allGenres">
-                        <i class="fas fa-tag me-1"></i>{{ game.primaryGenre }}
-                      </span>
-                      <span v-if="game.rating">
-                        <i class="fas fa-star text-warning me-1"></i>{{ game.rating }}/5
-                      </span>
-                      <span v-if="game.likesCount > 0">
-                        <i class="fas fa-heart text-primary me-1"></i>{{ game.likesCount }}
-                      </span>
-                      <!-- <span v-if="game.players">
-                        <i class="fas fa-users me-1"></i>{{ game.players }}
-                      </span> -->
-                    </div>
-                  </div>
-
-                  <!-- Action Button -->
-                  <div class="ms-3">
-                    <button
-                      @click.stop="addToLibrary(game)"
-                      class="btn btn-sm btn-outline-primary"
-                      :disabled="isGameInLibrary(game.id)"
-                    >
-                      <i class="fas" :class="isGameInLibrary(game.id) ? 'fa-check' : 'fa-plus'"></i>
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Empty State -->
-            <div v-else class="text-center py-5">
-              <i class="fas fa-gamepad text-muted mb-3" style="font-size: 2rem;"></i>
-              <p class="text-muted">No popular games available right now.</p>
-            </div>
-          </div>
-        </div>
+      <div class="col-12">
+        <GameSection
+          title="Popular Games"
+          icon="fas fa-fire text-danger"
+          :games="popularGames"
+          :loading="gamesStore.loading"
+          loading-message="Loading popular games..."
+          empty-message="No popular games available right now."
+          empty-icon="fas fa-gamepad"
+          :max-games-to-show="10"
+          @refresh="refreshPopularGames"
+          @view-all="viewAllPopularGames"
+          @game-click="handleGameClick"
+          @view-likes="handleViewLikes"
+          @view-lists="handleViewLists"
+          @view-reviews="handleViewReviews"
+        />
       </div>
 
-      <!-- New Games -->
-      <div class="col-lg-6">
-        <div class="card shadow-sm border-0 h-100">
-          <div class="card-header bg-white border-bottom">
-            <div class="d-flex justify-content-between align-items-center">
-              <h3 class="h5 mb-0 fw-bold">
-                <i class="fas fa-sparkles text-success me-2"></i>
-                New Releases
-              </h3>
-              <button
-                @click="refreshNewGames"
-                :disabled="gamesStore.loading"
-                class="btn btn-sm btn-outline-secondary"
-              >
-                <i class="fas fa-sync-alt" :class="{ 'fa-spin': gamesStore.loading }"></i>
-              </button>
-            </div>
-          </div>
-          <div class="card-body p-0">
-            <!-- Loading State -->
-            <div v-if="gamesStore.loading && newGames.length === 0" class="text-center py-5">
-              <div class="spinner-border text-primary mb-3"></div>
-              <p class="text-muted">Loading new games...</p>
-            </div>
-
-            <!-- New Games Grid -->
-            <div v-else-if="newGames.length > 0" class="row g-2 p-3">
-              <div
-                v-for="game in newGames.slice(0, 4)"
-                :key="game.id"
-                class="col-6"
-              >
-                <div
-                  @click="() => viewGameDetails(game.id)"
-                  class="card border-0 bg-light cursor-pointer game-hover-card"
-                >
-                  <img
-                    :src="getImageUrl(game.primaryImageUrl, FALLBACK_TYPES.GAME_SMALL, IMAGE_CONTEXTS.GAME_CARD)"
-                    :alt="game.name"
-                    class="card-img-top"
-                    style="height: 120px; object-fit: cover;"
-                    @error="(e) => handleImageError(e, 'gameSmall')"
-                  >
-                  <div class="card-body p-2">
-                    <h6 class="card-title mb-1 fw-semibold small">{{ game.name }}</h6>
-                    <p class="card-text small text-muted mb-2">{{ game.primaryGenre }}</p>
-                    <div class="d-flex justify-content-between align-items-center">
-                      <div class="d-flex flex-column small">
-                        <small class="text-muted">
-                          <i class="fas fa-calendar me-1"></i>
-                          {{ formatReleaseDate(game.firstReleaseDate) }}
-                        </small>
-                        <small v-if="game.likesCount > 0" class="text-muted">
-                          <i class="fas fa-heart text-primary me-1"></i>
-                          {{ game.likesCount }}
-                        </small>
-                      </div>
-                      <button
-                        @click.stop="addToLibrary(game)"
-                        class="btn btn-sm btn-outline-primary"
-                        :disabled="isGameInLibrary(game.id)"
-                      >
-                        <i class="fas" :class="isGameInLibrary(game.id) ? 'fa-check' : 'fa-plus'"></i>
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Empty State -->
-            <div v-else class="text-center py-5">
-              <i class="fas fa-calendar-plus text-muted mb-3" style="font-size: 2rem;"></i>
-              <p class="text-muted">No new games available right now.</p>
-            </div>
-          </div>
-        </div>
+      <!-- New Releases -->
+      <div class="col-12">
+        <GameSection
+          title="New Releases"
+          icon="fas fa-sparkles text-success"
+          :games="newGames"
+          :loading="gamesStore.loading"
+          loading-message="Loading new releases..."
+          empty-message="No new releases available right now."
+          empty-icon="fas fa-calendar-plus"
+          :max-games-to-show="10"
+          @refresh="refreshNewGames"
+          @view-all="viewAllNewGames"
+          @game-click="handleGameClick"
+          @view-likes="handleViewLikes"
+          @view-lists="handleViewLists"
+          @view-reviews="handleViewReviews"
+        />
       </div>
     </div>
 
@@ -400,9 +277,9 @@ import { useGamesStore } from '@/stores/gamesStore'
 import { useProfileStore } from '@/stores/profileStore'
 import { useToast } from 'vue-toastification'
 import GameSearchComponent from '@/components/GameSearchComponent.vue'
+import GameSection from '@/components/GameSection.vue'
 import ReviewCard from '@/components/ReviewCard.vue'
 import ListCard from '@/components/ListCard.vue'
-import { useImageFallback, FALLBACK_TYPES } from '@/composables/useImageFallback'
 import { reviewsService } from '@/services/reviewsService'
 import { socialService } from '@/services/socialService'
 import { commentsService } from '@/services/commentsService'
@@ -414,7 +291,6 @@ const authStore = useAuthStore()
 const gamesStore = useGamesStore()
 const profileStore = useProfileStore()
 const toast = useToast()
-const { handleImageError, getImageUrl, IMAGE_CONTEXTS } = useImageFallback()
 
 // State
 const error = ref('')
@@ -476,9 +352,6 @@ const addToLibrary = async (game) => {
   }
 }
 
-const isGameInLibrary = (gameId) => {
-  return userLibrary.value.has(gameId)
-}
 
 const refreshPopularGames = async () => {
   try {
@@ -498,6 +371,51 @@ const refreshNewGames = async () => {
   }
 }
 
+// New game section event handlers
+const handleGameClick = (game) => {
+  viewGameDetails(game.id)
+}
+
+const viewAllPopularGames = () => {
+  // Navigate to a dedicated popular games page
+  // For now, we can navigate to a general games page with a popular filter
+  router.push('/games?filter=popular')
+}
+
+const viewAllNewGames = () => {
+  // Navigate to a dedicated new releases page
+  // For now, we can navigate to a general games page with a new filter
+  router.push('/games?filter=new')
+}
+
+// Stat navigation handlers
+const handleViewLikes = (game) => {
+  // Navigate to game details page with likes section
+  router.push({
+    name: 'GameDetails',
+    params: { identifier: String(game.id) },
+    hash: '#likes'
+  })
+}
+
+const handleViewLists = (game) => {
+  // Navigate to game details page with lists section or a dedicated lists page
+  router.push({
+    name: 'GameDetails',
+    params: { identifier: String(game.id) },
+    hash: '#lists'
+  })
+}
+
+const handleViewReviews = (game) => {
+  // Navigate to game details page with reviews section
+  router.push({
+    name: 'GameDetails',
+    params: { identifier: String(game.id) },
+    hash: '#reviews'
+  })
+}
+
 const loadUserStats = async () => {
   try {
     if (authStore.user?.id) {
@@ -513,11 +431,6 @@ const loadUserStats = async () => {
   }
 }
 
-const formatReleaseDate = (dateString) => {
-  if (!dateString) return 'TBA'
-  const date = new Date(dateString)
-  return date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' })
-}
 
 const loadLatestReviews = async () => {
   try {
@@ -697,13 +610,5 @@ onBeforeUnmount(() => {
     padding: 1.5rem !important;
   }
 
-  .input-group-lg {
-    flex-direction: column;
-  }
-
-  .input-group-lg .btn {
-    border-radius: 0.375rem !important;
-    margin-top: 0.5rem;
-  }
 }
 </style>

@@ -494,7 +494,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted, watch } from 'vue'
+import { ref, reactive, computed, onMounted, onBeforeUnmount, watch } from 'vue'
 import { defineProps } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
@@ -945,6 +945,11 @@ onMounted(() => {
   if (profileUserId.value) {
     fetchProfile()
   }
+})
+
+// Clear search results when leaving the profile page
+onBeforeUnmount(() => {
+  gamesStore.clearSearchResults()
 })
 </script>
 

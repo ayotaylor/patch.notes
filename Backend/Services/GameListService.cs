@@ -201,6 +201,22 @@ namespace Backend.Services
                 return false;
             }
 
+            // Delete related entities first to avoid foreign key constraint violations
+            var gameListItems = await _context.GameListItems
+                .Where(gli => gli.GameListId == listId)
+                .ToListAsync();
+            _context.GameListItems.RemoveRange(gameListItems);
+
+            var comments = await _context.Comments
+                .Where(c => c.GameListId == listId)
+                .ToListAsync();
+            _context.Comments.RemoveRange(comments);
+
+            var gameListLikes = await _context.GameListLikes
+                .Where(gll => gll.GameListId == listId)
+                .ToListAsync();
+            _context.GameListLikes.RemoveRange(gameListLikes);
+
             _context.GameLists.Remove(gameList);
             await _context.SaveChangesAsync();
 

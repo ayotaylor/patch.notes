@@ -242,6 +242,26 @@ namespace Backend.Services
                 return false;
             }
 
+            // Delete related entities first to avoid foreign key constraint violations
+            var reviewLikes = await _context.ReviewLikes
+                .Where(rl => rl.ReviewId == reviewId)
+                .ToListAsync();
+            _context.ReviewLikes.RemoveRange(reviewLikes);
+
+            var comments = await _context.Comments
+                .Where(c => c.ReviewId == reviewId)
+                .ToListAsync();
+            
+            // Delete comment likes for each comment before deleting comments
+            foreach (var comment in comments)
+            {
+                var commentLikes = await _context.CommentLikes
+                    .Where(cl => cl.CommentId == comment.Id)
+                    .ToListAsync();
+                _context.CommentLikes.RemoveRange(commentLikes);
+            }
+            
+            _context.Comments.RemoveRange(comments);
             _context.Reviews.Remove(review);
             await _context.SaveChangesAsync();
 
