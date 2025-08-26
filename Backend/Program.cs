@@ -13,6 +13,9 @@ using Backend.Services;
 using Backend.Data;
 using Backend.Config;
 using Backend.Models.Auth;
+using Backend.Services.Recommendation;
+using Backend.Services.Recommendation.Interfaces;
+using Qdrant.Client;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -25,6 +28,26 @@ builder.Services.AddScoped<IFollowService, FollowService>();
 builder.Services.AddScoped<IReviewService, ReviewService>();
 builder.Services.AddScoped<IGameListService, GameListService>();
 builder.Services.AddScoped<ICommentService, CommentService>();
+
+// Add recommendation services
+builder.Services.AddHttpClient<GroqLanguageModel>();
+builder.Services.AddSingleton<QdrantClient>(provider =>
+{
+    var configuration = provider.GetRequiredService<IConfiguration>();
+    var qdrantUrl = configuration["Qdrant:Url"] ?? "http://localhost:6333";
+    return new QdrantClient(qdrantUrl);
+});
+
+builder.Services.AddScoped<IVectorDatabase, QdrantVectorDatabase>();
+builder.Services.AddScoped<IEmbeddingService, SentenceTransformerEmbeddingService>();
+builder.Services.AddScoped<ILanguageModel, GroqLanguageModel>();
+builder.Services.AddScoped<UserPreferenceService>();
+builder.Services.AddScoped<GameIndexingService>();
+builder.Services.AddScoped<GameRecommendationService>();
+builder.Services.AddSingleton<ConversationStateService>();
+// Add game change tracking service and initial indexing service
+builder.Services.AddHostedService<GameIndexingBackgroundService>();
+builder.Services.AddScoped<GameChangeTrackingService>();
 
 // add igdb import service -- TODO: to be removed later
 // get igdb settings from configuration
