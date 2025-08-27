@@ -79,10 +79,10 @@ Examples: [""Do you prefer single-player or multiplayer games?"", ""Are you inte
             try
             {
                 _logger.LogDebug("Follow-up questions response: {Response}", response);
-                
+
                 // Extract JSON from markdown code block if present
                 var jsonContent = ExtractJsonFromResponse(response);
-                
+
                 var questions = JsonSerializer.Deserialize<string[]>(jsonContent);
                 return questions?.ToList() ?? new List<string>();
             }
@@ -121,17 +121,20 @@ Return ONLY a JSON object (no additional text, explanations, or markdown formatt
 - isAmbiguous: boolean if query needs clarification
 - confidenceScore: float 0-1 for analysis confidence
 
-Example: {{""genres"":[""RPG""], ""moods"":[""happy""], ""isAmbiguous"":false, ""confidenceScore"":0.8}}";
+Example: {{""genres"":[""RPG""], ""platforms"":[""Playstation 5, Xbox Series X""],
+            ""gameModes"":[""Single player, Multiplayer""], ""releaseDateRange"":[""happy""],
+            ""processedQuery"":[""Here is a processed query""], ""isAmbiguous"":false,
+            ""confidenceScore"":0.8}}";
 
             var response = await GenerateResponseAsync(prompt);
 
             try
             {
                 _logger.LogDebug("QueryAnalysis response: {Response}", response);
-                
+
                 // Extract JSON from markdown code block if present
                 var jsonContent = ExtractJsonFromResponse(response);
-                
+
                 var analysis = JsonSerializer.Deserialize<QueryAnalysis>(jsonContent);
                 return analysis ?? new QueryAnalysis { ProcessedQuery = query, ConfidenceScore = 0.5f };
             }
