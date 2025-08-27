@@ -34,12 +34,13 @@ Add to your `appsettings.json`:
 ```json
 {
   "Qdrant": {
-    "Url": "http://localhost:6333"
+    "UrlUrl": "http://localhost:6333"
   },
   "Groq": {
     "ApiKey": "your-groq-api-key-here"
   },
   "EmbeddingModel": {
+    "UseOnnx": false,  // false in dev, true in production
     "Path": "./models/all-MiniLM-L6-v2/model.onnx",
     "TokenizerPath": "./models/all-MiniLM-L6-v2/tokenizer.json",
     "ConfigPath": "./models/all-MiniLM-L6-v2/config.json"

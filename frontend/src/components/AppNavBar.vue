@@ -34,6 +34,11 @@
                             <i class="fas fa-users me-1"></i>Members
                         </router-link>
                     </li>
+                    <li class="nav-item">
+                        <router-link class="nav-link" to="/recommendations" active-class="active">
+                            <i class="fas fa-magic me-1"></i>Ask Me Something
+                        </router-link>
+                    </li>
                 </ul>
 
                 <div class="navbar-nav">

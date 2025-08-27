@@ -1,4 +1,5 @@
 using Backend.Models.DTO.Recommendation;
+using System.Text.Json.Serialization;
 
 namespace Backend.Services.Recommendation.Interfaces
 {
@@ -12,19 +13,37 @@ namespace Backend.Services.Recommendation.Interfaces
 
     public class QueryAnalysis
     {
+        [JsonPropertyName("genres")]
         public List<string> Genres { get; set; } = new();
+        
+        [JsonPropertyName("platforms")]
         public List<string> Platforms { get; set; } = new();
+        
+        [JsonPropertyName("gameModes")]
         public List<string> GameModes { get; set; } = new();
+        
+        [JsonPropertyName("moods")]
         public List<string> Moods { get; set; } = new();
+        
+        [JsonPropertyName("releaseDateRange")]
         public DateRange? ReleaseDateRange { get; set; }
+        
+        [JsonPropertyName("processedQuery")]
         public string ProcessedQuery { get; set; } = string.Empty;
+        
+        [JsonPropertyName("isAmbiguous")]
         public bool IsAmbiguous { get; set; }
+        
+        [JsonPropertyName("confidenceScore")]
         public float ConfidenceScore { get; set; }
     }
 
     public class DateRange
     {
+        [JsonPropertyName("from")]
         public DateTime? From { get; set; }
+        
+        [JsonPropertyName("to")]
         public DateTime? To { get; set; }
     }
 }

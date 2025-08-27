@@ -4,10 +4,6 @@ using Microsoft.IdentityModel.Tokens;
 
 using System.Text;
 
-// add imports from current project
-// using AuthApp.API.Models;
-// using AuthApp.API.Services;
-
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Backend.Services;
 using Backend.Data;
@@ -35,7 +31,10 @@ builder.Services.AddSingleton<QdrantClient>(provider =>
 {
     var configuration = provider.GetRequiredService<IConfiguration>();
     var qdrantUrl = configuration["Qdrant:Url"] ?? "http://localhost:6333";
-    return new QdrantClient(qdrantUrl);
+    var uri = new Uri(qdrantUrl);
+    // Use gRPC port (6334) instead of HTTP port (6333) C# client uses gRPC interface by default
+    var grpcPort = uri.Port == 6333 ? 6334 : uri.Port;
+    return new QdrantClient(uri.Host, grpcPort, https: false);
 });
 
 builder.Services.AddScoped<IVectorDatabase, QdrantVectorDatabase>();

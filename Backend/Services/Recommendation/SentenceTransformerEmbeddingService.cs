@@ -10,8 +10,9 @@ namespace Backend.Services.Recommendation
         private readonly ILogger<SentenceTransformerEmbeddingService> _logger;
         private readonly IConfiguration _configuration;
         private readonly bool _useOnnxModel;
+        private readonly Lazy<int> _embeddingDimensions;
         
-        public int EmbeddingDimensions => 384; // all-MiniLM-L6-v2 dimensions
+        public int EmbeddingDimensions => _embeddingDimensions.Value;
 
         public SentenceTransformerEmbeddingService(IConfiguration configuration, ILogger<SentenceTransformerEmbeddingService> logger)
         {
@@ -23,6 +24,9 @@ namespace Backend.Services.Recommendation
             _useOnnxModel = _configuration.GetValue<bool>("EmbeddingModel:UseOnnx", false) 
                             && !string.IsNullOrEmpty(modelPath) 
                             && File.Exists(modelPath);
+
+            // Initialize embedding dimensions lazily by generating a sample embedding
+            _embeddingDimensions = new Lazy<int>(() => CalculateEmbeddingDimensions());
             
             try
             {
@@ -56,14 +60,18 @@ namespace Backend.Services.Recommendation
             {
                 try
                 {
+                    float[] baseEmbedding;
                     if (_useOnnxModel && _session != null)
                     {
-                        return GenerateOnnxEmbedding(text);
+                        baseEmbedding = GenerateOnnxEmbedding(text);
                     }
                     else
                     {
-                        return GenerateSimpleEmbedding(text);
+                        baseEmbedding = GenerateSimpleEmbedding(text);
                     }
+                    
+                    // Pad text embedding to match game embedding dimensions
+                    return PadEmbeddingToGameSize(baseEmbedding);
                 }
                 catch (Exception ex)
                 {
@@ -311,6 +319,15 @@ namespace Backend.Services.Recommendation
             return NormalizeVector(embedding);
         }
 
+        private static float[] PadEmbeddingToGameSize(float[] textEmbedding)
+        {
+            // Add 10 zero-padded structured features to match game embedding size
+            var paddedEmbedding = new float[textEmbedding.Length + 10];
+            Array.Copy(textEmbedding, 0, paddedEmbedding, 0, textEmbedding.Length);
+            // Remaining elements are already initialized to 0
+            return paddedEmbedding;
+        }
+
         private static float[] NormalizeVector(float[] vector)
         {
             var magnitude = Math.Sqrt(vector.Sum(x => x * x));
@@ -322,6 +339,30 @@ namespace Backend.Services.Recommendation
                 }
             }
             return vector;
+        }
+
+        private int CalculateEmbeddingDimensions()
+        {
+            try
+            {
+                // Generate a sample game embedding to determine the actual dimensions
+                var sampleGame = new GameEmbeddingInput
+                {
+                    Name = "Sample Game",
+                    Summary = "A sample game for dimension calculation",
+                    Genres = ["Action"],
+                    Platforms = ["PC"]
+                };
+                
+                var sampleEmbedding = GenerateGameEmbeddingAsync(sampleGame).Result;
+                _logger.LogInformation("Calculated embedding dimensions: {Dimensions}", sampleEmbedding.Length);
+                return sampleEmbedding.Length;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error calculating embedding dimensions, using default");
+                return 394; // Fallback to expected combined size
+            }
         }
 
         public void Dispose()

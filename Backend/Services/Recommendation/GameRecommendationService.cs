@@ -78,6 +78,8 @@ namespace Backend.Services.Recommendation
                     queryAnalysis.ReleaseDateRange?.To
                 );
 
+                _logger.LogInformation("Vector search returned {Count} results for query: {Query}", searchResults.Count, request.Query);
+
                 // Convert search results to game recommendations
                 var gameIds = searchResults.Select(r => Guid.Parse(r.Id)).ToList();
                 var games = await GetGamesWithDetailsAsync(gameIds);

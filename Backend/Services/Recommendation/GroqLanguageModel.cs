@@ -2,6 +2,7 @@ using Backend.Models.DTO.Recommendation;
 using Backend.Services.Recommendation.Interfaces;
 using System.Text;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace Backend.Services.Recommendation
 {
@@ -21,7 +22,6 @@ namespace Backend.Services.Recommendation
             _apiKey = _configuration["Groq:ApiKey"] ?? throw new ArgumentException("Groq API key not configured");
 
             _httpClient.DefaultRequestHeaders.Add("Authorization", $"Bearer {_apiKey}");
-            _httpClient.DefaultRequestHeaders.Add("Content-Type", "application/json");
         }
 
         public async Task<string> GenerateResponseAsync(string prompt, string? conversationContext = null)
@@ -56,6 +56,7 @@ namespace Backend.Services.Recommendation
                     return "I'm having trouble processing your request right now. Please try again.";
                 }
 
+                _logger.LogDebug("Groq API response: {Content}", responseContent);
                 var result = JsonSerializer.Deserialize<GroqResponse>(responseContent);
                 return result?.Choices?.FirstOrDefault()?.Message?.Content ?? "No response generated";
             }
@@ -77,11 +78,17 @@ Examples: [""Do you prefer single-player or multiplayer games?"", ""Are you inte
 
             try
             {
-                var questions = JsonSerializer.Deserialize<string[]>(response);
+                _logger.LogDebug("Follow-up questions response: {Response}", response);
+                
+                // Extract JSON from markdown code block if present
+                var jsonContent = ExtractJsonFromResponse(response);
+                
+                var questions = JsonSerializer.Deserialize<string[]>(jsonContent);
                 return questions?.ToList() ?? new List<string>();
             }
-            catch
+            catch (Exception ex)
             {
+                _logger.LogError(ex, "Failed to deserialize follow-up questions response: {Response}", response);
                 return new List<string> { "Would you like games similar to any specific genre?", "Do you prefer newer or older games?" };
             }
         }
@@ -103,7 +110,8 @@ Provide a brief, friendly explanation focusing on how they match the user's requ
         public async Task<QueryAnalysis> AnalyzeQueryAsync(string query)
         {
             var prompt = $@"Analyze this game recommendation query and extract structured information: '{query}'
-Return a JSON object with:
+
+Return ONLY a JSON object (no additional text, explanations, or markdown formatting) with:
 - genres: array of detected game genres
 - platforms: array of detected platforms
 - gameModes: array of detected game modes
@@ -119,11 +127,17 @@ Example: {{""genres"":[""RPG""], ""moods"":[""happy""], ""isAmbiguous"":false, "
 
             try
             {
-                var analysis = JsonSerializer.Deserialize<QueryAnalysis>(response);
+                _logger.LogDebug("QueryAnalysis response: {Response}", response);
+                
+                // Extract JSON from markdown code block if present
+                var jsonContent = ExtractJsonFromResponse(response);
+                
+                var analysis = JsonSerializer.Deserialize<QueryAnalysis>(jsonContent);
                 return analysis ?? new QueryAnalysis { ProcessedQuery = query, ConfidenceScore = 0.5f };
             }
-            catch
+            catch (Exception ex)
             {
+                _logger.LogError(ex, "Failed to deserialize QueryAnalysis response: {Response}", response);
                 return new QueryAnalysis
                 {
                     ProcessedQuery = query,
@@ -133,18 +147,53 @@ Example: {{""genres"":[""RPG""], ""moods"":[""happy""], ""isAmbiguous"":false, "
             }
         }
 
+        private string ExtractJsonFromResponse(string response)
+        {
+            // Try to extract JSON from markdown code block
+            var jsonMatch = System.Text.RegularExpressions.Regex.Match(response, @"```json\s*([\s\S]*?)\s*```");
+            if (jsonMatch.Success)
+            {
+                return jsonMatch.Groups[1].Value.Trim();
+            }
+
+            // Try to extract JSON from generic code block
+            var codeMatch = System.Text.RegularExpressions.Regex.Match(response, @"```\s*([\s\S]*?)\s*```");
+            if (codeMatch.Success)
+            {
+                var content = codeMatch.Groups[1].Value.Trim();
+                // Check if it looks like JSON (starts with { or [)
+                if (content.StartsWith("{") || content.StartsWith("["))
+                {
+                    return content;
+                }
+            }
+
+            // Try to find JSON object directly in the response
+            var directJsonMatch = System.Text.RegularExpressions.Regex.Match(response, @"(\{[\s\S]*\})");
+            if (directJsonMatch.Success)
+            {
+                return directJsonMatch.Groups[1].Value.Trim();
+            }
+
+            // If no JSON found, return original response
+            return response;
+        }
+
         private class GroqResponse
         {
+            [JsonPropertyName("choices")]
             public GroqChoice[]? Choices { get; set; }
         }
 
         private class GroqChoice
         {
+            [JsonPropertyName("message")]
             public GroqMessage? Message { get; set; }
         }
 
         private class GroqMessage
         {
+            [JsonPropertyName("content")]
             public string? Content { get; set; }
         }
     }

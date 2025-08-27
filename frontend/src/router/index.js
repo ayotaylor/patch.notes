@@ -15,6 +15,7 @@ const ReviewsListPage = () => import("@/components/ReviewsListPage.vue");
 const ListsPage = () => import("@/components/ListsPage.vue");
 const ListDetailsPage = () => import("@/components/ListDetailsPage.vue");
 const MembersPage = () => import("@/components/MembersPage.vue");
+const RecommendationsPage = () => import("@/components/RecommendationsPage.vue");
 // const ForgotPassword = () => import('@/views/ForgotPassword.vue')
 // const ResetPassword = () => import('@/views/ResetPassword.vue')
 
@@ -207,6 +208,18 @@ const routes = [
       requiresAuth: false,
       validateToken: "never",
       title: "Members - Patch Notes",
+    },
+  },
+
+  // Recommendations route
+  {
+    path: "/recommendations",
+    name: "Recommendations",
+    component: RecommendationsPage,
+    meta: {
+      requiresAuth: false,
+      validateToken: "never",
+      title: "Ask Me Something - Patch Notes",
     },
   },
 
