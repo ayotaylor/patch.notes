@@ -26,6 +26,102 @@ namespace Backend.Controllers
         }
 
         /// <summary>
+        /// Get semantic keyword cache statistics
+        /// </summary>
+        /// <returns>Cache statistics including performance metrics</returns>
+        [HttpGet("cache/stats")]
+        [Authorize(Roles = "Admin")] // Restrict to admin users
+        public ActionResult<ApiResponse<object>> GetCacheStats()
+        {
+            try
+            {
+                var stats = _indexingService.GetSemanticCacheStats();
+                if (stats == null)
+                {
+                    return Ok(new ApiResponse<object>
+                    {
+                        Success = true,
+                        Data = new { message = "Semantic cache not configured or not initialized" }
+                    });
+                }
+
+                return Ok(new ApiResponse<object>
+                {
+                    Success = true,
+                    Data = new
+                    {
+                        TotalKeywords = stats.TotalKeywords,
+                        TotalGenres = stats.TotalGenres,
+                        TotalPlatforms = stats.TotalPlatforms,
+                        TotalGameModes = stats.TotalGameModes,
+                        TotalPerspectives = stats.TotalPerspectives,
+                        TotalCombinations = stats.TotalCombinations,
+                        LastInitialized = stats.LastInitialized,
+                        InitializationTimeMs = stats.InitializationTime.TotalMilliseconds,
+                        IsInitialized = true
+                    }
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error retrieving cache statistics");
+                return StatusCode(500, new ApiResponse<object>
+                {
+                    Success = false,
+                    Message = "Error retrieving cache statistics"
+                });
+            }
+        }
+
+        /// <summary>
+        /// Manually refresh the semantic keyword cache
+        /// </summary>
+        /// <returns>Success status of cache refresh operation</returns>
+        [HttpPost("cache/refresh")]
+        [Authorize(Roles = "Admin")] // Restrict to admin users
+        public async Task<ActionResult<ApiResponse<object>>> RefreshCache()
+        {
+            try
+            {
+                _logger.LogInformation("Manual cache refresh requested");
+                var success = await _indexingService.RefreshSemanticCacheAsync();
+                
+                if (success)
+                {
+                    var stats = _indexingService.GetSemanticCacheStats();
+                    return Ok(new ApiResponse<object>
+                    {
+                        Success = true,
+                        Message = "Cache refreshed successfully",
+                        Data = stats != null ? new
+                        {
+                            TotalKeywords = stats.TotalKeywords,
+                            InitializationTimeMs = stats.InitializationTime.TotalMilliseconds,
+                            RefreshedAt = stats.LastInitialized
+                        } : null
+                    });
+                }
+                else
+                {
+                    return StatusCode(500, new ApiResponse<object>
+                    {
+                        Success = false,
+                        Message = "Failed to refresh cache"
+                    });
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error refreshing semantic cache");
+                return StatusCode(500, new ApiResponse<object>
+                {
+                    Success = false,
+                    Message = "Error refreshing semantic cache"
+                });
+            }
+        }
+
+        /// <summary>
         /// Get game recommendations based on natural language query
         /// </summary>
         /// <param name="request">The recommendation request containing the user's query</param>

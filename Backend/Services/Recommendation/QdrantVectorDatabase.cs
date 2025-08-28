@@ -92,7 +92,7 @@ namespace Backend.Services.Recommendation
                     {
                         searchFilter = new Filter
                         {
-                            Must = { filterConditions }
+                            Should = { filterConditions }
                         };
                     }
                 }
@@ -130,7 +130,7 @@ namespace Backend.Services.Recommendation
                             var values = stringValue.Split(',', StringSplitOptions.RemoveEmptyEntries)
                                                    .Select(v => v.Trim())
                                                    .ToList();
-                            
+
                             // Create multiple conditions with OR logic - match ANY of the provided values
                             var conditions = values.Select(value => new Condition
                             {
@@ -160,8 +160,8 @@ namespace Backend.Services.Recommendation
                                 Field = new FieldCondition
                                 {
                                     Key = key,
-                                    Match = new Match 
-                                    { 
+                                    Match = new Match
+                                    {
                                         Text = stringValue
                                     }
                                 }
@@ -205,8 +205,8 @@ namespace Backend.Services.Recommendation
                                 Field = new FieldCondition
                                 {
                                     Key = key,
-                                    Match = new Match 
-                                    { 
+                                    Match = new Match
+                                    {
                                         Integer = intValue
                                     }
                                 }
@@ -250,8 +250,8 @@ namespace Backend.Services.Recommendation
                                 Field = new FieldCondition
                                 {
                                     Key = key,
-                                    Match = new Match 
-                                    { 
+                                    Match = new Match
+                                    {
                                         Text = doubleValue.ToString()
                                     }
                                 }
@@ -264,8 +264,8 @@ namespace Backend.Services.Recommendation
                             Field = new FieldCondition
                             {
                                 Key = key,
-                                Match = new Match 
-                                { 
+                                Match = new Match
+                                {
                                     Text = boolValue.ToString().ToLower()
                                 }
                             }

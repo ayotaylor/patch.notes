@@ -1,0 +1,199 @@
+{
+  "GenreMappings": {
+    "Role-playing (RPG)": {
+      "GenreKeywords": ["rpg", "role-playing", "character progression"],
+      "MechanicKeywords": ["leveling", "character progression", "skill trees", "stats", "equipment"],
+      "ThemeKeywords": ["epic", "adventure", "quest"],
+      "MoodKeywords": ["immersive", "epic", "story-driven"],
+      "ArtStyleKeywords": [],
+      "AudienceKeywords": ["hardcore", "story-focused"]
+    },
+    "Action": {
+      "GenreKeywords": ["action", "combat"],
+      "MechanicKeywords": ["real-time combat", "fast-paced", "reflex-based"],
+      "ThemeKeywords": [],
+      "MoodKeywords": ["intense", "adrenaline", "exciting"],
+      "ArtStyleKeywords": [],
+      "AudienceKeywords": ["action-lovers"]
+    },
+    "Adventure": {
+      "GenreKeywords": ["adventure", "exploration"],
+      "MechanicKeywords": ["exploration", "puzzle-solving", "narrative"],
+      "ThemeKeywords": ["mystery", "discovery"],
+      "MoodKeywords": ["atmospheric", "immersive"],
+      "ArtStyleKeywords": [],
+      "AudienceKeywords": ["story-focused"]
+    },
+    "Strategy": {
+      "GenreKeywords": ["strategy", "tactical"],
+      "MechanicKeywords": ["resource management", "planning", "turn-based", "real-time strategy"],
+      "ThemeKeywords": ["war", "empire", "civilization"],
+      "MoodKeywords": ["cerebral", "challenging"],
+      "ArtStyleKeywords": [],
+      "AudienceKeywords": ["hardcore", "strategic thinkers"]
+    },
+    "Shooter": {
+      "GenreKeywords": ["shooter", "fps", "tps"],
+      "MechanicKeywords": ["shooting", "aiming", "weapons", "competitive"],
+      "ThemeKeywords": ["combat", "warfare"],
+      "MoodKeywords": ["intense", "competitive"],
+      "ArtStyleKeywords": ["realistic", "detailed"],
+      "AudienceKeywords": ["competitive", "action-oriented"]
+    },
+    "Simulation": {
+      "GenreKeywords": ["simulation", "sim"],
+      "MechanicKeywords": ["management", "building", "realistic", "sandbox"],
+      "ThemeKeywords": ["realistic", "life"],
+      "MoodKeywords": ["relaxing", "meditative", "engaging"],
+      "ArtStyleKeywords": ["realistic", "detailed"],
+      "AudienceKeywords": ["casual", "builders"]
+    },
+    "Puzzle": {
+      "GenreKeywords": ["puzzle", "brain teaser"],
+      "MechanicKeywords": ["puzzle-solving", "logic", "problem-solving"],
+      "ThemeKeywords": [],
+      "MoodKeywords": ["cerebral", "relaxing", "satisfying"],
+      "ArtStyleKeywords": ["minimalist", "clean"],
+      "AudienceKeywords": ["puzzle-lovers", "casual"]
+    },
+    "Horror": {
+      "GenreKeywords": ["horror", "survival horror"],
+      "MechanicKeywords": ["stealth", "survival", "limited resources"],
+      "ThemeKeywords": ["horror", "supernatural", "psychological"],
+      "MoodKeywords": ["dark", "scary", "atmospheric", "tense"],
+      "ArtStyleKeywords": ["dark", "realistic"],
+      "AudienceKeywords": ["mature", "horror fans"]
+    }
+  },
+  "PlatformMappings": {
+    "PC (Microsoft Windows)": {
+      "ArtStyleKeywords": ["high-resolution", "detailed", "mod-support"],
+      "AudienceKeywords": ["pc gamers", "enthusiasts"],
+      "MechanicKeywords": ["complex controls", "keyboard-mouse"]
+    },
+    "PlayStation": {
+      "ArtStyleKeywords": ["cinematic", "polished"],
+      "AudienceKeywords": ["console gamers"],
+      "MechanicKeywords": ["controller-based"]
+    },
+    "Xbox": {
+      "ArtStyleKeywords": ["cinematic", "polished"],
+      "AudienceKeywords": ["console gamers"],
+      "MechanicKeywords": ["controller-based", "xbox live"]
+    },
+    "Nintendo Switch": {
+      "ArtStyleKeywords": ["colorful", "stylized"],
+      "AudienceKeywords": ["family-friendly", "portable gaming"],
+      "MechanicKeywords": ["portable", "local multiplayer"]
+    },
+    "Mobile": {
+      "ArtStyleKeywords": ["simple", "clear"],
+      "AudienceKeywords": ["casual", "mobile gamers"],
+      "MechanicKeywords": ["touch controls", "short sessions"]
+    }
+  },
+  "GameModeMappings": {
+    "Single-player": {
+      "MechanicKeywords": ["single-player", "solo"],
+      "MoodKeywords": ["immersive", "personal"],
+      "AudienceKeywords": ["solo players"]
+    },
+    "Multiplayer": {
+      "MechanicKeywords": ["multiplayer", "online", "social"],
+      "MoodKeywords": ["social", "competitive"],
+      "AudienceKeywords": ["social gamers"]
+    },
+    "Co-operative": {
+      "MechanicKeywords": ["co-op", "cooperative", "teamwork"],
+      "MoodKeywords": ["collaborative", "friendly"],
+      "AudienceKeywords": ["team players"]
+    },
+    "Massively Multiplayer Online (MMO)": {
+      "MechanicKeywords": ["mmo", "persistent world", "large scale"],
+      "ThemeKeywords": ["virtual world", "community"],
+      "MoodKeywords": ["social", "persistent"],
+      "AudienceKeywords": ["mmo players", "community focused"]
+    }
+  },
+  "PerspectiveMappings": {
+    "First person": {
+      "MechanicKeywords": ["first-person", "immersive view"],
+      "MoodKeywords": ["immersive", "personal"],
+      "ArtStyleKeywords": ["realistic"]
+    },
+    "Third person": {
+      "MechanicKeywords": ["third-person", "character view"],
+      "MoodKeywords": ["cinematic"]
+    },
+    "Top-down": {
+      "MechanicKeywords": ["top-down", "strategic view"],
+      "ArtStyleKeywords": ["strategic", "overview"]
+    },
+    "Side view": {
+      "MechanicKeywords": ["side-scrolling", "2d"],
+      "ArtStyleKeywords": ["2d", "classic"],
+      "MoodKeywords": ["nostalgic", "classic"]
+    }
+  },
+  "CrossCategoryBoosts": {
+    "fantasy_rpg": [
+      {
+        "TriggerKeyword": "fantasy",
+        "Category": "RPG",
+        "BoostKeywords": ["magic", "medieval", "dragons", "wizards"],
+        "BoostWeight": 0.4,
+        "Condition": "any"
+      }
+    ],
+    "horror_action": [
+      {
+        "TriggerKeyword": "horror",
+        "Category": "Action",
+        "BoostKeywords": ["survival", "limited resources", "stealth"],
+        "BoostWeight": 0.3,
+        "Condition": "any"
+      }
+    ],
+    "multiplayer_competitive": [
+      {
+        "TriggerKeyword": "multiplayer",
+        "Category": "Competitive",
+        "BoostKeywords": ["esports", "ranked", "tournaments", "skill-based"],
+        "BoostWeight": 0.4,
+        "Condition": "any"
+      }
+    ],
+    "sci_fi_themes": [
+      {
+        "TriggerKeyword": "sci-fi",
+        "Category": "Themes",
+        "BoostKeywords": ["futuristic", "technology", "space", "cyberpunk"],
+        "BoostWeight": 0.3,
+        "Condition": "any"
+      }
+    ]
+  },
+  "DefaultWeights": {
+    "GenreWeight": 0.25,
+    "MechanicsWeight": 0.20,
+    "ThemeWeight": 0.15,
+    "MoodWeight": 0.15,
+    "ArtStyleWeight": 0.10,
+    "AudienceWeight": 0.05,
+    "HierarchicalBoostMultiplier": 1.3,
+    "CrossCategoryBoostMultiplier": 1.5
+  },
+  "Dimensions": {
+    "BaseTextEmbedding": 384,
+    "StructuredFeatures": 20,
+    "CategoryRanges": {
+      "Genre": { "Start": 0, "End": 30 },
+      "Mechanics": { "Start": 30, "End": 60 },
+      "Theme": { "Start": 60, "End": 90 },
+      "Mood": { "Start": 90, "End": 120 },
+      "ArtStyle": { "Start": 120, "End": 140 },
+      "Audience": { "Start": 150, "End": 170 },
+      "HierarchicalBoosts": { "Start": 170, "End": 220 }
+    }
+  }
+}

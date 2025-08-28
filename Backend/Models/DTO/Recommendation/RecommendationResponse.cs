@@ -13,6 +13,7 @@ namespace Backend.Models.DTO.Recommendation
     {
         public Guid GameId { get; set; }
         public string Name { get; set; } = string.Empty;
+        public string Slug { get; set; } = string.Empty;
         public string Summary { get; set; } = string.Empty;
         public string? CoverUrl { get; set; }
         public decimal? Rating { get; set; }

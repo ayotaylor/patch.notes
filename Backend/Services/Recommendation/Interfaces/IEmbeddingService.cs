@@ -19,6 +19,16 @@ namespace Backend.Services.Recommendation.Interfaces
         public List<string> PlayerPerspectives { get; set; } = new();
         public decimal? Rating { get; set; }
         public DateTime? ReleaseDate { get; set; }
+        
+        // Enhanced semantic keyword fields
+        public List<string> ExtractedGenreKeywords { get; set; } = new();
+        public List<string> ExtractedMechanicKeywords { get; set; } = new();
+        public List<string> ExtractedThemeKeywords { get; set; } = new();
+        public List<string> ExtractedMoodKeywords { get; set; } = new();
+        public List<string> ExtractedArtStyleKeywords { get; set; } = new();
+        public List<string> ExtractedAudienceKeywords { get; set; } = new();
+        public Dictionary<string, float> SemanticWeights { get; set; } = new();
+        public List<string> HierarchicalBoosts { get; set; } = new();
     }
 
     public class UserPreferenceInput

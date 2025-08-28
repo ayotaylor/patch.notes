@@ -25,6 +25,9 @@ builder.Services.AddScoped<IReviewService, ReviewService>();
 builder.Services.AddScoped<IGameListService, GameListService>();
 builder.Services.AddScoped<ICommentService, CommentService>();
 
+// Add memory caching for semantic keyword cache
+builder.Services.AddMemoryCache();
+
 // Add recommendation services
 builder.Services.AddHttpClient<GroqLanguageModel>();
 builder.Services.AddSingleton<QdrantClient>(provider =>
@@ -41,6 +44,7 @@ builder.Services.AddScoped<IVectorDatabase, QdrantVectorDatabase>();
 builder.Services.AddScoped<IEmbeddingService, SentenceTransformerEmbeddingService>();
 builder.Services.AddScoped<ILanguageModel, GroqLanguageModel>();
 builder.Services.AddScoped<UserPreferenceService>();
+builder.Services.AddSingleton<ISemanticKeywordCache, SemanticKeywordCache>();
 builder.Services.AddScoped<GameIndexingService>();
 builder.Services.AddScoped<GameRecommendationService>();
 builder.Services.AddSingleton<ConversationStateService>();
