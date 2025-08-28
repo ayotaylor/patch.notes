@@ -71,11 +71,9 @@ namespace Backend.Services.Recommendation
                 // Search for similar games using vector search
                 var searchResults = await _gameIndexingService.SearchGamesWithFiltersAsync(
                     queryEmbedding,
-                    request.MaxResults * 2, // Get more results for filtering
-                    queryAnalysis.Genres,
-                    queryAnalysis.Platforms,
-                    queryAnalysis.ReleaseDateRange?.From,
-                    queryAnalysis.ReleaseDateRange?.To
+                    queryAnalysis,
+                    request.MaxResults * 2 // Get more results for filtering
+
                 );
 
                 _logger.LogInformation("Vector search returned {Count} results for query: {Query}", searchResults.Count, request.Query);

@@ -190,22 +190,19 @@ namespace Backend.Services.Recommendation
 
         public async Task<List<VectorSearchResult>> SearchGamesWithFiltersAsync(
             float[] queryEmbedding,
-            int limit = 20,
-            List<string>? genres = null,
-            List<string>? platforms = null,
-            DateTime? releaseDateFrom = null,
-            DateTime? releaseDateTo = null)
+            QueryAnalysis analysis,
+            int limit = 20)
         {
             try
             {
                 var filters = new Dictionary<string, object>();
 
-                if (genres?.Any() == true)
+                if (analysis.Genres?.Count > 0)
                 {
                     filters["genres"] = string.Join(",", genres);
                 }
 
-                if (platforms?.Any() == true)
+                if (platforms?.Count > 0)
                 {
                     filters["platforms"] = string.Join(",", platforms);
                 }

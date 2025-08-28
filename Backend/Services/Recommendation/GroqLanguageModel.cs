@@ -111,6 +111,9 @@ Provide a brief, friendly explanation focusing on how they match the user's requ
         {
             var prompt = $@"Analyze this game recommendation query and extract structured information: '{query}'
 
+This structured information should include information that is assessed from the query.
+This assessment should be based on the  
+and should be categorized by the fields described in the JSON object described below:
 Return ONLY a JSON object (no additional text, explanations, or markdown formatting) with:
 - genres: array of detected game genres
 - platforms: array of detected platforms
@@ -121,7 +124,10 @@ Return ONLY a JSON object (no additional text, explanations, or markdown formatt
 - isAmbiguous: boolean if query needs clarification
 - confidenceScore: float 0-1 for analysis confidence
 
-Example: {{""genres"":[""RPG""], ""platforms"":[""Playstation 5, Xbox Series X""],
+Include alternate names or pseunodyms for any of the values of either of the array above.
+Except processedQuery and confidenceScore
+
+Example: {{""genres"":[""RPG""], ""platforms"":[""Playstation 5, PS5, Xbox Series X, XSX""],
             ""gameModes"":[""Single player, Multiplayer""], ""releaseDateRange"":[""happy""],
             ""processedQuery"":[""Here is a processed query""], ""isAmbiguous"":false,
             ""confidenceScore"":0.8}}";

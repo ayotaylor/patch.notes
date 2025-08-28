@@ -72,13 +72,42 @@ namespace Backend.Services.Recommendation
         {
             try
             {
-                var searchResult = await _client.SearchAsync(collectionName, queryVector, limit: (ulong)limit);
+                Filter? searchFilter = null;
+
+                // Apply filters if provided to enrich the search results
+                if (filter != null && filter.Count > 0)
+                {
+                    var filterConditions = new List<Condition>();
+
+                    foreach (var filterItem in filter)
+                    {
+                        var condition = CreateFilterCondition(filterItem.Key, filterItem.Value);
+                        if (condition != null)
+                        {
+                            filterConditions.Add(condition);
+                        }
+                    }
+
+                    if (filterConditions.Count > 0)
+                    {
+                        searchFilter = new Filter
+                        {
+                            Must = { filterConditions }
+                        };
+                    }
+                }
+
+                var searchResult = await _client.SearchAsync(
+                    collectionName: collectionName,
+                    vector: queryVector,
+                    filter: searchFilter,
+                    limit: (ulong)limit);
 
                 return searchResult.Select(point => new VectorSearchResult
                 {
                     Id = point.Id.Uuid ?? point.Id.Num.ToString(),
                     Score = point.Score,
-                    Payload = point.Payload.ToDictionary(kvp => kvp.Key, kvp => (object)kvp.Value.StringValue)
+                    Payload = ExtractPayload(point.Payload)
                 }).ToList();
             }
             catch (Exception ex)
@@ -86,6 +115,193 @@ namespace Backend.Services.Recommendation
                 _logger.LogError(ex, "Failed to search vectors in collection: {CollectionName}", collectionName);
                 return [];
             }
+        }
+
+        private Condition? CreateFilterCondition(string key, object value)
+        {
+            try
+            {
+                switch (value)
+                {
+                    case string stringValue:
+                        // Handle comma-separated values for multi-value fields like genres, platforms, game modes
+                        if (stringValue.Contains(','))
+                        {
+                            var values = stringValue.Split(',', StringSplitOptions.RemoveEmptyEntries)
+                                                   .Select(v => v.Trim())
+                                                   .ToList();
+                            
+                            // Create multiple conditions with OR logic - match ANY of the provided values
+                            var conditions = values.Select(value => new Condition
+                            {
+                                Field = new FieldCondition
+                                {
+                                    Key = key,
+                                    Match = new Match
+                                    {
+                                        Text = value
+                                    }
+                                }
+                            }).ToList();
+
+                            // Return a condition that matches ANY of the values
+                            return new Condition
+                            {
+                                Filter = new Filter
+                                {
+                                    Should = { conditions }
+                                }
+                            };
+                        }
+                        else
+                        {
+                            return new Condition
+                            {
+                                Field = new FieldCondition
+                                {
+                                    Key = key,
+                                    Match = new Match 
+                                    { 
+                                        Text = stringValue
+                                    }
+                                }
+                            };
+                        }
+
+                    case int intValue:
+                        // Handle range filters for years
+                        if (key.EndsWith("_from"))
+                        {
+                            return new Condition
+                            {
+                                Field = new FieldCondition
+                                {
+                                    Key = key.Replace("_from", ""),
+                                    Range = new Qdrant.Client.Grpc.Range
+                                    {
+                                        Gte = intValue
+                                    }
+                                }
+                            };
+                        }
+                        else if (key.EndsWith("_to"))
+                        {
+                            return new Condition
+                            {
+                                Field = new FieldCondition
+                                {
+                                    Key = key.Replace("_to", ""),
+                                    Range = new Qdrant.Client.Grpc.Range
+                                    {
+                                        Lte = intValue
+                                    }
+                                }
+                            };
+                        }
+                        else
+                        {
+                            return new Condition
+                            {
+                                Field = new FieldCondition
+                                {
+                                    Key = key,
+                                    Match = new Match 
+                                    { 
+                                        Integer = intValue
+                                    }
+                                }
+                            };
+                        }
+
+                    case double doubleValue:
+                        // Handle range filters with _from/_to suffixes, otherwise exact match
+                        if (key.EndsWith("_from"))
+                        {
+                            return new Condition
+                            {
+                                Field = new FieldCondition
+                                {
+                                    Key = key.Replace("_from", ""),
+                                    Range = new Qdrant.Client.Grpc.Range
+                                    {
+                                        Gte = doubleValue
+                                    }
+                                }
+                            };
+                        }
+                        else if (key.EndsWith("_to"))
+                        {
+                            return new Condition
+                            {
+                                Field = new FieldCondition
+                                {
+                                    Key = key.Replace("_to", ""),
+                                    Range = new Qdrant.Client.Grpc.Range
+                                    {
+                                        Lte = doubleValue
+                                    }
+                                }
+                            };
+                        }
+                        else
+                        {
+                            return new Condition
+                            {
+                                Field = new FieldCondition
+                                {
+                                    Key = key,
+                                    Match = new Match 
+                                    { 
+                                        Text = doubleValue.ToString()
+                                    }
+                                }
+                            };
+                        }
+
+                    case bool boolValue:
+                        return new Condition
+                        {
+                            Field = new FieldCondition
+                            {
+                                Key = key,
+                                Match = new Match 
+                                { 
+                                    Text = boolValue.ToString().ToLower()
+                                }
+                            }
+                        };
+
+                    default:
+                        _logger.LogWarning("Unsupported filter value type: {Type} for key: {Key}", value.GetType(), key);
+                        return null;
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to create filter condition for key: {Key}", key);
+                return null;
+            }
+        }
+
+        private static Dictionary<string, object> ExtractPayload(Google.Protobuf.Collections.MapField<string, Value> payload)
+        {
+            var result = new Dictionary<string, object>();
+
+            foreach (var kvp in payload)
+            {
+                object value = kvp.Value.KindCase switch
+                {
+                    Value.KindOneofCase.StringValue => kvp.Value.StringValue,
+                    Value.KindOneofCase.IntegerValue => kvp.Value.IntegerValue,
+                    Value.KindOneofCase.DoubleValue => kvp.Value.DoubleValue,
+                    Value.KindOneofCase.BoolValue => kvp.Value.BoolValue,
+                    _ => kvp.Value.StringValue
+                };
+
+                result[kvp.Key] = value;
+            }
+
+            return result;
         }
 
         public async Task<bool> DeleteVectorAsync(string collectionName, string id)
