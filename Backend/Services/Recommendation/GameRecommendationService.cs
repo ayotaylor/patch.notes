@@ -57,8 +57,11 @@ namespace Backend.Services.Recommendation
                 // Analyze the query using LLM
                 var queryAnalysis = await _languageModel.AnalyzeQueryAsync(request.Query);
 
-                // Generate embedding for the query
-                var queryEmbedding = await _embeddingService.GenerateEmbeddingAsync(queryAnalysis.ProcessedQuery);
+                // Enhance the query with semantic expansion for better embedding quality
+                var enhancedQuery = EnhanceQueryWithSemanticTerms(queryAnalysis.ProcessedQuery, queryAnalysis);
+
+                // Generate embedding for the enhanced query
+                var queryEmbedding = await _embeddingService.GenerateEmbeddingAsync(enhancedQuery);
 
                 // If user is authenticated and wants personalized recommendations
                 if (userId.HasValue && request.IncludeFollowedUsersPreferences)
@@ -90,7 +93,9 @@ namespace Backend.Services.Recommendation
                     var game = games.FirstOrDefault(g => g.Id.ToString() == result.Id);
                     if (game == null) continue;
 
-                    var recommendation = MapToGameRecommendation(game, result.Score);
+                    // Apply minimum confidence threshold and ensure reasonable score range
+                    var adjustedScore = Math.Max(0.15f, Math.Min(1.0f, result.Score));
+                    var recommendation = MapToGameRecommendation(game, adjustedScore);
                     recommendations.Add(recommendation);
                 }
 
@@ -260,6 +265,100 @@ namespace Backend.Services.Recommendation
             }
 
             return blended;
+        }
+
+        private string EnhanceQueryWithSemanticTerms(string originalQuery, QueryAnalysis analysis)
+        {
+            var enhancedTerms = new List<string> { originalQuery };
+
+            // Add genre-specific enhancement terms
+            foreach (var genre in analysis.Genres)
+            {
+                switch (genre.ToLowerInvariant())
+                {
+                    case "rpg":
+                    case "role-playing":
+                        enhancedTerms.AddRange(new[] { "character progression", "leveling", "quests", "fantasy adventure" });
+                        break;
+                    case "action":
+                        enhancedTerms.AddRange(new[] { "fast-paced", "combat", "reflexes", "intense gameplay" });
+                        break;
+                    case "strategy":
+                        enhancedTerms.AddRange(new[] { "tactical", "planning", "resource management", "strategic thinking" });
+                        break;
+                    case "horror":
+                        enhancedTerms.AddRange(new[] { "scary", "atmospheric", "suspenseful", "frightening" });
+                        break;
+                    case "puzzle":
+                        enhancedTerms.AddRange(new[] { "brain teaser", "logic", "problem solving", "challenging" });
+                        break;
+                }
+            }
+
+            // Add platform context with acronyms
+            foreach (var platform in analysis.Platforms)
+            {
+                switch (platform.ToLowerInvariant())
+                {
+                    case "pc":
+                    case "windows":
+                    case "steam":
+                        enhancedTerms.AddRange(new[] { "computer gaming", "PC gaming", "Steam", "Windows" });
+                        break;
+                    case "playstation":
+                    case "ps5":
+                    case "ps4":
+                    case "sony":
+                        enhancedTerms.AddRange(new[] { "console gaming", "PlayStation", "PS5", "PS4", "Sony" });
+                        break;
+                    case "xbox":
+                    case "microsoft":
+                    case "xbox series x":
+                    case "xbox one":
+                        enhancedTerms.AddRange(new[] { "console gaming", "Xbox", "Microsoft", "Xbox Series X", "Game Pass" });
+                        break;
+                    case "nintendo":
+                    case "switch":
+                    case "nintendo switch":
+                        enhancedTerms.AddRange(new[] { "family friendly gaming", "Nintendo", "Switch", "portable gaming" });
+                        break;
+                    case "mobile":
+                    case "ios":
+                    case "android":
+                        enhancedTerms.AddRange(new[] { "mobile gaming", "iOS", "Android", "touch controls", "casual" });
+                        break;
+                }
+            }
+
+            // Add mood-based enhancements
+            foreach (var mood in analysis.Moods)
+            {
+                switch (mood.ToLowerInvariant())
+                {
+                    case "relaxing":
+                        enhancedTerms.AddRange(new[] { "peaceful", "calm", "meditative", "zen" });
+                        break;
+                    case "exciting":
+                        enhancedTerms.AddRange(new[] { "thrilling", "adrenaline", "heart-pounding", "energetic" });
+                        break;
+                    case "challenging":
+                        enhancedTerms.AddRange(new[] { "difficult", "hardcore", "skill-based", "rewarding" });
+                        break;
+                }
+            }
+
+            // Add multiplayer context if detected
+            if (analysis.GameModes.Any(gm => gm.ToLowerInvariant().Contains("multiplayer")))
+            {
+                enhancedTerms.AddRange(new[] { "social gaming", "online play", "competitive", "cooperative" });
+            }
+
+            // Join with original query, ensuring we don't exceed reasonable length
+            var result = string.Join(" ", enhancedTerms.Take(10)); // Limit to prevent overly long queries
+            
+            _logger.LogDebug("Enhanced query from '{OriginalQuery}' to '{EnhancedQuery}'", originalQuery, result);
+            
+            return result;
         }
     }
 }

@@ -28,7 +28,7 @@ namespace Backend.Services.Recommendation
                 await _client.CreateCollectionAsync(collectionName, new VectorParams
                 {
                     Size = (ulong)vectorSize,
-                    Distance = Distance.Cosine
+                    Distance = Distance.Dot
                 });
 
                 _logger.LogInformation("Created Qdrant collection: {CollectionName}", collectionName);
@@ -77,24 +77,9 @@ namespace Backend.Services.Recommendation
                 // Apply filters if provided to enrich the search results
                 if (filter != null && filter.Count > 0)
                 {
-                    var filterConditions = new List<Condition>();
-
-                    foreach (var filterItem in filter)
-                    {
-                        var condition = CreateFilterCondition(filterItem.Key, filterItem.Value);
-                        if (condition != null)
-                        {
-                            filterConditions.Add(condition);
-                        }
-                    }
-
-                    if (filterConditions.Count > 0)
-                    {
-                        searchFilter = new Filter
-                        {
-                            Should = { filterConditions }
-                        };
-                    }
+                    searchFilter = BuildSemanticSearchFilter(filter);
+                    _logger.LogDebug("Built search filter with {FilterCount} conditions for collection: {CollectionName}", 
+                        CountFilterConditions(searchFilter), collectionName);
                 }
 
                 var searchResult = await _client.SearchAsync(
@@ -102,6 +87,9 @@ namespace Backend.Services.Recommendation
                     vector: queryVector,
                     filter: searchFilter,
                     limit: (ulong)limit);
+
+                _logger.LogDebug("Search returned {ResultCount} results for collection: {CollectionName} with {FilterCount} filters", 
+                    searchResult.Count, collectionName, filter?.Count ?? 0);
 
                 return searchResult.Select(point => new VectorSearchResult
                 {
@@ -115,6 +103,109 @@ namespace Backend.Services.Recommendation
                 _logger.LogError(ex, "Failed to search vectors in collection: {CollectionName}", collectionName);
                 return [];
             }
+        }
+
+        private Filter BuildSemanticSearchFilter(Dictionary<string, object> filters)
+        {
+            var mustConditions = new List<Condition>();      // Required filters (AND logic)
+            var shouldConditions = new List<Condition>();    // Optional filters (OR logic) 
+            var semanticConditions = new List<Condition>();  // Semantic expansion filters
+
+            foreach (var filterItem in filters)
+            {
+                var condition = CreateFilterCondition(filterItem.Key, filterItem.Value);
+                if (condition == null) continue;
+
+                // Categorize filters based on their purpose and priority
+                switch (filterItem.Key)
+                {
+                    // Hard requirements - must match exactly
+                    case "release_year_from":
+                    case "release_year_to":
+                    case "platforms" when IsExactPlatformFilter(filterItem.Value):
+                        mustConditions.Add(condition);
+                        break;
+
+                    // Platform alias matching - flexible platform matching
+                    case "platform_aliases":
+                    case "canonical_platforms":
+                        shouldConditions.Add(condition);
+                        break;
+
+                    // Semantic expansions - should match for better relevance
+                    case "semantic_genres_expanded":
+                    case "semantic_moods":
+                    case "semantic_mechanics":
+                    case "semantic_themes":
+                        semanticConditions.Add(condition);
+                        break;
+
+                    // Quality preferences
+                    case "prefer_semantic_enhanced":
+                        shouldConditions.Add(condition);
+                        break;
+
+                    // Core content filters - flexible matching
+                    case "genres":
+                    case "game_modes":
+                    case "moods":
+                    case "platforms":
+                    default:
+                        shouldConditions.Add(condition);
+                        break;
+                }
+            }
+
+            // Build hierarchical filter structure
+            var filter = new Filter();
+
+            // Add required conditions (must match ALL)
+            if (mustConditions.Count > 0)
+            {
+                filter.Must.AddRange(mustConditions);
+            }
+
+            // Add flexible content conditions (match ANY)
+            if (shouldConditions.Count > 0)
+            {
+                filter.Should.AddRange(shouldConditions);
+            }
+
+            // Add semantic expansion conditions (bonus scoring)
+            if (semanticConditions.Count > 0)
+            {
+                // Semantic conditions boost relevance but don't exclude results
+                filter.Should.AddRange(semanticConditions);
+            }
+
+            // Ensure at least one "should" condition matches if any are specified
+            if (shouldConditions.Count > 0 || semanticConditions.Count > 0)
+            {
+                filter.MinShould = new MinShould { MinCount = 1 };
+            }
+
+            return filter;
+        }
+
+        private static bool IsExactPlatformFilter(object value)
+        {
+            // Check if this is a specific platform requirement (not a general preference)
+            if (value is string strValue)
+            {
+                var platforms = strValue.Split(',', StringSplitOptions.RemoveEmptyEntries);
+                // If only 1-2 specific platforms are specified, treat as exact requirement
+                return platforms.Length <= 2 && platforms.Any(p => 
+                    PlatformAliasService.AreSamePlatform(p.Trim(), "Nintendo Switch") ||
+                    PlatformAliasService.AreSamePlatform(p.Trim(), "PlayStation 5") ||
+                    PlatformAliasService.AreSamePlatform(p.Trim(), "Xbox Series X/S"));
+            }
+            return false;
+        }
+
+        private static int CountFilterConditions(Filter? filter)
+        {
+            if (filter == null) return 0;
+            return filter.Must.Count + filter.Should.Count + filter.MustNot.Count;
         }
 
         private Condition? CreateFilterCondition(string key, object value)

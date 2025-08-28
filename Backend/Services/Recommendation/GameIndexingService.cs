@@ -20,6 +20,7 @@ namespace Backend.Services.Recommendation
         private const string SEMANTIC_CACHE_KEY_PREFIX = "semantic_keywords_";
         private readonly TimeSpan CACHE_DURATION = TimeSpan.FromHours(24);
         private SemanticKeywordConfig? _semanticConfig;
+        private EmbeddingDimensions? _embeddingDimensions;
 
         public GameIndexingService(
             ApplicationDbContext context,
@@ -47,7 +48,8 @@ namespace Backend.Services.Recommendation
                 var collectionExists = await _vectorDatabase.CollectionExistsAsync(GAMES_COLLECTION);
                 if (!collectionExists)
                 {
-                    var success = await _vectorDatabase.CreateCollectionAsync(GAMES_COLLECTION, _embeddingService.EmbeddingDimensions);
+                    var totalDimensions = _embeddingDimensions?.TotalDimensions ?? _embeddingService.EmbeddingDimensions;
+                    var success = await _vectorDatabase.CreateCollectionAsync(GAMES_COLLECTION, totalDimensions);
                     if (!success)
                     {
                         _logger.LogError("Failed to create games collection in vector database");
@@ -137,6 +139,7 @@ namespace Backend.Services.Recommendation
                 var indexed = 0;
                 var batchSize = 50;
                 var skip = 0;
+                var processingStartTime = DateTime.UtcNow;
 
                 while (true)
                 {
@@ -152,14 +155,25 @@ namespace Backend.Services.Recommendation
                         break;
                     }
 
-                    foreach (var game in games)
+                    // Process games in parallel for better performance
+                    var indexingTasks = games.Select(IndexGameAsync).ToList();
+                    var results = await Task.WhenAll(indexingTasks);
+                    var successCount = results.Count(success => success);
+                    indexed += successCount;
+
+                    var failedCount = games.Count - successCount;
+                    if (failedCount > 0)
                     {
-                        var success = await IndexGameAsync(game);
-                        if (success) indexed++;
+                        _logger.LogWarning("Failed to index {FailedCount} out of {TotalCount} games in batch", failedCount, games.Count);
                     }
 
                     skip += batchSize;
-                    _logger.LogInformation("Indexed batch of {Count} games, total: {Total}", games.Count, indexed);
+                    
+                    // Enhanced logging with performance metrics
+                    var elapsed = DateTime.UtcNow - processingStartTime;
+                    var gamesPerSecond = indexed > 0 ? Math.Round(indexed / elapsed.TotalSeconds, 2) : 0;
+                    _logger.LogInformation("Indexed batch: {BatchSuccess}/{BatchTotal} games. Total: {Total} games in {Elapsed:mm\\:ss} ({Rate} games/sec)", 
+                        successCount, games.Count, indexed, elapsed, gamesPerSecond);
                 }
 
                 _logger.LogInformation("Completed indexing {Total} games", indexed);
@@ -337,32 +351,8 @@ namespace Backend.Services.Recommendation
         {
             try
             {
-                var filters = new Dictionary<string, object>();
-
-                if (analysis.Genres?.Count > 0)
-                {
-                    filters["genres"] = string.Join(",", analysis.Genres);
-                }
-                if (analysis.Platforms?.Count > 0)
-                {
-                    filters["platforms"] = string.Join(",", analysis.Platforms);
-                }
-                if (analysis.GameModes?.Count > 0)
-                {
-                    filters["gameModes"] = string.Join(",", analysis.GameModes);
-                }
-                if (analysis.Moods?.Count > 0)
-                {
-                    filters["moods"] = string.Join(",", analysis.Moods);
-                }
-                if (analysis.ReleaseDateRange?.From.HasValue == true)
-                {
-                    filters["release_year_from"] = analysis.ReleaseDateRange.From.Value.Year;
-                }
-                if (analysis.ReleaseDateRange?.To.HasValue == true)
-                {
-                    filters["release_year_to"] = analysis.ReleaseDateRange.To.Value.Year;
-                }
+                var filters = BuildEnhancedFilters(analysis);
+                _logger.LogDebug("Built {FilterCount} filters for search", filters.Count);
 
                 return await _vectorDatabase.SearchAsync(GAMES_COLLECTION, queryEmbedding, limit, filters);
             }
@@ -371,6 +361,192 @@ namespace Backend.Services.Recommendation
                 _logger.LogError(ex, "Error searching games with filters");
                 return new List<VectorSearchResult>();
             }
+        }
+
+        private Dictionary<string, object> BuildEnhancedFilters(QueryAnalysis analysis)
+        {
+            var filters = new Dictionary<string, object>();
+
+            // Basic filters for exact matching
+            AddBasicFilters(filters, analysis);
+
+            // Enhanced semantic filters for broader matching
+            AddSemanticFilters(filters, analysis);
+
+            return filters;
+        }
+
+        private void AddBasicFilters(Dictionary<string, object> filters, QueryAnalysis analysis)
+        {
+            // Exact genre matching
+            if (analysis.Genres?.Count > 0)
+            {
+                filters["genres"] = string.Join(",", analysis.Genres);
+                _logger.LogDebug("Added genre filters: {Genres}", string.Join(",", analysis.Genres));
+            }
+
+            // Exact platform matching
+            if (analysis.Platforms?.Count > 0)
+            {
+                filters["platforms"] = string.Join(",", analysis.Platforms);
+                _logger.LogDebug("Added platform filters: {Platforms}", string.Join(",", analysis.Platforms));
+            }
+
+            // Exact game mode matching
+            if (analysis.GameModes?.Count > 0)
+            {
+                filters["game_modes"] = string.Join(",", analysis.GameModes);
+                _logger.LogDebug("Added game mode filters: {GameModes}", string.Join(",", analysis.GameModes));
+            }
+
+            // Release date range filtering
+            if (analysis.ReleaseDateRange?.From.HasValue == true)
+            {
+                filters["release_year_from"] = analysis.ReleaseDateRange.From.Value.Year;
+            }
+            if (analysis.ReleaseDateRange?.To.HasValue == true)
+            {
+                filters["release_year_to"] = analysis.ReleaseDateRange.To.Value.Year;
+            }
+        }
+
+        private void AddSemanticFilters(Dictionary<string, object> filters, QueryAnalysis analysis)
+        {
+            // Semantic genre expansion (broaden search using extracted semantic keywords)
+            if (analysis.Genres?.Count > 0)
+            {
+                var expandedGenres = ExpandGenresSemanticaly(analysis.Genres);
+                if (expandedGenres.Count > analysis.Genres.Count)
+                {
+                    filters["semantic_genres_expanded"] = string.Join(",", expandedGenres);
+                    _logger.LogDebug("Expanded {OriginalCount} genres to {ExpandedCount} semantic genres", 
+                        analysis.Genres.Count, expandedGenres.Count);
+                }
+            }
+
+            // Platform alias expansion (match ps5, playstation 5, sony ps5, etc.)
+            if (analysis.Platforms?.Count > 0)
+            {
+                var expandedPlatforms = PlatformAliasService.ExpandPlatformNamesForSearch(analysis.Platforms);
+                filters["platform_aliases"] = string.Join(",", expandedPlatforms);
+                _logger.LogDebug("Expanded {OriginalCount} platforms to {ExpandedCount} platform aliases", 
+                    analysis.Platforms.Count, expandedPlatforms.Count);
+
+                // Also add canonical platform names for exact matching
+                var canonicalPlatforms = PlatformAliasService.NormalizePlatformNames(analysis.Platforms);
+                filters["canonical_platforms"] = string.Join(",", canonicalPlatforms);
+            }
+
+            // Semantic mood matching (use extracted mood keywords)
+            if (analysis.Moods?.Count > 0)
+            {
+                var expandedMoods = ExpandMoodsSemanticaly(analysis.Moods);
+                filters["semantic_moods"] = string.Join(",", expandedMoods);
+                _logger.LogDebug("Added semantic mood filters: {Moods}", string.Join(",", expandedMoods));
+            }
+
+            // Quality-based filtering (prefer games with rich semantic metadata)
+            filters["prefer_semantic_enhanced"] = "true";
+        }
+
+        private List<string> ExpandGenresSemanticaly(List<string> originalGenres)
+        {
+            var expandedGenres = new HashSet<string>(originalGenres, StringComparer.OrdinalIgnoreCase);
+
+            foreach (var genre in originalGenres)
+            {
+                var semanticExpansions = GetSemanticGenreExpansions(genre.ToLowerInvariant());
+                foreach (var expansion in semanticExpansions)
+                {
+                    expandedGenres.Add(expansion);
+                }
+            }
+
+            return expandedGenres.ToList();
+        }
+
+        private List<string> ExpandMoodsSemanticaly(List<string> originalMoods)
+        {
+            var expandedMoods = new HashSet<string>(originalMoods, StringComparer.OrdinalIgnoreCase);
+
+            foreach (var mood in originalMoods)
+            {
+                var semanticExpansions = GetSemanticMoodExpansions(mood.ToLowerInvariant());
+                foreach (var expansion in semanticExpansions)
+                {
+                    expandedMoods.Add(expansion);
+                }
+            }
+
+            return expandedMoods.ToList();
+        }
+
+        private static List<string> GetSemanticGenreExpansions(string genre)
+        {
+            var expansions = new List<string>();
+
+            switch (genre)
+            {
+                case "rpg":
+                case "role-playing":
+                    expansions.AddRange(new[] { "jrpg", "western rpg", "action rpg", "tactical rpg", "mmorpg", "character progression", "leveling", "quest-driven" });
+                    break;
+                case "action":
+                    expansions.AddRange(new[] { "fast-paced", "combat-focused", "reflex-based", "adrenaline", "intense" });
+                    break;
+                case "adventure":
+                    expansions.AddRange(new[] { "exploration", "story-driven", "narrative", "discovery", "atmospheric" });
+                    break;
+                case "strategy":
+                    expansions.AddRange(new[] { "tactical", "planning", "resource management", "turn-based", "real-time strategy", "cerebral" });
+                    break;
+                case "horror":
+                    expansions.AddRange(new[] { "scary", "frightening", "atmospheric", "dark", "psychological", "survival horror", "tension" });
+                    break;
+                case "puzzle":
+                    expansions.AddRange(new[] { "brain teaser", "logic", "problem-solving", "cerebral", "satisfying" });
+                    break;
+                case "simulation":
+                    expansions.AddRange(new[] { "realistic", "management", "building", "sandbox", "meditative" });
+                    break;
+                default:
+                    // For unknown genres, add the original
+                    break;
+            }
+
+            return expansions;
+        }
+
+        private static List<string> GetSemanticMoodExpansions(string mood)
+        {
+            var expansions = new List<string>();
+
+            switch (mood)
+            {
+                case "dark":
+                    expansions.AddRange(new[] { "serious", "grim", "atmospheric", "intense", "mature" });
+                    break;
+                case "light-hearted":
+                    expansions.AddRange(new[] { "cheerful", "fun", "comedic", "uplifting", "family-friendly" });
+                    break;
+                case "intense":
+                    expansions.AddRange(new[] { "thrilling", "adrenaline", "exciting", "heart-pounding", "challenging" });
+                    break;
+                case "relaxing":
+                    expansions.AddRange(new[] { "peaceful", "calming", "meditative", "zen", "casual" });
+                    break;
+                case "atmospheric":
+                    expansions.AddRange(new[] { "immersive", "moody", "environmental", "ambient" });
+                    break;
+                case "challenging":
+                    expansions.AddRange(new[] { "difficult", "hardcore", "demanding", "punishing", "skill-based" });
+                    break;
+                default:
+                    // For unknown moods, add the original
+                    break;
+            }
+
+            return expansions;
         }
 
         private GameEmbeddingInput MapGameToEmbeddingInput(Backend.Models.Game.Game game)
@@ -418,11 +594,13 @@ namespace Backend.Services.Recommendation
                     {
                         PropertyNameCaseInsensitive = true
                     });
+                    _embeddingDimensions = _semanticConfig?.Dimensions;
                     _logger.LogInformation("Loaded semantic keyword configuration from file");
                 }
                 else
                 {
                     _semanticConfig = CreateDefaultSemanticConfig();
+                    _embeddingDimensions = _semanticConfig?.Dimensions;
                     _logger.LogWarning("Configuration file not found, using default semantic configuration");
                 }
             }
@@ -430,6 +608,7 @@ namespace Backend.Services.Recommendation
             {
                 _logger.LogError(ex, "Error loading semantic configuration, using defaults");
                 _semanticConfig = CreateDefaultSemanticConfig();
+                _embeddingDimensions = _semanticConfig?.Dimensions;
             }
         }
 
@@ -437,7 +616,8 @@ namespace Backend.Services.Recommendation
         {
             return new SemanticKeywordConfig
             {
-                DefaultWeights = new SemanticWeights()
+                DefaultWeights = new SemanticWeights(),
+                Dimensions = new EmbeddingDimensions()
             };
         }
 
@@ -831,20 +1011,97 @@ namespace Backend.Services.Recommendation
                 ? DateTimeOffset.FromUnixTimeSeconds(game.FirstReleaseDate.Value).Year
                 : 0;
 
-            return new Dictionary<string, object>
+            // Get the enhanced game input with semantic keywords
+            var gameInput = MapGameToEmbeddingInput(game);
+
+            var payload = new Dictionary<string, object>
             {
+                // Basic game information
                 {"name", game.Name},
                 {"summary", game.Summary ?? ""},
                 {"storyline", game.Storyline ?? ""},
                 {"rating", game.Rating?.ToString() ?? "0"},
                 {"release_year", releaseYear.ToString()},
+                {"cover_url", game.Covers?.FirstOrDefault()?.Url ?? ""},
+                {"igdb_id", game.IgdbId.ToString()},
+
+                // Original game attributes (for exact matching)
                 {"genres", string.Join(",", game.GameGenres?.Select(gg => gg.Genre.Name) ?? new List<string>())},
                 {"platforms", string.Join(",", game.GamePlatforms?.Select(gp => gp.Platform.Name) ?? new List<string>())},
                 {"game_modes", string.Join(",", game.GameModes?.Select(gm => gm.GameMode.Name) ?? new List<string>())},
                 {"perspectives", string.Join(",", game.GamePlayerPerspectives?.Select(gpp => gpp.PlayerPerspective.Name) ?? new List<string>())},
-                {"cover_url", game.Covers?.FirstOrDefault()?.Url ?? ""},
-                {"igdb_id", game.IgdbId.ToString()}
+
+                // Enhanced platform information with aliases
+                {"platform_aliases", CreatePlatformAliasesString(game.GamePlatforms?.Select(gp => gp.Platform.Name) ?? new List<string>())},
+                {"canonical_platforms", string.Join(",", PlatformAliasService.NormalizePlatformNames(game.GamePlatforms?.Select(gp => gp.Platform.Name) ?? new List<string>()))}
             };
+
+            // Enhanced semantic metadata for better filtering and search
+            AddSemanticMetadataToPayload(payload, gameInput);
+
+            return payload;
+        }
+
+        private static void AddSemanticMetadataToPayload(Dictionary<string, object> payload, GameEmbeddingInput gameInput)
+        {
+            // Add extracted semantic keywords for advanced filtering
+            if (HasEnhancedSemanticKeywords(gameInput))
+            {
+                payload["semantic_genres"] = string.Join(",", gameInput.ExtractedGenreKeywords);
+                payload["semantic_mechanics"] = string.Join(",", gameInput.ExtractedMechanicKeywords);
+                payload["semantic_themes"] = string.Join(",", gameInput.ExtractedThemeKeywords);
+                payload["semantic_moods"] = string.Join(",", gameInput.ExtractedMoodKeywords);
+                payload["semantic_artstyles"] = string.Join(",", gameInput.ExtractedArtStyleKeywords);
+                payload["semantic_audiences"] = string.Join(",", gameInput.ExtractedAudienceKeywords);
+
+                // Add hierarchical boost information for ranking insights
+                payload["hierarchical_boosts"] = string.Join(",", gameInput.HierarchicalBoosts);
+
+                // Add semantic weight distribution for quality scoring
+                if (gameInput.SemanticWeights.Count > 0)
+                {
+                    var semanticWeightSum = gameInput.SemanticWeights.Values.Sum();
+                    payload["semantic_weight_total"] = semanticWeightSum.ToString("F2");
+
+                    // Category richness indicators
+                    var categoryCount = gameInput.ExtractedGenreKeywords.Count +
+                                      gameInput.ExtractedMechanicKeywords.Count +
+                                      gameInput.ExtractedThemeKeywords.Count +
+                                      gameInput.ExtractedMoodKeywords.Count +
+                                      gameInput.ExtractedArtStyleKeywords.Count +
+                                      gameInput.ExtractedAudienceKeywords.Count;
+                    payload["semantic_keyword_count"] = categoryCount.ToString();
+                }
+            }
+
+            // Add embedding confidence metrics (useful for result ranking)
+            payload["embedding_method"] = HasEnhancedSemanticKeywords(gameInput) ? "semantic_enhanced" : "text_based";
+        }
+
+        private static bool HasEnhancedSemanticKeywords(GameEmbeddingInput gameInput)
+        {
+            return gameInput.ExtractedGenreKeywords.Count > 0 ||
+                   gameInput.ExtractedMechanicKeywords.Count > 0 ||
+                   gameInput.ExtractedThemeKeywords.Count > 0 ||
+                   gameInput.ExtractedMoodKeywords.Count > 0 ||
+                   gameInput.ExtractedArtStyleKeywords.Count > 0 ||
+                   gameInput.ExtractedAudienceKeywords.Count > 0;
+        }
+
+        private static string CreatePlatformAliasesString(IEnumerable<string> platformNames)
+        {
+            var allAliases = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            
+            foreach (var platform in platformNames)
+            {
+                var aliases = PlatformAliasService.GetAllPlatformAliases(platform);
+                foreach (var alias in aliases)
+                {
+                    allAliases.Add(alias);
+                }
+            }
+            
+            return string.Join(",", allAliases);
         }
     }
 }

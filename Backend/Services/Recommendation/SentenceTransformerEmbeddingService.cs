@@ -12,16 +12,20 @@ namespace Backend.Services.Recommendation
         private readonly ILogger<SentenceTransformerEmbeddingService> _logger;
         private readonly IConfiguration _configuration;
         private readonly bool _useOnnxModel;
-        private readonly Lazy<int> _embeddingDimensions;
         private readonly EmbeddingDimensions _dimensions;
 
-        public int EmbeddingDimensions => _embeddingDimensions.Value;
+        private static readonly JsonSerializerOptions JsonOptions = new()
+        {
+            PropertyNameCaseInsensitive = true
+        };
+
+        public int EmbeddingDimensions => _dimensions.TotalDimensions;
 
         public SentenceTransformerEmbeddingService(IConfiguration configuration, ILogger<SentenceTransformerEmbeddingService> logger)
         {
             _logger = logger;
             _configuration = configuration;
-            
+
             // Initialize standardized dimensions
             _dimensions = LoadEmbeddingDimensions();
 
@@ -30,9 +34,6 @@ namespace Backend.Services.Recommendation
             _useOnnxModel = _configuration.GetValue<bool>("EmbeddingModel:UseOnnx", false)
                             && !string.IsNullOrEmpty(modelPath)
                             && File.Exists(modelPath);
-
-            // Initialize embedding dimensions lazily by generating a sample embedding
-            _embeddingDimensions = new Lazy<int>(() => CalculateEmbeddingDimensions());
 
             try
             {
@@ -68,19 +69,16 @@ namespace Backend.Services.Recommendation
                 if (File.Exists(configPath))
                 {
                     var jsonContent = File.ReadAllText(configPath);
-                    var config = JsonSerializer.Deserialize<SemanticKeywordConfig>(jsonContent, new JsonSerializerOptions 
-                    { 
-                        PropertyNameCaseInsensitive = true 
-                    });
-                    
+                    var config = JsonSerializer.Deserialize<SemanticKeywordConfig>(jsonContent, JsonOptions);
+
                     if (config?.Dimensions != null)
                     {
-                        _logger.LogInformation("Loaded embedding dimensions from configuration: {BaseTextEmbedding} + {StructuredFeatures} = {TotalDimensions}", 
+                        _logger.LogInformation("Loaded embedding dimensions from configuration: {BaseTextEmbedding} + {StructuredFeatures} = {TotalDimensions}",
                             config.Dimensions.BaseTextEmbedding, config.Dimensions.StructuredFeatures, config.Dimensions.TotalDimensions);
                         return config.Dimensions;
                     }
                 }
-                
+
                 _logger.LogWarning("Could not load embedding dimensions from configuration, using defaults");
                 return new EmbeddingDimensions();
             }
@@ -334,7 +332,7 @@ namespace Backend.Services.Recommendation
             }
         }
 
-        private static float[] ExtractStructuredFeatures(GameEmbeddingInput gameInput)
+        private float[] ExtractStructuredFeatures(GameEmbeddingInput gameInput)
         {
             var features = new List<float>
             {
@@ -362,16 +360,16 @@ namespace Backend.Services.Recommendation
             if (HasEnhancedSemanticKeywords(gameInput))
             {
                 // Semantic keyword richness (normalized)
-                var totalKeywords = gameInput.ExtractedGenreKeywords.Count + 
-                                  gameInput.ExtractedMechanicKeywords.Count + 
-                                  gameInput.ExtractedThemeKeywords.Count + 
-                                  gameInput.ExtractedMoodKeywords.Count + 
-                                  gameInput.ExtractedArtStyleKeywords.Count + 
+                var totalKeywords = gameInput.ExtractedGenreKeywords.Count +
+                                  gameInput.ExtractedMechanicKeywords.Count +
+                                  gameInput.ExtractedThemeKeywords.Count +
+                                  gameInput.ExtractedMoodKeywords.Count +
+                                  gameInput.ExtractedArtStyleKeywords.Count +
                                   gameInput.ExtractedAudienceKeywords.Count;
                 features.Add(Math.Min(1f, totalKeywords / 20f)); // Normalize to max 20 keywords
 
                 // Cross-category boost strength
-                var boostStrength = gameInput.HierarchicalBoosts.Count > 0 ? 
+                var boostStrength = gameInput.HierarchicalBoosts.Count > 0 ?
                     Math.Min(1f, gameInput.HierarchicalBoosts.Count / 10f) : 0f;
                 features.Add(boostStrength);
 
@@ -400,14 +398,14 @@ namespace Backend.Services.Recommendation
             {
                 // Add zeros for missing semantic features to maintain consistent size
                 features.Add(0f); // keyword richness
-                features.Add(0f); // boost strength  
+                features.Add(0f); // boost strength
                 features.Add(0f); // weight variance
                 features.Add(0f); // category coverage
             }
 
-            // Pad to fixed size (should be exactly 20 now to match total dimensions of 404)
-            while (features.Count < 20) features.Add(0f);
-            return [.. features.Take(20)];
+            // Pad to fixed size using configured structured features count
+            while (features.Count < _dimensions.StructuredFeatures) features.Add(0f);
+            return [.. features.Take(_dimensions.StructuredFeatures)];
         }
 
         private static float CalculateWeightVariance(Dictionary<string, float> weights)
@@ -419,7 +417,7 @@ namespace Backend.Services.Recommendation
 
             var mean = validWeights.Average();
             var variance = validWeights.Sum(w => Math.Pow(w - mean, 2)) / validWeights.Count;
-            
+
             return (float)Math.Sqrt(variance); // Return standard deviation normalized
         }
 
@@ -435,11 +433,11 @@ namespace Backend.Services.Recommendation
         {
             if (embeddings.Count == 0) return new float[_dimensions.TotalDimensions];
 
-            var avgEmbedding = new float[embeddings.First().Length];
+            var avgEmbedding = new float[_dimensions.TotalDimensions];
 
             foreach (var embedding in embeddings)
             {
-                for (int i = 0; i < embedding.Length; i++)
+                for (int i = 0; i < Math.Min(embedding.Length, avgEmbedding.Length); i++)
                 {
                     avgEmbedding[i] += embedding[i];
                 }
@@ -455,20 +453,56 @@ namespace Backend.Services.Recommendation
 
         private float[] GenerateSimpleEmbedding(string text, GameEmbeddingInput? gameInput = null)
         {
-            // Deterministic embedding based on text content
+            // Start with a zero embedding for purely semantic-based generation
             var embedding = new float[_dimensions.BaseTextEmbedding];
-            var hash = text.GetHashCode();
-            var random = new Random(hash);
-
-            for (int i = 0; i < embedding.Length; i++)
-            {
-                embedding[i] = (float)(random.NextDouble() * 2 - 1); // Range: -1 to 1
-            }
-
-            // Add semantic features based on comprehensive keyword taxonomy
+            
+            // Apply semantic features as the primary signal source (preserve their relative strength)
             ApplySemanticKeywords(embedding, text, gameInput);
+            
+            // Calculate semantic signal strength before adding text features
+            var semanticMagnitude = CalculateMagnitude(embedding);
+            
+            // Add text-based semantic features using TF-IDF-like approach
+            AddTextBasedFeatures(embedding, text);
+            
+            // Apply magnitude-preserving normalization that maintains semantic signal ratios
+            return ApplySemanticPreservingNormalization(embedding, semanticMagnitude);
+        }
 
-            return NormalizeVector(embedding);
+        private void AddTextBasedFeatures(float[] embedding, string text)
+        {
+            var words = text.ToLowerInvariant().Split(new[] { ' ', '.', ',', '!', '?', ';', ':' }, StringSplitOptions.RemoveEmptyEntries);
+            var ranges = _dimensions.CategoryRanges;
+            
+            // Calculate word frequency and importance
+            var wordCounts = words.GroupBy(w => w).ToDictionary(g => g.Key, g => g.Count());
+            var totalWords = words.Length;
+            
+            foreach (var (word, count) in wordCounts)
+            {
+                if (word.Length < 3) continue; // Skip short words
+                
+                // Calculate TF (term frequency) 
+                var tf = (float)count / totalWords;
+                
+                // Simple IDF approximation based on word length and rarity indicators
+                var idf = word.Length > 6 ? 1.5f : 1.0f; // Longer words get higher weight
+                var weight = tf * idf * 0.3f; // Scale down to avoid overwhelming semantic signals
+                
+                // Map word to embedding position using hash
+                var hash = Math.Abs(word.GetHashCode());
+                var basePosition = hash % _dimensions.BaseTextEmbedding;
+                
+                // Distribute across multiple positions for better representation
+                for (int i = 0; i < 3; i++)
+                {
+                    var position = (basePosition + i * 17) % _dimensions.BaseTextEmbedding; // Prime number spreading
+                    if (position < embedding.Length)
+                    {
+                        embedding[position] += weight / (i + 1); // Decay weight for spread positions
+                    }
+                }
+            }
         }
 
         private void ApplySemanticKeywords(float[] embedding, string text, GameEmbeddingInput? gameInput = null)
@@ -483,8 +517,8 @@ namespace Backend.Services.Recommendation
                 return;
             }
 
-            // Fallback to original keyword matching for backward compatibility
-            ApplyLegacyKeywordMatching(embedding, lowerText, keywordMatches);
+            // Fallback: Apply basic semantic keywords using configuration
+            ApplyConfigurableSemanticKeywords(embedding, lowerText);
         }
 
         private static bool HasEnhancedSemanticKeywords(GameEmbeddingInput gameInput)
@@ -500,7 +534,7 @@ namespace Backend.Services.Recommendation
         private void ApplyEnhancedSemanticKeywords(float[] embedding, GameEmbeddingInput gameInput)
         {
             var keywordMatches = new List<(string keyword, float weight, int position)>();
-            
+
             // Get semantic weights from the game input
             var weights = gameInput.SemanticWeights;
             var genreWeight = weights.GetValueOrDefault("genre", 0.25f);
@@ -513,7 +547,7 @@ namespace Backend.Services.Recommendation
 
             // Apply keywords using standardized position ranges
             var ranges = _dimensions.CategoryRanges;
-            
+
             ApplyKeywordCategory(gameInput.ExtractedGenreKeywords, genreWeight, ranges.Genre.Start, ranges.Genre.End, keywordMatches);
             ApplyKeywordCategory(gameInput.ExtractedMechanicKeywords, mechanicsWeight, ranges.Mechanics.Start, ranges.Mechanics.End, keywordMatches);
             ApplyKeywordCategory(gameInput.ExtractedThemeKeywords, themeWeight, ranges.Theme.Start, ranges.Theme.End, keywordMatches);
@@ -537,17 +571,17 @@ namespace Backend.Services.Recommendation
         }
 
         private static void ApplyKeywordCategory(
-            List<string> keywords, 
-            float baseWeight, 
-            int startPosition, 
-            int endPosition, 
+            List<string> keywords,
+            float baseWeight,
+            int startPosition,
+            int endPosition,
             List<(string keyword, float weight, int position)> keywordMatches)
         {
             if (keywords.Count == 0) return;
-            
+
             var positionRange = endPosition - startPosition;
             var positionStep = Math.Max(1, positionRange / Math.Max(keywords.Count, 1));
-            
+
             for (int i = 0; i < keywords.Count; i++)
             {
                 var position = startPosition + (i * positionStep);
@@ -556,68 +590,134 @@ namespace Backend.Services.Recommendation
             }
         }
 
-        private static void ApplyLegacyKeywordMatching(float[] embedding, string lowerText, List<(string keyword, float weight, int position)> keywordMatches)
+        private void ApplyConfigurableSemanticKeywords(float[] embedding, string lowerText)
         {
-            // Core Genres (High weight - defines primary gameplay)
-            foreach (var (keyword, weight, position) in GenreKeywords)
-            {
-                if (lowerText.Contains(keyword, StringComparison.OrdinalIgnoreCase))
-                {
-                    keywordMatches.Add((keyword, weight, position));
-                }
-            }
-
-            // Game Mechanics (Medium-high weight - defines how game plays)
-            foreach (var (keyword, weight, position) in MechanicKeywords)
-            {
-                if (lowerText.Contains(keyword, StringComparison.OrdinalIgnoreCase))
-                {
-                    keywordMatches.Add((keyword, weight, position));
-                }
-            }
-
-            // Themes and Settings (Medium weight - defines context and world)
-            foreach (var (keyword, weight, position) in ThemeKeywords)
-            {
-                if (lowerText.Contains(keyword, StringComparison.OrdinalIgnoreCase))
-                {
-                    keywordMatches.Add((keyword, weight, position));
-                }
-            }
-
-            // Moods and Tone (Medium weight - defines emotional experience)
-            foreach (var (keyword, weight, position) in MoodKeywords)
-            {
-                if (lowerText.Contains(keyword, StringComparison.OrdinalIgnoreCase))
-                {
-                    keywordMatches.Add((keyword, weight, position));
-                }
-            }
-
-            // Art Style (Medium-low weight - defines visual presentation)
-            foreach (var (keyword, weight, position) in ArtStyleKeywords)
-            {
-                if (lowerText.Contains(keyword, StringComparison.OrdinalIgnoreCase))
-                {
-                    keywordMatches.Add((keyword, weight, position));
-                }
-            }
-
-            // Target Audience and Difficulty (Lower weight - defines accessibility)
-            foreach (var (keyword, weight, position) in AudienceKeywords)
-            {
-                if (lowerText.Contains(keyword, StringComparison.OrdinalIgnoreCase))
-                {
-                    keywordMatches.Add((keyword, weight, position));
-                }
-            }
-
-            // Apply hierarchical boosts for related keywords
-            ApplyHierarchicalBoosts(keywordMatches, lowerText);
-
-            // Apply matched keywords to embedding
-            ApplyKeywordMatchesToEmbedding(embedding, keywordMatches);
+            // Load basic semantic keywords from configuration or defaults
+            var config = LoadBasicSemanticConfig();
+            var ranges = _dimensions.CategoryRanges;
+            
+            // Apply genre keywords
+            ApplyKeywordCategory(config.GenreKeywords, lowerText, embedding, ranges.Genre.Start, ranges.Genre.Size, 1.2f);
+            
+            // Apply mechanics keywords with platform-aware enhancements
+            var enhancedMechanics = EnhanceMechanicsWithPlatformKeywords(config.MechanicsKeywords, lowerText);
+            ApplyKeywordCategory(enhancedMechanics, lowerText, embedding, ranges.Mechanics.Start, ranges.Mechanics.Size, 1.0f);
+            
+            // Apply theme keywords
+            ApplyKeywordCategory(config.ThemeKeywords, lowerText, embedding, ranges.Theme.Start, ranges.Theme.Size, 0.8f);
+            
+            // Apply mood keywords
+            ApplyKeywordCategory(config.MoodKeywords, lowerText, embedding, ranges.Mood.Start, ranges.Mood.Size, 0.7f);
+            
+            // Apply art style keywords
+            ApplyKeywordCategory(config.ArtStyleKeywords, lowerText, embedding, ranges.ArtStyle.Start, ranges.ArtStyle.Size, 0.6f);
+            
+            // Apply audience keywords
+            ApplyKeywordCategory(config.AudienceKeywords, lowerText, embedding, ranges.Audience.Start, ranges.Audience.Size, 0.5f);
         }
+
+        private static List<string> EnhanceMechanicsWithPlatformKeywords(List<string> mechanicsKeywords, string text)
+        {
+            var enhanced = new List<string>(mechanicsKeywords);
+            
+            // Extract potential platform names from text and add their semantic keywords
+            var potentialPlatforms = ExtractPlatformNamesFromText(text);
+            foreach (var platform in potentialPlatforms)
+            {
+                var platformKeywords = PlatformAliasService.GetPlatformSemanticKeywords(platform);
+                // Add platform-specific semantic keywords to mechanics
+                enhanced.AddRange(platformKeywords.Where(k => 
+                    k.Contains("controller") || k.Contains("portable") || k.Contains("touchscreen") || 
+                    k.Contains("motion-controls") || k.Contains("backwards-compatible") || k.Contains("mods")));
+            }
+            
+            return enhanced.Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+        }
+
+        private static List<string> ExtractPlatformNamesFromText(string text)
+        {
+            var platforms = new List<string>();
+            var lowerText = text.ToLowerInvariant();
+            
+            // Common platform keywords that might appear in game text
+            var platformIndicators = new[]
+            {
+                "pc", "ps5", "ps4", "xbox", "switch", "nintendo", "playstation", "mobile", 
+                "android", "ios", "steam", "windows", "mac", "linux", "console"
+            };
+            
+            foreach (var indicator in platformIndicators)
+            {
+                if (lowerText.Contains(indicator))
+                {
+                    platforms.Add(indicator);
+                }
+            }
+            
+            return platforms.Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+        }
+
+        private static void ApplyKeywordCategory(List<string> keywords, string text, float[] embedding, int startPos, int rangeSize, float baseWeight)
+        {
+            if (keywords.Count == 0) return;
+            
+            var positionStep = Math.Max(1, rangeSize / Math.Max(keywords.Count, 1));
+            
+            for (int i = 0; i < keywords.Count; i++)
+            {
+                if (text.Contains(keywords[i], StringComparison.OrdinalIgnoreCase))
+                {
+                    var position = startPos + (i * positionStep);
+                    if (position < embedding.Length)
+                    {
+                        var weight = baseWeight * (1.0f + (0.2f * (keywords.Count - i) / keywords.Count));
+                        embedding[position] += weight;
+                        
+                        // Spread influence to nearby positions for better semantic clustering
+                        for (int j = 1; j <= 2; j++)
+                        {
+                            var decayWeight = weight * (0.4f / j);
+                            if (position + j < embedding.Length) embedding[position + j] += decayWeight;
+                            if (position - j >= 0) embedding[position - j] += decayWeight;
+                        }
+                    }
+                }
+            }
+        }
+
+        private BasicSemanticConfig LoadBasicSemanticConfig()
+        {
+            try
+            {
+                var configPath = Path.Combine(AppContext.BaseDirectory, "Configuration", "BasicSemanticKeywords.json");
+                if (File.Exists(configPath))
+                {
+                    var jsonContent = File.ReadAllText(configPath);
+                    var config = JsonSerializer.Deserialize<BasicSemanticConfig>(jsonContent, JsonOptions);
+                    return config ?? GetDefaultBasicSemanticConfig();
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error loading basic semantic configuration, using defaults");
+            }
+            
+            return GetDefaultBasicSemanticConfig();
+        }
+
+        private static BasicSemanticConfig GetDefaultBasicSemanticConfig()
+        {
+            return new BasicSemanticConfig
+            {
+                GenreKeywords = ["rpg", "action", "adventure", "strategy", "simulation", "puzzle", "racing", "sports", "fighting", "shooter", "fps", "platformer", "roguelike", "mmorpg", "rts", "tower defense", "horror", "survival", "sandbox", "battle royale", "moba", "visual novel"],
+                MechanicsKeywords = ["multiplayer", "co-op", "single-player", "open world", "crafting", "building", "exploration", "stealth", "combat", "leveling", "character progression", "skill tree", "inventory", "quest", "boss battles", "permadeath", "real-time", "turn-based"],
+                ThemeKeywords = ["fantasy", "sci-fi", "cyberpunk", "steampunk", "post-apocalyptic", "medieval", "modern", "futuristic", "space", "underwater", "mythology", "anime", "realistic", "dystopian", "military", "pirate", "detective", "supernatural"],
+                MoodKeywords = ["dark", "light-hearted", "serious", "comedic", "atmospheric", "intense", "relaxing", "mysterious", "epic", "emotional", "thrilling", "suspenseful", "peaceful", "chaotic", "nostalgic", "uplifting", "creepy", "energetic"],
+                ArtStyleKeywords = ["pixel art", "8-bit", "16-bit", "hand-drawn", "3d", "realistic", "stylized", "minimalist", "retro", "colorful", "cel-shaded", "low-poly", "cartoon", "beautiful", "detailed", "artistic"],
+                AudienceKeywords = ["casual", "hardcore", "family", "children", "mature", "beginner", "challenging", "difficult", "accessible", "complex", "competitive", "social"]
+            };
+        }
+
 
         private static void ApplyKeywordMatchesToEmbedding(float[] embedding, List<(string keyword, float weight, int position)> keywordMatches)
         {
@@ -626,7 +726,7 @@ namespace Backend.Services.Recommendation
                 if (position < embedding.Length)
                 {
                     embedding[position] += weight;
-                    
+
                     // Spread influence to nearby positions for semantic clustering
                     var spreadRange = 3;
                     for (int i = 1; i <= spreadRange; i++)
@@ -639,184 +739,58 @@ namespace Backend.Services.Recommendation
             }
         }
 
-        private static void ApplyHierarchicalBoosts(List<(string keyword, float weight, int position)> keywordMatches, string lowerText)
-        {
-            // Boost RPG subcategories when RPG is present
-            if (keywordMatches.Any(k => k.keyword.Contains("rpg")))
-            {
-                if (lowerText.Contains("character") && lowerText.Contains("level")) 
-                    keywordMatches.Add(("character progression", 0.4f, 15));
-                if (lowerText.Contains("turn") && lowerText.Contains("based")) 
-                    keywordMatches.Add(("tactical combat", 0.4f, 16));
-                if (lowerText.Contains("story") || lowerText.Contains("narrative")) 
-                    keywordMatches.Add(("story-driven", 0.3f, 17));
-            }
-
-            // Boost action subcategories when action is present
-            if (keywordMatches.Any(k => k.keyword.Contains("action")))
-            {
-                if (lowerText.Contains("fast") || lowerText.Contains("quick") || lowerText.Contains("reflex")) 
-                    keywordMatches.Add(("fast-paced", 0.4f, 25));
-                if (lowerText.Contains("combat") || lowerText.Contains("fight")) 
-                    keywordMatches.Add(("combat-focused", 0.4f, 26));
-            }
-
-            // Boost multiplayer features when multiplayer detected
-            if (keywordMatches.Any(k => k.keyword.Contains("multiplayer")))
-            {
-                if (lowerText.Contains("team") || lowerText.Contains("coop") || lowerText.Contains("co-op")) 
-                    keywordMatches.Add(("cooperative", 0.5f, 35));
-                if (lowerText.Contains("versus") || lowerText.Contains("pvp") || lowerText.Contains("competitive")) 
-                    keywordMatches.Add(("competitive", 0.5f, 36));
-            }
-
-            // Boost atmospheric keywords for horror/dark themes
-            if (keywordMatches.Any(k => k.keyword.Contains("horror") || k.keyword.Contains("dark")))
-            {
-                if (lowerText.Contains("atmosphere") || lowerText.Contains("mood") || lowerText.Contains("tension")) 
-                    keywordMatches.Add(("atmospheric", 0.4f, 45));
-                if (lowerText.Contains("scary") || lowerText.Contains("frightening")) 
-                    keywordMatches.Add(("intense", 0.3f, 46));
-            }
-        }
 
         private float[] PadEmbeddingToGameSize(float[] textEmbedding)
         {
-            // Add structured features to match game embedding size
-            var paddedEmbedding = new float[textEmbedding.Length + _dimensions.StructuredFeatures];
-            Array.Copy(textEmbedding, 0, paddedEmbedding, 0, textEmbedding.Length);
+            // Add structured features to match game embedding size using total dimensions
+            var paddedEmbedding = new float[_dimensions.TotalDimensions];
+            Array.Copy(textEmbedding, 0, paddedEmbedding, 0, Math.Min(textEmbedding.Length, _dimensions.BaseTextEmbedding));
             // Remaining elements are already initialized to 0
             return paddedEmbedding;
         }
 
+        private static float CalculateMagnitude(float[] vector)
+        {
+            return (float)Math.Sqrt(vector.Sum(x => x * x));
+        }
+
+        private static float[] ApplySemanticPreservingNormalization(float[] embedding, float semanticMagnitude)
+        {
+            var currentMagnitude = CalculateMagnitude(embedding);
+            
+            if (currentMagnitude == 0) return embedding;
+            
+            // Preserve semantic signal strength while applying gentle normalization
+            // This approach maintains the relative importance of semantic signals
+            // while preventing the embedding from becoming too extreme in magnitude
+            
+            var semanticRatio = semanticMagnitude > 0 ? semanticMagnitude / currentMagnitude : 0f;
+            var targetMagnitude = Math.Max(0.5f, Math.Min(1.5f, semanticRatio)); // Bounded normalization
+            
+            var scalingFactor = targetMagnitude / currentMagnitude;
+            
+            for (int i = 0; i < embedding.Length; i++)
+            {
+                embedding[i] *= scalingFactor;
+            }
+            
+            return embedding;
+        }
+
         private static float[] NormalizeVector(float[] vector)
         {
-            var magnitude = Math.Sqrt(vector.Sum(x => x * x));
+            var magnitude = CalculateMagnitude(vector);
             if (magnitude > 0)
             {
                 for (int i = 0; i < vector.Length; i++)
                 {
-                    vector[i] = (float)(vector[i] / magnitude);
+                    vector[i] /= magnitude;
                 }
             }
             return vector;
         }
 
-        private int CalculateEmbeddingDimensions()
-        {
-            try
-            {
-                // Generate a sample game embedding to determine the actual dimensions
-                var sampleGame = new GameEmbeddingInput
-                {
-                    Name = "Sample Game",
-                    Summary = "A sample game for dimension calculation",
-                    Genres = ["Action"],
-                    Platforms = ["PC"]
-                };
 
-                var sampleEmbedding = GenerateGameEmbeddingAsync(sampleGame).Result;
-                _logger.LogInformation("Calculated embedding dimensions: {Dimensions}", sampleEmbedding.Length);
-                return sampleEmbedding.Length;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error calculating embedding dimensions, using default");
-                return _dimensions.TotalDimensions; // Use standardized dimensions
-            }
-        }
-
-        // Comprehensive keyword taxonomy with weights and positions
-        private static readonly List<(string keyword, float weight, int position)> GenreKeywords = new()
-        {
-            // Core Genres (High weight - 0.6-0.8)
-            ("rpg", 0.8f, 0), ("role playing", 0.8f, 0), ("role-playing", 0.8f, 0),
-            ("action", 0.7f, 1), ("adventure", 0.7f, 2), ("strategy", 0.7f, 3),
-            ("simulation", 0.7f, 4), ("puzzle", 0.6f, 5), ("racing", 0.6f, 6),
-            ("sports", 0.6f, 7), ("fighting", 0.6f, 8), ("shooter", 0.7f, 9),
-            
-            // RPG Subgenres
-            ("jrpg", 0.7f, 10), ("japanese rpg", 0.7f, 10), ("wrpg", 0.7f, 11), ("western rpg", 0.7f, 11),
-            ("arpg", 0.7f, 12), ("action rpg", 0.7f, 12), ("mmorpg", 0.7f, 13), ("tactical rpg", 0.6f, 14),
-            ("roguelike", 0.6f, 15), ("roguelite", 0.6f, 15),
-            
-            // Strategy Subgenres
-            ("rts", 0.6f, 18), ("real-time strategy", 0.6f, 18), ("turn-based", 0.6f, 19),
-            ("4x", 0.6f, 20), ("tower defense", 0.5f, 21), ("city builder", 0.5f, 22),
-        };
-
-        private static readonly List<(string keyword, float weight, int position)> MechanicKeywords = new()
-        {
-            // Core Mechanics (Medium-high weight - 0.4-0.6)
-            ("multiplayer", 0.6f, 30), ("single-player", 0.5f, 31), ("singleplayer", 0.5f, 31),
-            ("co-op", 0.6f, 32), ("coop", 0.6f, 32), ("cooperative", 0.6f, 32),
-            ("competitive", 0.5f, 33), ("pvp", 0.5f, 33), ("versus", 0.5f, 33),
-            
-            ("open world", 0.6f, 34), ("open-world", 0.6f, 34), ("sandbox", 0.5f, 35),
-            ("linear", 0.4f, 36), ("exploration", 0.5f, 37), ("crafting", 0.5f, 38),
-            ("building", 0.5f, 39), ("management", 0.5f, 40), ("survival", 0.5f, 41),
-            
-            ("stealth", 0.5f, 42), ("platformer", 0.5f, 43), ("platforming", 0.5f, 43),
-            ("puzzle-solving", 0.5f, 44), ("resource management", 0.4f, 45),
-            ("character progression", 0.5f, 46), ("leveling", 0.4f, 47), ("loot", 0.4f, 48),
-        };
-
-        private static readonly List<(string keyword, float weight, int position)> ThemeKeywords = new()
-        {
-            // Themes and Settings (Medium weight - 0.3-0.5)
-            ("fantasy", 0.5f, 60), ("sci-fi", 0.5f, 61), ("science fiction", 0.5f, 61),
-            ("cyberpunk", 0.4f, 62), ("steampunk", 0.4f, 63), ("post-apocalyptic", 0.4f, 64),
-            ("horror", 0.5f, 65), ("western", 0.4f, 66), ("medieval", 0.4f, 67),
-            ("modern", 0.3f, 68), ("futuristic", 0.4f, 69), ("historical", 0.4f, 70),
-            
-            ("space", 0.4f, 71), ("underwater", 0.3f, 72), ("urban", 0.3f, 73),
-            ("jungle", 0.3f, 74), ("desert", 0.3f, 75), ("arctic", 0.3f, 76),
-            
-            ("mythology", 0.4f, 77), ("japanese", 0.3f, 78), ("anime", 0.4f, 79),
-            ("cartoon", 0.3f, 80), ("realistic", 0.3f, 81),
-        };
-
-        private static readonly List<(string keyword, float weight, int position)> MoodKeywords = new()
-        {
-            // Moods and Emotional Tone (Medium weight - 0.3-0.5)
-            ("dark", 0.4f, 90), ("light-hearted", 0.4f, 91), ("serious", 0.3f, 92),
-            ("comedic", 0.4f, 93), ("funny", 0.4f, 93), ("humorous", 0.4f, 93),
-            ("atmospheric", 0.4f, 94), ("intense", 0.4f, 95), ("relaxing", 0.4f, 96),
-            ("stressful", 0.3f, 97), ("mysterious", 0.4f, 98), ("romantic", 0.3f, 99),
-            
-            ("nostalgic", 0.3f, 100), ("epic", 0.4f, 101), ("emotional", 0.4f, 102),
-            ("cheerful", 0.3f, 103), ("happy", 0.3f, 103), ("melancholic", 0.3f, 104),
-            ("dramatic", 0.4f, 105), ("peaceful", 0.3f, 106), ("chaotic", 0.3f, 107),
-        };
-
-        private static readonly List<(string keyword, float weight, int position)> ArtStyleKeywords = new()
-        {
-            // Art and Presentation Style (Medium-low weight - 0.2-0.4)
-            ("pixel art", 0.4f, 120), ("pixelart", 0.4f, 120), ("8-bit", 0.3f, 121), ("16-bit", 0.3f, 122),
-            ("hand-drawn", 0.3f, 123), ("3d realistic", 0.3f, 124), ("3d stylized", 0.3f, 125),
-            ("minimalist", 0.3f, 126), ("retro", 0.3f, 127), ("vintage", 0.3f, 127),
-            
-            ("colorful", 0.3f, 128), ("monochrome", 0.2f, 129), ("noir", 0.3f, 130),
-            ("cel-shaded", 0.3f, 131), ("photorealistic", 0.3f, 132),
-            
-            // Audio cues
-            ("orchestral", 0.2f, 133), ("electronic", 0.2f, 134), ("ambient", 0.2f, 135),
-            ("soundtrack", 0.2f, 136), ("music", 0.2f, 136),
-        };
-
-        private static readonly List<(string keyword, float weight, int position)> AudienceKeywords = new()
-        {
-            // Target Audience and Difficulty (Lower weight - 0.2-0.4)
-            ("casual", 0.4f, 150), ("hardcore", 0.4f, 151), ("family", 0.3f, 152),
-            ("children", 0.3f, 153), ("kids", 0.3f, 153), ("teen", 0.2f, 154),
-            ("mature", 0.3f, 155), ("adult", 0.2f, 156),
-            
-            ("beginner", 0.3f, 157), ("easy", 0.3f, 158), ("challenging", 0.3f, 159),
-            ("difficult", 0.3f, 160), ("hard", 0.3f, 160), ("punishing", 0.3f, 161),
-            ("accessible", 0.3f, 162), ("complex", 0.3f, 163), ("simple", 0.3f, 164),
-            
-            ("social", 0.3f, 165), ("community", 0.2f, 166), ("competitive scene", 0.3f, 167),
-        };
 
         public void Dispose()
         {

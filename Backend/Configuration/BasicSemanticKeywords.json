@@ -1,0 +1,79 @@
+{
+  "GenreKeywords": [
+    "action", "adventure", "rpg", "role-playing", "strategy", "simulation", "puzzle", "shooter", 
+    "fps", "tps", "platformer", "fighting", "racing", "sports", "mmo", "mmorpg", "survival", 
+    "sandbox", "roguelike", "roguelite", "metroidvania", "battle-royale", "tower-defense", 
+    "city-builder", "4x", "grand-strategy", "turn-based", "real-time", "tactical", "stealth",
+    "horror", "thriller", "mystery", "detective", "visual-novel", "dating-sim", "life-sim",
+    "farming-sim", "business-sim", "flight-sim", "driving-sim", "management", "tycoon",
+    "card-game", "board-game", "trivia", "music", "rhythm", "dance", "educational"
+  ],
+  "MechanicsKeywords": [
+    "combat", "exploration", "crafting", "building", "resource-management", "character-progression",
+    "leveling", "skill-trees", "loot", "inventory", "equipment", "weapons", "armor", "magic",
+    "spells", "abilities", "talents", "stats", "attributes", "health", "mana", "energy",
+    "stamina", "experience", "quests", "missions", "objectives", "achievements", "collectibles",
+    "mini-games", "side-quests", "main-story", "narrative", "dialogue", "choices", "consequences",
+    "branching-paths", "multiple-endings", "new-game-plus", "difficulty-levels", "customization",
+    "character-creation", "avatar", "appearance", "clothing", "cosmetics", "skins", "unlockables",
+    "progression", "upgrades", "modifications", "enhancements", "power-ups", "buffs", "debuffs",
+    "status-effects", "conditions", "environmental-interactions", "physics", "destructible",
+    "interactive-objects", "vehicles", "mounts", "companions", "pets", "allies", "npcs",
+    "vendors", "traders", "shops", "economy", "currency", "trading", "auction-house",
+    "guilds", "clans", "factions", "reputation", "karma", "morality", "alignment"
+  ],
+  "ThemeKeywords": [
+    "fantasy", "medieval", "magic", "dragons", "wizards", "elves", "dwarves", "orcs", "knights",
+    "castles", "kingdoms", "empires", "mythology", "legends", "folklore", "fairy-tales",
+    "sci-fi", "science-fiction", "futuristic", "space", "aliens", "robots", "cyberpunk",
+    "dystopian", "utopian", "post-apocalyptic", "wasteland", "nuclear", "zombies", "undead",
+    "vampires", "werewolves", "supernatural", "paranormal", "ghosts", "spirits", "demons",
+    "angels", "gods", "deities", "religion", "mythology", "ancient", "historical", "modern",
+    "contemporary", "urban", "rural", "wilderness", "nature", "animals", "pirates", "ninjas",
+    "samurai", "vikings", "cowboys", "western", "steampunk", "dieselpunk", "alternate-history",
+    "time-travel", "parallel-worlds", "dimensions", "multiverse", "virtual-reality",
+    "matrix", "simulation", "artificial-intelligence", "war", "military", "espionage",
+    "crime", "mafia", "gangsters", "police", "detective", "investigation", "murder-mystery"
+  ],
+  "MoodKeywords": [
+    "dark", "light", "serious", "humorous", "comedic", "satirical", "parody", "dramatic",
+    "emotional", "heartwarming", "touching", "inspiring", "uplifting", "depressing", "sad",
+    "melancholy", "nostalgic", "bittersweet", "romantic", "passionate", "intense", "thrilling",
+    "exciting", "adrenaline", "fast-paced", "slow-paced", "relaxing", "peaceful", "calming",
+    "meditative", "zen", "atmospheric", "immersive", "engaging", "captivating", "addictive",
+    "challenging", "difficult", "hardcore", "casual", "accessible", "family-friendly",
+    "mature", "adult", "violent", "brutal", "gory", "bloody", "disturbing", "scary",
+    "frightening", "terrifying", "spooky", "eerie", "creepy", "unsettling", "tense",
+    "suspenseful", "mysterious", "enigmatic", "puzzling", "thought-provoking", "philosophical",
+    "cerebral", "intellectual", "educational", "informative", "realistic", "believable",
+    "fantastical", "surreal", "abstract", "artistic", "creative", "innovative", "unique",
+    "original", "classic", "retro", "vintage", "nostalgic", "modern", "contemporary"
+  ],
+  "ArtStyleKeywords": [
+    "realistic", "photorealistic", "hyper-realistic", "stylized", "cartoonish", "anime",
+    "manga", "cel-shaded", "toon-shading", "hand-drawn", "2d", "3d", "pixel-art", "8-bit",
+    "16-bit", "retro", "vintage", "classic", "modern", "contemporary", "minimalist",
+    "abstract", "surreal", "impressionist", "expressionist", "cubist", "art-nouveau",
+    "art-deco", "gothic", "baroque", "renaissance", "medieval", "ancient", "tribal",
+    "primitive", "folk-art", "traditional", "cultural", "ethnic", "exotic", "oriental",
+    "western", "eastern", "northern", "southern", "urban", "rural", "industrial",
+    "organic", "geometric", "angular", "curved", "flowing", "rigid", "structured",
+    "chaotic", "ordered", "symmetrical", "asymmetrical", "balanced", "unbalanced",
+    "colorful", "monochrome", "black-and-white", "sepia", "vibrant", "muted", "pastel",
+    "neon", "glowing", "bright", "dark", "light", "shadowy", "high-contrast", "low-contrast",
+    "detailed", "simple", "complex", "intricate", "elaborate", "ornate", "plain"
+  ],
+  "AudienceKeywords": [
+    "casual", "hardcore", "family-friendly", "kids", "children", "teens", "teenagers", "adults",
+    "mature", "seniors", "elderly", "beginners", "novices", "experts", "professionals",
+    "enthusiasts", "fans", "collectors", "completionists", "speedrunners", "streamers",
+    "content-creators", "modders", "competitive-players", "esports", "tournament-players",
+    "social-gamers", "solo-players", "co-op-players", "multiplayer-fans", "single-player-fans",
+    "story-focused", "gameplay-focused", "graphics-focused", "audio-focused", "music-lovers",
+    "puzzle-lovers", "strategy-fans", "action-lovers", "rpg-fans", "simulation-fans",
+    "horror-fans", "comedy-fans", "sci-fi-fans", "fantasy-fans", "historical-fans",
+    "military-fans", "sports-fans", "racing-fans", "fighting-fans", "shooter-fans",
+    "indie-game-lovers", "aaa-game-fans", "retro-gamers", "modern-gamers", "pc-gamers",
+    "console-gamers", "mobile-gamers", "handheld-gamers", "vr-enthusiasts", "ar-fans"
+  ]
+}
