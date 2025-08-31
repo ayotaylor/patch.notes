@@ -216,8 +216,8 @@ namespace Backend.Services.Recommendation
             return new GameEmbeddingInput
             {
                 Name = game.Name,
-                Summary = game.Summary ?? "",
-                Storyline = game.Storyline,
+                // Summary = game.Summary ?? "",
+                // Storyline = game.Storyline,
                 Genres = game.GameGenres?.Select(gg => gg.Genre.Name).ToList() ?? new List<string>(),
                 Platforms = game.GamePlatforms?.Select(gp => gp.Platform.Name).ToList() ?? new List<string>(),
                 GameModes = game.GameModes?.Select(gm => gm.GameMode.Name).ToList() ?? new List<string>(),

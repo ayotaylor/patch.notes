@@ -1,4 +1,5 @@
 using Backend.Services.Recommendation.Interfaces;
+using Backend.Configuration;
 using Qdrant.Client;
 using Qdrant.Client.Grpc;
 
@@ -45,6 +46,14 @@ namespace Backend.Services.Recommendation
         {
             try
             {
+                // Strict validation: NEVER allow upserting vectors with incorrect dimensions
+                if (!EmbeddingConstants.ValidateDimensions(vector.Length))
+                {
+                    var errorMessage = $"CRITICAL: Cannot upsert vector with incorrect dimensions to collection {collectionName}. Vector ID: {id}, Got {vector.Length}, {EmbeddingConstants.GetExpectedDimensionsMessage()}. This would corrupt the collection.";
+                    _logger.LogCritical(errorMessage);
+                    throw new InvalidOperationException(errorMessage);
+                }
+
                 var pointStruct = new PointStruct
                 {
                     Id = new PointId { Uuid = id },
@@ -68,10 +77,79 @@ namespace Backend.Services.Recommendation
             }
         }
 
+        public async Task<bool> UpsertVectorsBulkAsync(string collectionName, List<(string id, float[] vector, Dictionary<string, object> payload)> vectors)
+        {
+            try
+            {
+                if (vectors == null || vectors.Count == 0)
+                    return true;
+
+                // Process in optimized chunks for maximum throughput
+                const int optimalChunkSize = 100;
+                var totalProcessed = 0;
+                
+                for (int i = 0; i < vectors.Count; i += optimalChunkSize)
+                {
+                    var chunk = vectors.Skip(i).Take(optimalChunkSize).ToList();
+                    var points = new List<PointStruct>(chunk.Count);
+
+                    foreach (var (id, vector, payload) in chunk)
+                    {
+                        // Validate each vector
+                        if (!EmbeddingConstants.ValidateDimensions(vector.Length))
+                        {
+                            _logger.LogError("Skipping vector {VectorId} due to incorrect dimensions: {ActualDimensions}", 
+                                id, vector.Length);
+                            continue;
+                        }
+
+                        var pointStruct = new PointStruct
+                        {
+                            Id = new PointId { Uuid = id },
+                            Vectors = new Vectors { Vector = new Vector { Data = { vector } } }
+                        };
+
+                        // Add payload
+                        foreach (var kvp in payload)
+                        {
+                            pointStruct.Payload.Add(kvp.Key, new Value { StringValue = kvp.Value?.ToString() ?? "" });
+                        }
+
+                        points.Add(pointStruct);
+                    }
+
+                    if (points.Count > 0)
+                    {
+                        // Optimized bulk upsert with wait=false for better throughput
+                        await _client.UpsertAsync(collectionName, points, wait: false);
+                        totalProcessed += points.Count;
+                    }
+                }
+
+                _logger.LogDebug("Bulk upserted {Count} vectors to collection {CollectionName} in {ChunkCount} chunks", 
+                    totalProcessed, collectionName, (vectors.Count + optimalChunkSize - 1) / optimalChunkSize);
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to bulk upsert {Count} vectors to collection: {CollectionName}", vectors.Count, collectionName);
+                return false;
+            }
+        }
+
         public async Task<List<VectorSearchResult>> SearchAsync(string collectionName, float[] queryVector, int limit = 10, Dictionary<string, object>? filter = null)
         {
             try
             {
+                // Strict validation: NEVER allow searching with incorrect dimensions
+                if (!EmbeddingConstants.ValidateDimensions(queryVector.Length))
+                {
+                    var errorMessage = $"CRITICAL: Query vector dimension mismatch in collection {collectionName}. Got {queryVector.Length}, {EmbeddingConstants.GetExpectedDimensionsMessage()}. This will cause search failures.";
+                    _logger.LogCritical(errorMessage);
+                    throw new InvalidOperationException(errorMessage);
+                }
+
                 Filter? searchFilter = null;
 
                 // Apply filters if provided to enrich the search results

@@ -4,6 +4,7 @@ namespace Backend.Services.Recommendation.Interfaces
     {
         Task<bool> CreateCollectionAsync(string collectionName, int vectorSize);
         Task<bool> UpsertVectorAsync(string collectionName, string id, float[] vector, Dictionary<string, object> payload);
+        Task<bool> UpsertVectorsBulkAsync(string collectionName, List<(string id, float[] vector, Dictionary<string, object> payload)> vectors);
         Task<List<VectorSearchResult>> SearchAsync(string collectionName, float[] queryVector, int limit = 10, Dictionary<string, object>? filter = null);
         Task<bool> DeleteVectorAsync(string collectionName, string id);
         Task<bool> CollectionExistsAsync(string collectionName);

@@ -13,30 +13,27 @@ namespace Backend.Services.Recommendation
         private readonly IVectorDatabase _vectorDatabase;
         private readonly IEmbeddingService _embeddingService;
         private readonly ILogger<GameIndexingService> _logger;
-        private readonly IMemoryCache _cache;
-        private readonly IConfiguration _configuration;
         private readonly ISemanticKeywordCache? _semanticKeywordCache;
         private const string GAMES_COLLECTION = "games";
-        private const string SEMANTIC_CACHE_KEY_PREFIX = "semantic_keywords_";
-        private readonly TimeSpan CACHE_DURATION = TimeSpan.FromHours(24);
         private SemanticKeywordConfig? _semanticConfig;
         private EmbeddingDimensions? _embeddingDimensions;
+
+        private static readonly JsonSerializerOptions JsonOptions = new()
+        {
+            PropertyNameCaseInsensitive = true
+        };
 
         public GameIndexingService(
             ApplicationDbContext context,
             IVectorDatabase vectorDatabase,
             IEmbeddingService embeddingService,
             ILogger<GameIndexingService> logger,
-            IMemoryCache cache,
-            IConfiguration configuration,
             ISemanticKeywordCache? semanticKeywordCache = null)
         {
             _context = context;
             _vectorDatabase = vectorDatabase;
             _embeddingService = embeddingService;
             _logger = logger;
-            _cache = cache;
-            _configuration = configuration;
             _semanticKeywordCache = semanticKeywordCache;
             LoadSemanticConfiguration();
         }
@@ -49,13 +46,51 @@ namespace Backend.Services.Recommendation
                 if (!collectionExists)
                 {
                     var totalDimensions = _embeddingDimensions?.TotalDimensions ?? _embeddingService.EmbeddingDimensions;
+
+                    // Validate dimensions match expected constants
+                    if (!EmbeddingConstants.ValidateDimensions(totalDimensions))
+                    {
+                        _logger.LogError("Dimension mismatch detected! Using {ActualDimensions} but {ExpectedMessage}",
+                            totalDimensions, EmbeddingConstants.GetExpectedDimensionsMessage());
+                        _logger.LogWarning("Using fallback dimensions: {FallbackDimensions}", EmbeddingConstants.TOTAL_EMBEDDING_DIMENSIONS);
+                        totalDimensions = EmbeddingConstants.TOTAL_EMBEDDING_DIMENSIONS;
+                    }
+
                     var success = await _vectorDatabase.CreateCollectionAsync(GAMES_COLLECTION, totalDimensions);
                     if (!success)
                     {
-                        _logger.LogError("Failed to create games collection in vector database");
+                        _logger.LogError("Failed to create games collection in vector database with {TotalDimensions} dimensions", totalDimensions);
                         return false;
                     }
+
+                    _logger.LogInformation("Created games collection with {TotalDimensions} dimensions", totalDimensions);
                 }
+                // else
+                // {
+                //     // Collection exists - validate that our current embedding service generates compatible dimensions
+                //     var testGameInput = new GameEmbeddingInput
+                //     {
+                //         Name = "Test Game",
+                //         //Summary = "Test summary for dimension validation",
+                //         Genres = [],
+                //         Platforms = [],
+                //         GameModes = [],
+                //         PlayerPerspectives = []
+                //     };
+
+                //     var testEmbedding = await _embeddingService.GenerateGameEmbeddingAsync(testGameInput);
+                //     if (!EmbeddingConstants.ValidateDimensions(testEmbedding.Length))
+                //     {
+                //         _logger.LogError("Existing collection may have incompatible dimensions. Current embedding service generates {ActualDimensions}, but {ExpectedMessage}. Consider recreating the collection.",
+                //             testEmbedding.Length, EmbeddingConstants.GetExpectedDimensionsMessage());
+                //         _logger.LogWarning("This may cause errors during reindexing or searching. To fix this, delete the existing collection and reinitialize.");
+                //         // Don't fail initialization but warn about potential issues
+                //     }
+                //     else
+                //     {
+                //         _logger.LogDebug("Dimension validation successful: {Dimensions} dimensions", testEmbedding.Length);
+                //     }
+                // }
 
                 _logger.LogInformation("Games collection initialized successfully");
                 return true;
@@ -155,25 +190,59 @@ namespace Backend.Services.Recommendation
                         break;
                     }
 
-                    // Process games in parallel for better performance
-                    var indexingTasks = games.Select(IndexGameAsync).ToList();
-                    var results = await Task.WhenAll(indexingTasks);
-                    var successCount = results.Count(success => success);
+                    // Process games using batch embeddings and bulk database insert
+                    var gameInputs = games.Select(MapGameToEmbeddingInput).ToList();
+                    var embeddings = await _embeddingService.ProcessGamesInBatch(gameInputs);
+
+                    // Prepare bulk vector data
+                    var vectorsToStore = new List<(string id, float[] vector, Dictionary<string, object> payload)>();
+
+                    for (int i = 0; i < games.Count; i++)
+                    {
+                        var game = games[i];
+                        var embedding = embeddings[i];
+
+                        // Validate embedding before adding to bulk operation
+                        if (!EmbeddingConstants.ValidateDimensions(embedding.Length))
+                        {
+                            _logger.LogError("Skipping game {GameName} due to invalid embedding dimensions: {ActualDimensions}",
+                                game.Name, embedding.Length);
+                            continue;
+                        }
+
+                        var payload = new Dictionary<string, object>
+                        {
+                            {"name", game.Name},
+                            {"cover_url", game.Covers?.FirstOrDefault()?.Url ?? ""}
+                        };
+
+                        vectorsToStore.Add((game.Id.ToString(), embedding, payload));
+                    }
+
+                    // Single bulk upsert for entire batch
+                    var success = await _vectorDatabase.UpsertVectorsBulkAsync(GAMES_COLLECTION, vectorsToStore);
+
+                    var successCount = success ? vectorsToStore.Count : 0;
+                    var failedCount = games.Count - successCount;
                     indexed += successCount;
 
-                    var failedCount = games.Count - successCount;
                     if (failedCount > 0)
                     {
                         _logger.LogWarning("Failed to index {FailedCount} out of {TotalCount} games in batch", failedCount, games.Count);
                     }
 
                     skip += batchSize;
-                    
-                    // Enhanced logging with performance metrics
+
+                    // Enhanced logging with performance metrics and memory monitoring
                     var elapsed = DateTime.UtcNow - processingStartTime;
                     var gamesPerSecond = indexed > 0 ? Math.Round(indexed / elapsed.TotalSeconds, 2) : 0;
-                    _logger.LogInformation("Indexed batch: {BatchSuccess}/{BatchTotal} games. Total: {Total} games in {Elapsed:mm\\:ss} ({Rate} games/sec)", 
-                        successCount, games.Count, indexed, elapsed, gamesPerSecond);
+                    var memoryMB = GC.GetTotalMemory(false) / 1024 / 1024;
+                    _logger.LogInformation("Indexed batch: {BatchSuccess}/{BatchTotal} games. Total: {Total} games in {Elapsed:mm\\:ss} ({Rate} games/sec, {Memory}MB memory)",
+                        successCount, games.Count, indexed, elapsed, gamesPerSecond, memoryMB);
+
+
+                    // Small delay between batches
+                    await Task.Delay(10);
                 }
 
                 _logger.LogInformation("Completed indexing {Total} games", indexed);
@@ -187,62 +256,29 @@ namespace Backend.Services.Recommendation
         }
 
         /// <summary>
-        /// Optimized method to fetch games with all required relationships using manual split queries
+        /// Optimized method to fetch games with all required relationships using AsSplitQuery for better performance
         /// </summary>
         private async Task<List<Backend.Models.Game.Game>> GetGamesWithRelationshipsBatchAsync(int skip, int take)
         {
             try
             {
-                // First, get the basic game data with ordering for consistent pagination
-                var gameIds = await _context.Games
-                    .OrderBy(g => g.Id)
+                // Use AsSplitQuery() to optimize relationship loading - reduces from 7 queries to 2 queries
+                var games = await _context.Games
+                    .AsNoTracking() // Better performance for read-only operations
+                    .AsSplitQuery() // Handles relationship loading efficiently with split queries
+                    .Include(g => g.GameGenres).ThenInclude(gg => gg.Genre)
+                    .Include(g => g.GamePlatforms).ThenInclude(gp => gp.Platform)
+                    .Include(g => g.GameModes).ThenInclude(gm => gm.GameMode)
+                    .Include(g => g.GamePlayerPerspectives).ThenInclude(gpp => gpp.PlayerPerspective)
+                    .Include(g => g.Covers)
+                    .Include(g => g.GameType)
+                    .Include(g => g.GameCompanies).ThenInclude(gc => gc.Company)
+                    .OrderBy(g => g.Id) // Consistent ordering for pagination
                     .Skip(skip)
                     .Take(take)
-                    .Select(g => g.Id)
                     .ToListAsync();
 
-                if (gameIds.Count == 0)
-                    return new List<Backend.Models.Game.Game>();
-
-                // Load relationships sequentially to avoid DbContext concurrency issues
-                var games = await _context.Games
-                    .AsNoTracking()
-                    .Where(g => gameIds.Contains(g.Id))
-                    .ToListAsync();
-
-                var genres = await _context.GameGenres
-                    .Include(gg => gg.Genre)
-                    .Where(gg => gameIds.Contains(gg.GameId))
-                    .ToListAsync();
-
-                var platforms = await _context.GamePlatforms
-                    .Include(gp => gp.Platform)
-                    .Where(gp => gameIds.Contains(gp.GameId))
-                    .ToListAsync();
-
-                var gameModes = await _context.GameModeGames
-                    .Include(gm => gm.GameMode)
-                    .Where(gm => gameIds.Contains(gm.GameId))
-                    .ToListAsync();
-
-                var perspectives = await _context.GamePlayerPerspectives
-                    .Include(gpp => gpp.PlayerPerspective)
-                    .Where(gpp => gameIds.Contains(gpp.GameId))
-                    .ToListAsync();
-
-                var covers = await _context.Covers
-                    .Where(c => gameIds.Contains(c.GameId))
-                    .ToListAsync();
-
-                // Manually populate relationships for better control over data structure
-                foreach (var game in games)
-                {
-                    game.GameGenres = genres.Where(g => g.GameId == game.Id).ToList();
-                    game.GamePlatforms = platforms.Where(p => p.GameId == game.Id).ToList();
-                    game.GameModes = gameModes.Where(gm => gm.GameId == game.Id).ToList();
-                    game.GamePlayerPerspectives = perspectives.Where(p => p.GameId == game.Id).ToList();
-                    game.Covers = covers.Where(c => c.GameId == game.Id).ToList();
-                }
+                _logger.LogDebug("Retrieved {GameCount} games with relationships from database using optimized AsSplitQuery (skip: {Skip}, take: {Take})", games.Count, skip, take);
 
                 return games;
             }
@@ -260,7 +296,20 @@ namespace Backend.Services.Recommendation
                 var gameInput = MapGameToEmbeddingInput(game);
                 var embedding = await _embeddingService.GenerateGameEmbeddingAsync(gameInput);
 
-                var payload = CreateGamePayload(game);
+                // Strict validation: NEVER allow incorrect dimensions
+                if (!EmbeddingConstants.ValidateDimensions(embedding.Length))
+                {
+                    var errorMessage = $"CRITICAL: Generated embedding dimension mismatch for game {game.Name} (ID: {game.Id}). Got {embedding.Length}, {EmbeddingConstants.GetExpectedDimensionsMessage()}. This indicates a configuration or implementation error.";
+                    _logger.LogCritical(errorMessage);
+                    throw new InvalidOperationException(errorMessage);
+                }
+
+                // Simplified: only store minimal metadata needed for retrieval
+                var payload = new Dictionary<string, object>
+                {
+                    {"name", game.Name},
+                    {"cover_url", game.Covers?.FirstOrDefault()?.Url ?? ""}
+                };
 
                 var success = await _vectorDatabase.UpsertVectorAsync(
                     GAMES_COLLECTION,
@@ -287,15 +336,15 @@ namespace Backend.Services.Recommendation
             try
             {
                 var game = await _context.Games
-                    .Include(g => g.GameGenres)
-                        .ThenInclude(gg => gg.Genre)
-                    .Include(g => g.GamePlatforms)
-                        .ThenInclude(gp => gp.Platform)
-                    .Include(g => g.GameModes)
-                        .ThenInclude(gm => gm.GameMode)
-                    .Include(g => g.GamePlayerPerspectives)
-                        .ThenInclude(gpp => gpp.PlayerPerspective)
+                    .AsNoTracking() // Better performance for read-only operations
+                    .AsSplitQuery() // Optimize relationship loading
+                    .Include(g => g.GameGenres).ThenInclude(gg => gg.Genre)
+                    .Include(g => g.GamePlatforms).ThenInclude(gp => gp.Platform)
+                    .Include(g => g.GameModes).ThenInclude(gm => gm.GameMode)
+                    .Include(g => g.GamePlayerPerspectives).ThenInclude(gpp => gpp.PlayerPerspective)
+                    .Include(g => g.GameType)
                     .Include(g => g.Covers)
+                    .Include(g => g.GameCompanies).ThenInclude(gc => gc.Company)
                     .FirstOrDefaultAsync(g => g.Id == gameId);
 
                 if (game == null)
@@ -344,240 +393,28 @@ namespace Backend.Services.Recommendation
             }
         }
 
-        public async Task<List<VectorSearchResult>> SearchGamesWithFiltersAsync(
-            float[] queryEmbedding,
-            QueryAnalysis analysis,
-            int limit = 20)
-        {
-            try
-            {
-                var filters = BuildEnhancedFilters(analysis);
-                _logger.LogDebug("Built {FilterCount} filters for search", filters.Count);
-
-                return await _vectorDatabase.SearchAsync(GAMES_COLLECTION, queryEmbedding, limit, filters);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error searching games with filters");
-                return new List<VectorSearchResult>();
-            }
-        }
-
-        private Dictionary<string, object> BuildEnhancedFilters(QueryAnalysis analysis)
-        {
-            var filters = new Dictionary<string, object>();
-
-            // Basic filters for exact matching
-            AddBasicFilters(filters, analysis);
-
-            // Enhanced semantic filters for broader matching
-            AddSemanticFilters(filters, analysis);
-
-            return filters;
-        }
-
-        private void AddBasicFilters(Dictionary<string, object> filters, QueryAnalysis analysis)
-        {
-            // Exact genre matching
-            if (analysis.Genres?.Count > 0)
-            {
-                filters["genres"] = string.Join(",", analysis.Genres);
-                _logger.LogDebug("Added genre filters: {Genres}", string.Join(",", analysis.Genres));
-            }
-
-            // Exact platform matching
-            if (analysis.Platforms?.Count > 0)
-            {
-                filters["platforms"] = string.Join(",", analysis.Platforms);
-                _logger.LogDebug("Added platform filters: {Platforms}", string.Join(",", analysis.Platforms));
-            }
-
-            // Exact game mode matching
-            if (analysis.GameModes?.Count > 0)
-            {
-                filters["game_modes"] = string.Join(",", analysis.GameModes);
-                _logger.LogDebug("Added game mode filters: {GameModes}", string.Join(",", analysis.GameModes));
-            }
-
-            // Release date range filtering
-            if (analysis.ReleaseDateRange?.From.HasValue == true)
-            {
-                filters["release_year_from"] = analysis.ReleaseDateRange.From.Value.Year;
-            }
-            if (analysis.ReleaseDateRange?.To.HasValue == true)
-            {
-                filters["release_year_to"] = analysis.ReleaseDateRange.To.Value.Year;
-            }
-        }
-
-        private void AddSemanticFilters(Dictionary<string, object> filters, QueryAnalysis analysis)
-        {
-            // Semantic genre expansion (broaden search using extracted semantic keywords)
-            if (analysis.Genres?.Count > 0)
-            {
-                var expandedGenres = ExpandGenresSemanticaly(analysis.Genres);
-                if (expandedGenres.Count > analysis.Genres.Count)
-                {
-                    filters["semantic_genres_expanded"] = string.Join(",", expandedGenres);
-                    _logger.LogDebug("Expanded {OriginalCount} genres to {ExpandedCount} semantic genres", 
-                        analysis.Genres.Count, expandedGenres.Count);
-                }
-            }
-
-            // Platform alias expansion (match ps5, playstation 5, sony ps5, etc.)
-            if (analysis.Platforms?.Count > 0)
-            {
-                var expandedPlatforms = PlatformAliasService.ExpandPlatformNamesForSearch(analysis.Platforms);
-                filters["platform_aliases"] = string.Join(",", expandedPlatforms);
-                _logger.LogDebug("Expanded {OriginalCount} platforms to {ExpandedCount} platform aliases", 
-                    analysis.Platforms.Count, expandedPlatforms.Count);
-
-                // Also add canonical platform names for exact matching
-                var canonicalPlatforms = PlatformAliasService.NormalizePlatformNames(analysis.Platforms);
-                filters["canonical_platforms"] = string.Join(",", canonicalPlatforms);
-            }
-
-            // Semantic mood matching (use extracted mood keywords)
-            if (analysis.Moods?.Count > 0)
-            {
-                var expandedMoods = ExpandMoodsSemanticaly(analysis.Moods);
-                filters["semantic_moods"] = string.Join(",", expandedMoods);
-                _logger.LogDebug("Added semantic mood filters: {Moods}", string.Join(",", expandedMoods));
-            }
-
-            // Quality-based filtering (prefer games with rich semantic metadata)
-            filters["prefer_semantic_enhanced"] = "true";
-        }
-
-        private List<string> ExpandGenresSemanticaly(List<string> originalGenres)
-        {
-            var expandedGenres = new HashSet<string>(originalGenres, StringComparer.OrdinalIgnoreCase);
-
-            foreach (var genre in originalGenres)
-            {
-                var semanticExpansions = GetSemanticGenreExpansions(genre.ToLowerInvariant());
-                foreach (var expansion in semanticExpansions)
-                {
-                    expandedGenres.Add(expansion);
-                }
-            }
-
-            return expandedGenres.ToList();
-        }
-
-        private List<string> ExpandMoodsSemanticaly(List<string> originalMoods)
-        {
-            var expandedMoods = new HashSet<string>(originalMoods, StringComparer.OrdinalIgnoreCase);
-
-            foreach (var mood in originalMoods)
-            {
-                var semanticExpansions = GetSemanticMoodExpansions(mood.ToLowerInvariant());
-                foreach (var expansion in semanticExpansions)
-                {
-                    expandedMoods.Add(expansion);
-                }
-            }
-
-            return expandedMoods.ToList();
-        }
-
-        private static List<string> GetSemanticGenreExpansions(string genre)
-        {
-            var expansions = new List<string>();
-
-            switch (genre)
-            {
-                case "rpg":
-                case "role-playing":
-                    expansions.AddRange(new[] { "jrpg", "western rpg", "action rpg", "tactical rpg", "mmorpg", "character progression", "leveling", "quest-driven" });
-                    break;
-                case "action":
-                    expansions.AddRange(new[] { "fast-paced", "combat-focused", "reflex-based", "adrenaline", "intense" });
-                    break;
-                case "adventure":
-                    expansions.AddRange(new[] { "exploration", "story-driven", "narrative", "discovery", "atmospheric" });
-                    break;
-                case "strategy":
-                    expansions.AddRange(new[] { "tactical", "planning", "resource management", "turn-based", "real-time strategy", "cerebral" });
-                    break;
-                case "horror":
-                    expansions.AddRange(new[] { "scary", "frightening", "atmospheric", "dark", "psychological", "survival horror", "tension" });
-                    break;
-                case "puzzle":
-                    expansions.AddRange(new[] { "brain teaser", "logic", "problem-solving", "cerebral", "satisfying" });
-                    break;
-                case "simulation":
-                    expansions.AddRange(new[] { "realistic", "management", "building", "sandbox", "meditative" });
-                    break;
-                default:
-                    // For unknown genres, add the original
-                    break;
-            }
-
-            return expansions;
-        }
-
-        private static List<string> GetSemanticMoodExpansions(string mood)
-        {
-            var expansions = new List<string>();
-
-            switch (mood)
-            {
-                case "dark":
-                    expansions.AddRange(new[] { "serious", "grim", "atmospheric", "intense", "mature" });
-                    break;
-                case "light-hearted":
-                    expansions.AddRange(new[] { "cheerful", "fun", "comedic", "uplifting", "family-friendly" });
-                    break;
-                case "intense":
-                    expansions.AddRange(new[] { "thrilling", "adrenaline", "exciting", "heart-pounding", "challenging" });
-                    break;
-                case "relaxing":
-                    expansions.AddRange(new[] { "peaceful", "calming", "meditative", "zen", "casual" });
-                    break;
-                case "atmospheric":
-                    expansions.AddRange(new[] { "immersive", "moody", "environmental", "ambient" });
-                    break;
-                case "challenging":
-                    expansions.AddRange(new[] { "difficult", "hardcore", "demanding", "punishing", "skill-based" });
-                    break;
-                default:
-                    // For unknown moods, add the original
-                    break;
-            }
-
-            return expansions;
-        }
-
         private GameEmbeddingInput MapGameToEmbeddingInput(Backend.Models.Game.Game game)
         {
-            var cacheKey = $"{SEMANTIC_CACHE_KEY_PREFIX}{game.Id}_{game.UpdatedAt:yyyyMMddHHmmss}";
-
-            if (_cache.TryGetValue(cacheKey, out GameEmbeddingInput? cachedInput) && cachedInput != null)
-            {
-                _logger.LogDebug("Using cached semantic keywords for game: {GameName}", game.Name);
-                return cachedInput;
-            }
-
             var gameInput = new GameEmbeddingInput
             {
                 Name = game.Name,
-                Summary = game.Summary ?? "",
-                Storyline = game.Storyline,
+                // Summary = game.Summary ?? "",
+                // Storyline = game.Storyline ?? "",
                 Genres = game.GameGenres?.Select(gg => gg.Genre.Name).ToList() ?? new List<string>(),
                 Platforms = game.GamePlatforms?.Select(gp => gp.Platform.Name).ToList() ?? new List<string>(),
                 GameModes = game.GameModes?.Select(gm => gm.GameMode.Name).ToList() ?? new List<string>(),
                 PlayerPerspectives = game.GamePlayerPerspectives?.Select(gpp => gpp.PlayerPerspective.Name).ToList() ?? new List<string>(),
-                Rating = game.Rating,
+                //Rating = game.Rating,
                 ReleaseDate = game.FirstReleaseDate.HasValue ? DateTimeOffset.FromUnixTimeSeconds(game.FirstReleaseDate.Value).DateTime : null
             };
 
-            // Extract semantic keywords with comprehensive cross-category analysis
-            ExtractSemanticKeywords(gameInput);
+            // Add the new required fields
+            //gameInput.AgeRatings = game.GameAgeRatings?.Select(ar => ar.AgeRating.AgeRatingCategory.).ToList() ?? new List<string>();
+            gameInput.Companies = game.GameCompanies?.Select(gc => gc.Company.Name).ToList() ?? new List<string>();
+            gameInput.GameType = game.GameType?.Type ?? "";
 
-            // Cache the result
-            _cache.Set(cacheKey, gameInput, CACHE_DURATION);
-            _logger.LogDebug("Cached semantic keywords for game: {GameName}", game.Name);
+            // Apply simplified semantic enrichment using existing mappings
+            ApplySemanticEnrichment(gameInput);
 
             return gameInput;
         }
@@ -590,10 +427,7 @@ namespace Backend.Services.Recommendation
                 if (File.Exists(configPath))
                 {
                     var jsonContent = File.ReadAllText(configPath);
-                    _semanticConfig = JsonSerializer.Deserialize<SemanticKeywordConfig>(jsonContent, new JsonSerializerOptions
-                    {
-                        PropertyNameCaseInsensitive = true
-                    });
+                    _semanticConfig = JsonSerializer.Deserialize<SemanticKeywordConfig>(jsonContent, JsonOptions);
                     _embeddingDimensions = _semanticConfig?.Dimensions;
                     _logger.LogInformation("Loaded semantic keyword configuration from file");
                 }
@@ -612,7 +446,7 @@ namespace Backend.Services.Recommendation
             }
         }
 
-        private SemanticKeywordConfig CreateDefaultSemanticConfig()
+        private static SemanticKeywordConfig CreateDefaultSemanticConfig()
         {
             return new SemanticKeywordConfig
             {
@@ -621,487 +455,64 @@ namespace Backend.Services.Recommendation
             };
         }
 
-        private void ExtractSemanticKeywords(GameEmbeddingInput gameInput)
+        private void ApplySemanticEnrichment(GameEmbeddingInput gameInput)
         {
             if (_semanticConfig == null)
             {
-                _logger.LogWarning("Semantic configuration not loaded, skipping keyword extraction");
+                _logger.LogWarning("Semantic configuration not loaded, skipping enrichment");
                 return;
             }
 
-            var allExtractedKeywords = new HashSet<string>();
-            var usePrecomputedCache = _semanticKeywordCache?.IsInitialized == true;
-
-            if (usePrecomputedCache)
+            // Simple direct mapping from existing semantic configurations
+            foreach (var genre in gameInput.Genres)
             {
-                _logger.LogDebug("Using precomputed semantic keyword cache for game: {GameName}", gameInput.Name);
-
-                // Extract from genres using precomputed cache
-                foreach (var genre in gameInput.Genres)
-                {
-                    ExtractKeywordsFromPrecomputedCache("genre", genre, gameInput, allExtractedKeywords);
-                }
-
-                // Extract from platforms using precomputed cache
-                foreach (var platform in gameInput.Platforms)
-                {
-                    ExtractKeywordsFromPrecomputedCache("platform", platform, gameInput, allExtractedKeywords);
-                }
-
-                // Extract from game modes using precomputed cache
-                foreach (var gameMode in gameInput.GameModes)
-                {
-                    ExtractKeywordsFromPrecomputedCache("gamemode", gameMode, gameInput, allExtractedKeywords);
-                }
-
-                // Extract from player perspectives using precomputed cache
-                foreach (var perspective in gameInput.PlayerPerspectives)
-                {
-                    ExtractKeywordsFromPrecomputedCache("perspective", perspective, gameInput, allExtractedKeywords);
-                }
-
-                // Try to find precomputed combinations
-                ExtractKeywordsFromPrecomputedCombinations(gameInput, allExtractedKeywords);
-            }
-            else
-            {
-                _logger.LogDebug("Using real-time semantic keyword extraction for game: {GameName}", gameInput.Name);
-
-                // Fallback to real-time extraction
-                foreach (var genre in gameInput.Genres)
-                {
-                    ExtractKeywordsFromCategory(_semanticConfig.GenreMappings, genre, gameInput, allExtractedKeywords);
-                }
-
-                foreach (var platform in gameInput.Platforms)
-                {
-                    ExtractKeywordsFromCategory(_semanticConfig.PlatformMappings, platform, gameInput, allExtractedKeywords);
-                }
-
-                foreach (var gameMode in gameInput.GameModes)
-                {
-                    ExtractKeywordsFromCategory(_semanticConfig.GameModeMappings, gameMode, gameInput, allExtractedKeywords);
-                }
-
-                foreach (var perspective in gameInput.PlayerPerspectives)
-                {
-                    ExtractKeywordsFromCategory(_semanticConfig.PerspectiveMappings, perspective, gameInput, allExtractedKeywords);
-                }
+                ApplySemanticMapping(_semanticConfig.GenreMappings, genre, gameInput);
             }
 
-            // Always extract from text content (not cached as it's game-specific)
-            ExtractKeywordsFromText(gameInput, allExtractedKeywords);
-
-            // Apply comprehensive cross-category analysis
-            ApplyComprehensiveCrossCategoryBoosts(gameInput, allExtractedKeywords);
-
-            // Calculate semantic weights
-            CalculateSemanticWeights(gameInput);
-
-            _logger.LogDebug("Extracted {Count} unique semantic keywords for game: {GameName} (using {Method})",
-                allExtractedKeywords.Count, gameInput.Name, usePrecomputedCache ? "precomputed cache" : "real-time extraction");
-        }
-
-        private void ExtractKeywordsFromPrecomputedCache(
-            string categoryType,
-            string key,
-            GameEmbeddingInput gameInput,
-            HashSet<string> allExtractedKeywords)
-        {
-            if (_semanticKeywordCache == null) return;
-
-            SemanticCategoryMapping? mapping = categoryType switch
+            foreach (var platform in gameInput.Platforms)
             {
-                "genre" => _semanticKeywordCache.GetGenreKeywords(key),
-                "platform" => _semanticKeywordCache.GetPlatformKeywords(key),
-                "gamemode" => _semanticKeywordCache.GetGameModeKeywords(key),
-                "perspective" => _semanticKeywordCache.GetPerspectiveKeywords(key),
-                _ => null
-            };
-
-            if (mapping != null)
-            {
-                SemanticUtilityService.AddMappingKeywords(mapping, gameInput, allExtractedKeywords);
-                _logger.LogDebug("Used precomputed cache for {CategoryType}: {Key}", categoryType, key);
+                ApplySemanticMapping(_semanticConfig.PlatformMappings, platform, gameInput);
             }
-            else
+
+            foreach (var gameMode in gameInput.GameModes)
             {
-                // Fallback to real-time extraction if not in cache
-                var categoryMappings = categoryType switch
+                ApplySemanticMapping(_semanticConfig.GameModeMappings, gameMode, gameInput);
+            }
+
+            foreach (var perspective in gameInput.PlayerPerspectives)
+            {
+                ApplySemanticMapping(_semanticConfig.PerspectiveMappings, perspective, gameInput);
+            }
+
+            // Apply weights from configuration
+            if (_semanticConfig.DefaultWeights != null)
+            {
+                gameInput.SemanticWeights = new Dictionary<string, float>
                 {
-                    "genre" => _semanticConfig?.GenreMappings,
-                    "platform" => _semanticConfig?.PlatformMappings,
-                    "gamemode" => _semanticConfig?.GameModeMappings,
-                    "perspective" => _semanticConfig?.PerspectiveMappings,
-                    _ => null
+                    ["genre"] = _semanticConfig.DefaultWeights.GenreWeight,
+                    ["mechanics"] = _semanticConfig.DefaultWeights.MechanicsWeight,
+                    ["theme"] = _semanticConfig.DefaultWeights.ThemeWeight,
+                    ["mood"] = _semanticConfig.DefaultWeights.MoodWeight,
+                    ["artstyle"] = _semanticConfig.DefaultWeights.ArtStyleWeight,
+                    ["audience"] = _semanticConfig.DefaultWeights.AudienceWeight
                 };
-
-                if (categoryMappings != null)
-                {
-                    ExtractKeywordsFromCategory(categoryMappings, key, gameInput, allExtractedKeywords);
-                    _logger.LogDebug("Cache miss for {CategoryType}: {Key}, used real-time extraction", categoryType, key);
-                }
             }
+
+            _logger.LogDebug("Applied simplified semantic enrichment for game: {GameName}", gameInput.Name);
         }
 
-        private void ExtractKeywordsFromPrecomputedCombinations(GameEmbeddingInput gameInput, HashSet<string> allExtractedKeywords)
+        private static void ApplySemanticMapping(Dictionary<string, SemanticCategoryMapping> mappings, string key, GameEmbeddingInput gameInput)
         {
-            if (_semanticKeywordCache == null) return;
-
-            // Try common combinations based on game's genres and modes
-            var possibleCombinations = new List<string>();
-
-            // Generate genre combinations
-            for (int i = 0; i < gameInput.Genres.Count; i++)
+            if (mappings.TryGetValue(key, out var mapping))
             {
-                for (int j = i + 1; j < gameInput.Genres.Count; j++)
-                {
-                    possibleCombinations.Add($"{gameInput.Genres[i]} {gameInput.Genres[j]}");
-                }
-            }
-
-            // Generate platform + genre combinations
-            foreach (var platform in gameInput.Platforms.Take(2)) // Limit to avoid too many combinations
-            {
-                foreach (var genre in gameInput.Genres.Take(2))
-                {
-                    possibleCombinations.Add($"{platform} {genre}");
-                }
-            }
-
-            // Check precomputed cache for these combinations
-            foreach (var combination in possibleCombinations)
-            {
-                var mapping = _semanticKeywordCache.GetCombinationKeywords(combination);
-                if (mapping != null)
-                {
-                    SemanticUtilityService.AddMappingKeywords(mapping, gameInput, allExtractedKeywords);
-                    _logger.LogDebug("Used precomputed combination: {Combination}", combination);
-                }
+                gameInput.ExtractedGenreKeywords.AddRange(mapping.GenreKeywords);
+                gameInput.ExtractedMechanicKeywords.AddRange(mapping.MechanicKeywords);
+                gameInput.ExtractedThemeKeywords.AddRange(mapping.ThemeKeywords);
+                gameInput.ExtractedMoodKeywords.AddRange(mapping.MoodKeywords);
+                gameInput.ExtractedArtStyleKeywords.AddRange(mapping.ArtStyleKeywords);
+                gameInput.ExtractedAudienceKeywords.AddRange(mapping.AudienceKeywords);
             }
         }
 
-        private void ExtractKeywordsFromCategory(
-            Dictionary<string, SemanticCategoryMapping> categoryMappings,
-            string key,
-            GameEmbeddingInput gameInput,
-            HashSet<string> allExtractedKeywords)
-        {
-            SemanticCategoryMapping? mapping = null;
-
-            // First try exact match
-            if (categoryMappings.TryGetValue(key, out mapping))
-            {
-                SemanticUtilityService.AddMappingKeywords(mapping, gameInput, allExtractedKeywords);
-                return;
-            }
-
-            // Enhanced fuzzy matching with safeguards
-            var fuzzyMatch = SemanticUtilityService.FindBestFuzzyMatch(key, categoryMappings.Keys);
-            if (fuzzyMatch != null && categoryMappings.TryGetValue(fuzzyMatch, out mapping))
-            {
-                SemanticUtilityService.AddMappingKeywords(mapping, gameInput, allExtractedKeywords);
-                _logger.LogDebug("Used fuzzy match '{FuzzyMatch}' for key '{Key}' (similarity score: {Score})",
-                    fuzzyMatch, key, SemanticUtilityService.CalculateSimilarityScore(key, fuzzyMatch));
-            }
-        }
-
-
-        private void ExtractKeywordsFromText(GameEmbeddingInput gameInput, HashSet<string> allExtractedKeywords)
-        {
-            var combinedText = $"{gameInput.Summary} {gameInput.Storyline}".ToLowerInvariant();
-
-            // Define text-based keyword patterns
-            var textKeywordMappings = new Dictionary<string[], string[]>
-            {
-                [new[] { "magic", "wizard", "spell", "dragon", "medieval" }] = new[] { "fantasy" },
-                [new[] { "space", "robot", "future", "technology", "cyber" }] = new[] { "sci-fi", "futuristic" },
-                [new[] { "scary", "frightening", "terror", "nightmare", "haunted" }] = new[] { "horror", "scary" },
-                [new[] { "funny", "humor", "comedy", "joke", "laugh" }] = new[] { "comedic", "light-hearted" },
-                [new[] { "dark", "grim", "serious", "mature", "violence" }] = new[] { "dark", "mature" },
-                [new[] { "beautiful", "stunning", "gorgeous", "artistic" }] = new[] { "visually stunning" },
-                [new[] { "challenging", "difficult", "hard", "punishing" }] = new[] { "challenging", "hardcore" },
-                [new[] { "relaxing", "calm", "peaceful", "zen", "meditative" }] = new[] { "relaxing", "peaceful" },
-                [new[] { "multiplayer", "online", "friends", "team", "co-op" }] = new[] { "social", "multiplayer" },
-                [new[] { "story", "narrative", "plot", "character", "dialogue" }] = new[] { "story-driven", "narrative" }
-            };
-
-            foreach (var (triggers, keywords) in textKeywordMappings)
-            {
-                if (triggers.Any(trigger => combinedText.Contains(trigger)))
-                {
-                    foreach (var keyword in keywords)
-                    {
-                        allExtractedKeywords.Add(keyword);
-
-                        // Add to appropriate category
-                        if (keyword.Contains("horror") || keyword.Contains("scary") || keyword.Contains("dark"))
-                            gameInput.ExtractedMoodKeywords.Add(keyword);
-                        else if (keyword.Contains("fantasy") || keyword.Contains("sci-fi"))
-                            gameInput.ExtractedThemeKeywords.Add(keyword);
-                        else if (keyword.Contains("challenging") || keyword.Contains("relaxing"))
-                            gameInput.ExtractedAudienceKeywords.Add(keyword);
-                        else if (keyword.Contains("multiplayer") || keyword.Contains("social"))
-                            gameInput.ExtractedMechanicKeywords.Add(keyword);
-                        else if (keyword.Contains("story") || keyword.Contains("narrative"))
-                            gameInput.ExtractedMoodKeywords.Add(keyword);
-                        else
-                            gameInput.ExtractedMoodKeywords.Add(keyword); // Default to mood
-                    }
-                }
-            }
-        }
-
-        private void ApplyComprehensiveCrossCategoryBoosts(GameEmbeddingInput gameInput, HashSet<string> allExtractedKeywords)
-        {
-            if (_semanticConfig?.CrossCategoryBoosts == null) return;
-
-            var boostsApplied = new List<string>();
-
-            // Apply configured cross-category boosts
-            foreach (var (boostKey, boosts) in _semanticConfig.CrossCategoryBoosts)
-            {
-                foreach (var boost in boosts)
-                {
-                    bool shouldApplyBoost = boost.Condition.ToLower() switch
-                    {
-                        "all" => boost.BoostKeywords.All(k => allExtractedKeywords.Contains(k.ToLowerInvariant())),
-                        "exact" => allExtractedKeywords.Contains(boost.TriggerKeyword.ToLowerInvariant()),
-                        _ => allExtractedKeywords.Any(k => k.Contains(boost.TriggerKeyword.ToLowerInvariant()))
-                    };
-
-                    if (shouldApplyBoost)
-                    {
-                        ApplyBoostToCategory(gameInput, boost);
-                        boostsApplied.Add($"{boost.TriggerKeyword}→{boost.Category}");
-                    }
-                }
-            }
-
-            // Apply intelligent cross-category analysis
-            ApplyIntelligentCrossCategoryBoosts(gameInput, allExtractedKeywords, boostsApplied);
-
-            gameInput.HierarchicalBoosts = boostsApplied;
-        }
-
-        private void ApplyIntelligentCrossCategoryBoosts(GameEmbeddingInput gameInput, HashSet<string> allExtractedKeywords, List<string> boostsApplied)
-        {
-            // RPG + Fantasy combination
-            if (allExtractedKeywords.Any(k => k.Contains("rpg")) && allExtractedKeywords.Any(k => k.Contains("fantasy")))
-            {
-                gameInput.ExtractedThemeKeywords.AddRange(new[] { "epic", "quest", "adventure", "magic system" });
-                gameInput.ExtractedMechanicKeywords.AddRange(new[] { "character customization", "skill progression" });
-                boostsApplied.Add("RPG+Fantasy→Enhanced");
-            }
-
-            // Horror + Action combination
-            if (allExtractedKeywords.Any(k => k.Contains("horror")) && allExtractedKeywords.Any(k => k.Contains("action")))
-            {
-                gameInput.ExtractedMechanicKeywords.AddRange(new[] { "survival horror", "resource scarcity" });
-                gameInput.ExtractedMoodKeywords.AddRange(new[] { "intense", "thrilling" });
-                boostsApplied.Add("Horror+Action→Survival");
-            }
-
-            // Strategy + Multiplayer combination
-            if (allExtractedKeywords.Any(k => k.Contains("strategy")) && allExtractedKeywords.Any(k => k.Contains("multiplayer")))
-            {
-                gameInput.ExtractedMechanicKeywords.AddRange(new[] { "competitive strategy", "tactical multiplayer" });
-                gameInput.ExtractedAudienceKeywords.AddRange(new[] { "strategy enthusiasts", "competitive" });
-                boostsApplied.Add("Strategy+Multiplayer→Competitive");
-            }
-
-            // Sci-fi + Shooter combination
-            if (allExtractedKeywords.Any(k => k.Contains("sci-fi")) && allExtractedKeywords.Any(k => k.Contains("shooter")))
-            {
-                gameInput.ExtractedThemeKeywords.AddRange(new[] { "futuristic warfare", "space combat" });
-                gameInput.ExtractedArtStyleKeywords.AddRange(new[] { "futuristic", "high-tech" });
-                boostsApplied.Add("SciFi+Shooter→FuturisticCombat");
-            }
-
-            // Indie + Artistic indicators
-            if (gameInput.Platforms.Any(p => p.Contains("PC")) &&
-                (allExtractedKeywords.Any(k => k.Contains("artistic") || k.Contains("unique") || k.Contains("creative"))))
-            {
-                gameInput.ExtractedAudienceKeywords.AddRange(new[] { "indie game lovers", "art enthusiasts" });
-                gameInput.ExtractedArtStyleKeywords.AddRange(new[] { "unique", "artistic", "creative" });
-                boostsApplied.Add("Indie+Artistic→CreativeAudience");
-            }
-        }
-
-        private void ApplyBoostToCategory(GameEmbeddingInput gameInput, CrossCategoryBoost boost)
-        {
-            var keywordsToAdd = boost.BoostKeywords.ToList();
-
-            switch (boost.Category.ToLower())
-            {
-                case "genre":
-                    gameInput.ExtractedGenreKeywords.AddRange(keywordsToAdd);
-                    break;
-                case "mechanics":
-                    gameInput.ExtractedMechanicKeywords.AddRange(keywordsToAdd);
-                    break;
-                case "themes":
-                    gameInput.ExtractedThemeKeywords.AddRange(keywordsToAdd);
-                    break;
-                case "mood":
-                    gameInput.ExtractedMoodKeywords.AddRange(keywordsToAdd);
-                    break;
-                case "artstyle":
-                    gameInput.ExtractedArtStyleKeywords.AddRange(keywordsToAdd);
-                    break;
-                case "audience":
-                    gameInput.ExtractedAudienceKeywords.AddRange(keywordsToAdd);
-                    break;
-                default:
-                    gameInput.ExtractedMoodKeywords.AddRange(keywordsToAdd); // Default fallback
-                    break;
-            }
-        }
-
-        private void CalculateSemanticWeights(GameEmbeddingInput gameInput)
-        {
-            if (_semanticConfig?.DefaultWeights == null) return;
-
-            var weights = _semanticConfig.DefaultWeights;
-
-            gameInput.SemanticWeights = new Dictionary<string, float>
-            {
-                ["genre"] = weights.GenreWeight,
-                ["mechanics"] = weights.MechanicsWeight,
-                ["theme"] = weights.ThemeWeight,
-                ["mood"] = weights.MoodWeight,
-                ["artstyle"] = weights.ArtStyleWeight,
-                ["audience"] = weights.AudienceWeight,
-                ["hierarchical_boost"] = weights.HierarchicalBoostMultiplier,
-                ["cross_category_boost"] = weights.CrossCategoryBoostMultiplier
-            };
-
-            // Apply dynamic weight adjustments based on content richness
-            var totalKeywordCount = gameInput.ExtractedGenreKeywords.Count +
-                                  gameInput.ExtractedMechanicKeywords.Count +
-                                  gameInput.ExtractedThemeKeywords.Count +
-                                  gameInput.ExtractedMoodKeywords.Count +
-                                  gameInput.ExtractedArtStyleKeywords.Count +
-                                  gameInput.ExtractedAudienceKeywords.Count;
-
-            // Boost weights for games with rich semantic content
-            if (totalKeywordCount > 15)
-            {
-                foreach (var key in gameInput.SemanticWeights.Keys.ToList())
-                {
-                    if (key.Contains("boost"))
-                        gameInput.SemanticWeights[key] *= 1.2f; // Increase boost effectiveness
-                }
-            }
-
-            // Reduce noise for games with minimal semantic content
-            if (totalKeywordCount < 5)
-            {
-                foreach (var key in gameInput.SemanticWeights.Keys.ToList())
-                {
-                    if (!key.Contains("genre")) // Keep genre weight stable
-                        gameInput.SemanticWeights[key] *= 0.8f;
-                }
-            }
-        }
-
-        private Dictionary<string, object> CreateGamePayload(Backend.Models.Game.Game game)
-        {
-            var releaseYear = game.FirstReleaseDate.HasValue
-                ? DateTimeOffset.FromUnixTimeSeconds(game.FirstReleaseDate.Value).Year
-                : 0;
-
-            // Get the enhanced game input with semantic keywords
-            var gameInput = MapGameToEmbeddingInput(game);
-
-            var payload = new Dictionary<string, object>
-            {
-                // Basic game information
-                {"name", game.Name},
-                {"summary", game.Summary ?? ""},
-                {"storyline", game.Storyline ?? ""},
-                {"rating", game.Rating?.ToString() ?? "0"},
-                {"release_year", releaseYear.ToString()},
-                {"cover_url", game.Covers?.FirstOrDefault()?.Url ?? ""},
-                {"igdb_id", game.IgdbId.ToString()},
-
-                // Original game attributes (for exact matching)
-                {"genres", string.Join(",", game.GameGenres?.Select(gg => gg.Genre.Name) ?? new List<string>())},
-                {"platforms", string.Join(",", game.GamePlatforms?.Select(gp => gp.Platform.Name) ?? new List<string>())},
-                {"game_modes", string.Join(",", game.GameModes?.Select(gm => gm.GameMode.Name) ?? new List<string>())},
-                {"perspectives", string.Join(",", game.GamePlayerPerspectives?.Select(gpp => gpp.PlayerPerspective.Name) ?? new List<string>())},
-
-                // Enhanced platform information with aliases
-                {"platform_aliases", CreatePlatformAliasesString(game.GamePlatforms?.Select(gp => gp.Platform.Name) ?? new List<string>())},
-                {"canonical_platforms", string.Join(",", PlatformAliasService.NormalizePlatformNames(game.GamePlatforms?.Select(gp => gp.Platform.Name) ?? new List<string>()))}
-            };
-
-            // Enhanced semantic metadata for better filtering and search
-            AddSemanticMetadataToPayload(payload, gameInput);
-
-            return payload;
-        }
-
-        private static void AddSemanticMetadataToPayload(Dictionary<string, object> payload, GameEmbeddingInput gameInput)
-        {
-            // Add extracted semantic keywords for advanced filtering
-            if (HasEnhancedSemanticKeywords(gameInput))
-            {
-                payload["semantic_genres"] = string.Join(",", gameInput.ExtractedGenreKeywords);
-                payload["semantic_mechanics"] = string.Join(",", gameInput.ExtractedMechanicKeywords);
-                payload["semantic_themes"] = string.Join(",", gameInput.ExtractedThemeKeywords);
-                payload["semantic_moods"] = string.Join(",", gameInput.ExtractedMoodKeywords);
-                payload["semantic_artstyles"] = string.Join(",", gameInput.ExtractedArtStyleKeywords);
-                payload["semantic_audiences"] = string.Join(",", gameInput.ExtractedAudienceKeywords);
-
-                // Add hierarchical boost information for ranking insights
-                payload["hierarchical_boosts"] = string.Join(",", gameInput.HierarchicalBoosts);
-
-                // Add semantic weight distribution for quality scoring
-                if (gameInput.SemanticWeights.Count > 0)
-                {
-                    var semanticWeightSum = gameInput.SemanticWeights.Values.Sum();
-                    payload["semantic_weight_total"] = semanticWeightSum.ToString("F2");
-
-                    // Category richness indicators
-                    var categoryCount = gameInput.ExtractedGenreKeywords.Count +
-                                      gameInput.ExtractedMechanicKeywords.Count +
-                                      gameInput.ExtractedThemeKeywords.Count +
-                                      gameInput.ExtractedMoodKeywords.Count +
-                                      gameInput.ExtractedArtStyleKeywords.Count +
-                                      gameInput.ExtractedAudienceKeywords.Count;
-                    payload["semantic_keyword_count"] = categoryCount.ToString();
-                }
-            }
-
-            // Add embedding confidence metrics (useful for result ranking)
-            payload["embedding_method"] = HasEnhancedSemanticKeywords(gameInput) ? "semantic_enhanced" : "text_based";
-        }
-
-        private static bool HasEnhancedSemanticKeywords(GameEmbeddingInput gameInput)
-        {
-            return gameInput.ExtractedGenreKeywords.Count > 0 ||
-                   gameInput.ExtractedMechanicKeywords.Count > 0 ||
-                   gameInput.ExtractedThemeKeywords.Count > 0 ||
-                   gameInput.ExtractedMoodKeywords.Count > 0 ||
-                   gameInput.ExtractedArtStyleKeywords.Count > 0 ||
-                   gameInput.ExtractedAudienceKeywords.Count > 0;
-        }
-
-        private static string CreatePlatformAliasesString(IEnumerable<string> platformNames)
-        {
-            var allAliases = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-            
-            foreach (var platform in platformNames)
-            {
-                var aliases = PlatformAliasService.GetAllPlatformAliases(platform);
-                foreach (var alias in aliases)
-                {
-                    allAliases.Add(alias);
-                }
-            }
-            
-            return string.Join(",", allAliases);
-        }
     }
 }

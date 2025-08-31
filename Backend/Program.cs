@@ -11,7 +11,9 @@ using Backend.Config;
 using Backend.Models.Auth;
 using Backend.Services.Recommendation;
 using Backend.Services.Recommendation.Interfaces;
+using Backend.Configuration;
 using Qdrant.Client;
+using Qdrant.Client.Grpc;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -37,7 +39,25 @@ builder.Services.AddSingleton<QdrantClient>(provider =>
     var uri = new Uri(qdrantUrl);
     // Use gRPC port (6334) instead of HTTP port (6333) C# client uses gRPC interface by default
     var grpcPort = uri.Port == 6333 ? 6334 : uri.Port;
-    return new QdrantClient(uri.Host, grpcPort, https: false);
+
+    // Configure optimized gRPC channel for high-throughput operations
+    var grpcAddress = $"http://{uri.Host}:{grpcPort}";
+    var grpcChannelOptions = new Grpc.Net.Client.GrpcChannelOptions
+    {
+        MaxReceiveMessageSize = 16 * 1024 * 1024, // 16MB
+        MaxSendMessageSize = 16 * 1024 * 1024,    // 16MB
+        HttpHandler = new SocketsHttpHandler
+        {
+            EnableMultipleHttp2Connections = true,
+            KeepAlivePingDelay = TimeSpan.FromSeconds(30),
+            KeepAlivePingTimeout = TimeSpan.FromSeconds(5),
+            PooledConnectionIdleTimeout = TimeSpan.FromMinutes(10)
+        }
+    };
+
+    var channel = Grpc.Net.Client.GrpcChannel.ForAddress(grpcAddress, grpcChannelOptions);
+    var grpcClient = new QdrantGrpcClient(channel);
+    return new QdrantClient(grpcClient);
 });
 
 builder.Services.AddScoped<IVectorDatabase, QdrantVectorDatabase>();
@@ -47,6 +67,7 @@ builder.Services.AddScoped<UserPreferenceService>();
 builder.Services.AddSingleton<ISemanticKeywordCache, SemanticKeywordCache>();
 builder.Services.AddScoped<GameIndexingService>();
 builder.Services.AddScoped<GameRecommendationService>();
+builder.Services.AddScoped<EmbeddingDimensionValidator>();
 builder.Services.AddSingleton<ConversationStateService>();
 // Add game change tracking service and initial indexing service
 builder.Services.AddHostedService<GameIndexingBackgroundService>();
@@ -74,7 +95,16 @@ builder.Services.AddOpenApi();
 // TODO: add connection string in cofnigguration
 var mySqlConnectionString = builder.Configuration.GetConnectionString("mysqldb");
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseMySql(mySqlConnectionString, new MySqlServerVersion(new Version())));
+{
+    options.UseMySql(mySqlConnectionString, new MySqlServerVersion(new Version()), mySqlOptions =>
+    {
+        mySqlOptions.CommandTimeout(120);
+        mySqlOptions.EnableRetryOnFailure(maxRetryCount: 3, maxRetryDelay: TimeSpan.FromSeconds(5), errorNumbersToAdd: null);
+    });
+    options.EnableSensitiveDataLogging(false);
+    options.EnableServiceProviderCaching();
+    options.EnableDetailedErrors(false);
+});
 
 // add identity services
 builder.Services.AddIdentity<User, IdentityRole>()
@@ -165,5 +195,23 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+
+// Validate embedding dimensions at startup to prevent runtime errors
+using (var scope = app.Services.CreateScope())
+{
+    var validator = scope.ServiceProvider.GetRequiredService<EmbeddingDimensionValidator>();
+    var validationResult = await validator.ValidateSystemDimensionsAsync();
+
+    if (!validationResult)
+    {
+        var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+        logger.LogCritical("❌ STARTUP FAILED: Embedding dimension validation failed! The system cannot start with incorrect dimensions.");
+        logger.LogCritical("Please check your configuration and ensure all embedding dimensions are consistent.");
+        logger.LogCritical("Expected dimensions: {ExpectedMessage}", EmbeddingConstants.GetExpectedDimensionsMessage());
+
+        // Terminate the application to prevent runtime errors
+        Environment.Exit(1);
+    }
+}
 
 app.Run();

@@ -1,8 +1,11 @@
 using Backend.Services.Recommendation.Interfaces;
+using Backend.Services.Recommendation.Tokenization;
 using Microsoft.ML.OnnxRuntime;
 using Microsoft.ML.OnnxRuntime.Tensors;
 using Backend.Configuration;
 using System.Text.Json;
+using System.Buffers;
+using System.Text;
 
 namespace Backend.Services.Recommendation
 {
@@ -13,6 +16,12 @@ namespace Backend.Services.Recommendation
         private readonly IConfiguration _configuration;
         private readonly bool _useOnnxModel;
         private readonly EmbeddingDimensions _dimensions;
+        private readonly EmbeddingCacheManager _cacheManager;
+        private readonly ITokenizationStrategy _tokenizationStrategy;
+        private readonly ArrayPool<long> _longArrayPool = ArrayPool<long>.Shared;
+        private readonly ArrayPool<float> _floatArrayPool = ArrayPool<float>.Shared;
+        private const int MaxBatchSize = 50;
+        private ITokenizationStrategy? _cachedWorkingStrategy;
 
         private static readonly JsonSerializerOptions JsonOptions = new()
         {
@@ -25,6 +34,20 @@ namespace Backend.Services.Recommendation
         {
             _logger = logger;
             _configuration = configuration;
+
+            // Optimize cache sizes for high-throughput indexing
+            var cacheConfig = configuration.GetSection("EmbeddingCache");
+            var maxEmbeddingCacheSize = cacheConfig.GetValue<int>("MaxEmbeddingCacheSize", 5000);
+            var maxTokenCacheSize = cacheConfig.GetValue<int>("MaxTokenCacheSize", 15000);
+            var cacheExpiryHours = cacheConfig.GetValue<int>("ExpiryHours", 2);
+
+            _cacheManager = new EmbeddingCacheManager(
+                maxEmbeddingCacheSize,
+                maxTokenCacheSize,
+                TimeSpan.FromHours(cacheExpiryHours));
+
+            // Initialize tokenization strategy
+            _tokenizationStrategy = TokenizationStrategyFactory.CreateStrategy(configuration, logger);
 
             // Initialize standardized dimensions
             _dimensions = LoadEmbeddingDimensions();
@@ -40,8 +63,13 @@ namespace Backend.Services.Recommendation
                 if (_useOnnxModel)
                 {
                     var sessionOptions = new Microsoft.ML.OnnxRuntime.SessionOptions();
+                    sessionOptions.EnableMemoryPattern = true;
+                    sessionOptions.EnableCpuMemArena = true;
+                    sessionOptions.ExecutionMode = ExecutionMode.ORT_PARALLEL;
+                    sessionOptions.InterOpNumThreads = Environment.ProcessorCount;
+                    sessionOptions.IntraOpNumThreads = Math.Max(1, Environment.ProcessorCount / 2);
                     _session = new InferenceSession(modelPath!, sessionOptions);
-                    _logger.LogInformation("Embedding service initialized with ONNX model: {ModelPath}", modelPath);
+                    _logger.LogInformation("Embedding service initialized with optimized ONNX model: {ModelPath}", modelPath);
                 }
                 else
                 {
@@ -73,19 +101,38 @@ namespace Backend.Services.Recommendation
 
                     if (config?.Dimensions != null)
                     {
-                        _logger.LogInformation("Loaded embedding dimensions from configuration: {BaseTextEmbedding} + {StructuredFeatures} = {TotalDimensions}",
-                            config.Dimensions.BaseTextEmbedding, config.Dimensions.StructuredFeatures, config.Dimensions.TotalDimensions);
+                        // Validate loaded dimensions match our constants
+                        if (!EmbeddingConstants.ValidateDimensions(config.Dimensions.TotalDimensions))
+                        {
+                            _logger.LogError("Configuration dimensions mismatch! Config has {ConfigDimensions}, but constants expect {ExpectedMessage}",
+                                config.Dimensions.TotalDimensions, EmbeddingConstants.GetExpectedDimensionsMessage());
+                            _logger.LogWarning("Using EmbeddingConstants dimensions for consistency");
+
+                            return new EmbeddingDimensions
+                            {
+                                BaseTextEmbedding = EmbeddingConstants.BASE_TEXT_EMBEDDING_DIMENSIONS
+                            };
+                        }
+
+                        _logger.LogInformation("Loaded embedding dimensions from configuration: {TotalDimensions} dimensions (ONNX-only)",
+                            config.Dimensions.TotalDimensions);
                         return config.Dimensions;
                     }
                 }
 
-                _logger.LogWarning("Could not load embedding dimensions from configuration, using defaults");
-                return new EmbeddingDimensions();
+                _logger.LogWarning("Could not load embedding dimensions from configuration, using EmbeddingConstants defaults");
+                return new EmbeddingDimensions
+                {
+                    BaseTextEmbedding = EmbeddingConstants.BASE_TEXT_EMBEDDING_DIMENSIONS
+                };
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error loading embedding dimensions configuration, using defaults");
-                return new EmbeddingDimensions();
+                _logger.LogError(ex, "Error loading embedding dimensions configuration, using EmbeddingConstants defaults");
+                return new EmbeddingDimensions
+                {
+                    BaseTextEmbedding = EmbeddingConstants.BASE_TEXT_EMBEDDING_DIMENSIONS
+                };
             }
         }
 
@@ -96,121 +143,456 @@ namespace Backend.Services.Recommendation
 
         public async Task<float[]> GenerateEmbeddingAsync(string text, GameEmbeddingInput? gameInput)
         {
-            return await Task.Run(() =>
+            if (_useOnnxModel && _session != null)
             {
-                try
-                {
-                    float[] baseEmbedding;
-                    if (_useOnnxModel && _session != null)
-                    {
-                        baseEmbedding = GenerateOnnxEmbedding(text, gameInput);
-                    }
-                    else
-                    {
-                        baseEmbedding = GenerateSimpleEmbedding(text, gameInput);
-                    }
-
-                    // Pad text embedding to match game embedding dimensions
-                    return PadEmbeddingToGameSize(baseEmbedding);
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogError(ex, "Error generating embedding for text: {Text}", text.Substring(0, Math.Min(50, text.Length)));
-                    return new float[EmbeddingDimensions];
-                }
-            });
+                return await GenerateRawTextEmbeddingAsync(text);
+            }
+            else
+            {
+                _logger.LogWarning("ONNX model not available, but ONNX-only mode requested");
+                throw new InvalidOperationException("ONNX model required but not available");
+            }
         }
 
-        // Production ONNX implementation - activated when UseOnnx=true and model files exist
-        private float[] GenerateOnnxEmbedding(string text, GameEmbeddingInput? gameInput = null)
+        /// <summary>
+        /// Generates raw text embedding using ONNX model - returns BASE_TEXT_EMBEDDING_DIMENSIONS
+        /// </summary>
+        private Task<float[]> GenerateRawTextEmbeddingAsync(string text)
         {
             try
             {
-                if (_session == null)
-                    throw new InvalidOperationException("ONNX session not initialized");
+                if (_useOnnxModel && _session != null)
+                {
+                    var embedding = GenerateOnnxEmbedding(text);
+                    return Task.FromResult(embedding);
+                }
+                else
+                {
+                    throw new InvalidOperationException("ONNX model required but not available");
+                }
+            }
+            catch (Exception ex)
+            {
+                var textPreview = string.IsNullOrEmpty(text) ? "[null/empty]" :
+                    text.Length <= 50 ? text : text.Substring(0, 50) + "...";
+                _logger.LogError(ex, "Error generating ONNX embedding for text: {TextPreview}", textPreview);
+                return Task.FromException<float[]>(ex);
+            }
+        }
 
-                // PRODUCTION IMPLEMENTATION NOTES:
-                // 1. Download model files from: https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2
-                //    - model.onnx
-                //    - tokenizer.json
-                //    - config.json
-                // 2. Install proper tokenizer package: Microsoft.ML.Tokenizers or HuggingFace.NET
-                // 3. Implement proper tokenization below
+        /// <summary>
+        /// Optimized ONNX embedding generation using proper BERT tokenization
+        /// Follows sentence-transformers all-MiniLM-L6-v2 model standards
+        /// </summary>
+        private float[] GenerateOnnxEmbedding(string text)
+        {
+            if (_session == null)
+                throw new InvalidOperationException("ONNX session not initialized");
 
-                // Simplified ONNX inference (replace with actual tokenization)
-                var tokens = SimpleTokenize(text, 512); // Max sequence length
+            try
+            {
+                const int maxSequenceLength = 512;
 
-                var inputTensor = new DenseTensor<long>(tokens, new[] { 1, tokens.Length });
-                var attentionMask = new DenseTensor<long>(
-                    tokens.Select(t => t > 0 ? 1L : 0L).ToArray(),
-                    new[] { 1, tokens.Length });
+                // Step 1: Tokenize with proper BERT tokenizer
+                var (inputIds, attentionMask) = TokenizeForBert(text, maxSequenceLength);
+
+                // Step 2: Create ONNX input tensors (batch_size=1)
+                var inputTensor = new DenseTensor<long>(inputIds, new[] { 1, inputIds.Length });
+                var maskTensor = new DenseTensor<long>(attentionMask, new[] { 1, attentionMask.Length });
+
+                // Create token_type_ids (all zeros for single sentence)
+                var tokenTypeIds = new long[inputIds.Length];
+                var tokenTypeTensor = new DenseTensor<long>(tokenTypeIds, new[] { 1, tokenTypeIds.Length });
 
                 var inputs = new List<NamedOnnxValue>
                 {
                     NamedOnnxValue.CreateFromTensor("input_ids", inputTensor),
-                    NamedOnnxValue.CreateFromTensor("attention_mask", attentionMask)
+                    NamedOnnxValue.CreateFromTensor("attention_mask", maskTensor),
+                    NamedOnnxValue.CreateFromTensor("token_type_ids", tokenTypeTensor)
                 };
 
+                // Step 3: Run ONNX inference
                 using var results = _session.Run(inputs);
-                var output = results.First().AsTensor<float>();
+                var lastHiddenState = results.FirstOrDefault()?.AsTensor<float>()
+                    ?? throw new InvalidOperationException("ONNX model returned no output");
 
-                // Extract and pool embeddings (mean pooling)
-                var embeddings = new float[_dimensions.BaseTextEmbedding];
-                var seqLength = Math.Min(tokens.Length, (int)output.Dimensions[1]);
-                var validTokens = tokens.Count(t => t > 0);
+                // Step 4: Apply mean pooling (sentence-transformers standard)
+                var pooledEmbedding = PerformMeanPooling(lastHiddenState, attentionMask);
 
-                for (int i = 0; i < _dimensions.BaseTextEmbedding; i++)
-                {
-                    float sum = 0;
-                    for (int j = 0; j < seqLength; j++)
-                    {
-                        if (tokens[j] > 0) // Only non-padded tokens
-                        {
-                            sum += output[0, j, i];
-                        }
-                    }
-                    embeddings[i] = validTokens > 0 ? sum / validTokens : 0;
-                }
-
-                return NormalizeVector(embeddings);
+                // Step 5: L2 normalize (sentence-transformers standard)
+                return NormalizeVector(pooledEmbedding);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error in ONNX embedding generation, falling back to simple method");
-                return GenerateSimpleEmbedding(text, gameInput);
+                _logger.LogError(ex, "ONNX embedding generation failed for text: {TextPreview}",
+                    text.Length > 100 ? text[..100] + "..." : text);
+                throw;
             }
         }
 
-        // Simple tokenization for ONNX (replace with proper tokenizer in production)
-        private static long[] SimpleTokenize(string text, int maxLength)
+        /// <summary>
+        /// Tokenize text for BERT model using the configured strategy with caching
+        /// </summary>
+        private (long[] inputIds, long[] attentionMask) TokenizeForBert(string text, int maxLength)
         {
-            // Simplified tokenization - replace with proper tokenizer in production
-            var tokens = new long[maxLength];
-            var words = text.ToLower().Split(' ', StringSplitOptions.RemoveEmptyEntries);
-
-            tokens[0] = 101; // [CLS] token
-            var pos = 1;
-
-            foreach (var word in words.Take(maxLength - 2))
+            // Check if we have cached tokens for this text
+            var cacheKey = $"{text}:{maxLength}";
+            if (_cacheManager.TryGetTokens(cacheKey, out var cachedTokens))
             {
-                // Simple hash-based token ID (replace with actual vocabulary)
-                tokens[pos++] = Math.Abs(word.GetHashCode()) % 30000 + 1000;
+                // Convert cached tokens to BERT inputs
+                return TokenizationStrategyBase.CreateBertInputs(cachedTokens, maxLength);
             }
 
-            if (pos < maxLength)
+            // Use strategy to tokenize
+            var result = _tokenizationStrategy.TokenizeForBert(text, maxLength);
+
+            // Extract tokens from result for caching
+            var tokensToCache = ExtractTokensFromBertInputs(result.inputIds, result.attentionMask);
+            _cacheManager.CacheTokens(cacheKey, tokensToCache);
+
+            return result;
+        }
+
+        /// <summary>
+        /// Extract token list from BERT input arrays for caching
+        /// </summary>
+        private static List<int> ExtractTokensFromBertInputs(long[] inputIds, long[] attentionMask)
+        {
+            var tokens = new List<int>();
+
+            // Skip CLS token at start (index 0) and SEP token at end
+            for (int i = 1; i < inputIds.Length && attentionMask[i] == 1; i++)
             {
-                tokens[pos] = 102; // [SEP] token
+                if (inputIds[i] != 102) // Not SEP token
+                {
+                    tokens.Add((int)inputIds[i]);
+                }
             }
 
             return tokens;
         }
 
+        /// <summary>
+        /// Perform mean pooling on token embeddings (sentence-transformers standard) with ArrayPool optimization
+        /// </summary>
+        private float[] PerformMeanPooling(Tensor<float> tokenEmbeddings, long[] attentionMask)
+        {
+            var sequenceLength = tokenEmbeddings.Dimensions[1];
+            var embeddingDim = tokenEmbeddings.Dimensions[2];
+
+            if (embeddingDim != _dimensions.BaseTextEmbedding)
+            {
+                throw new InvalidOperationException(
+                    $"Model embedding dimension {embeddingDim} doesn't match expected {_dimensions.BaseTextEmbedding}");
+            }
+
+            var pooledEmbeddingArray = ArrayPool<float>.Shared.Rent(embeddingDim);
+            try
+            {
+                var pooledEmbedding = pooledEmbeddingArray.AsSpan(0, embeddingDim);
+                pooledEmbedding.Clear();
+                var validTokenCount = 0;
+
+                // Sum embeddings for all valid (non-padded) tokens
+                for (int seq = 0; seq < Math.Min(sequenceLength, attentionMask.Length); seq++)
+                {
+                    if (attentionMask[seq] > 0) // Valid token
+                    {
+                        validTokenCount++;
+                        for (int dim = 0; dim < embeddingDim; dim++)
+                        {
+                            pooledEmbedding[dim] += tokenEmbeddings[0, seq, dim];
+                        }
+                    }
+                }
+
+                // Compute mean (average over valid tokens)
+                if (validTokenCount > 0)
+                {
+                    for (int dim = 0; dim < embeddingDim; dim++)
+                    {
+                        pooledEmbedding[dim] /= validTokenCount;
+                    }
+                }
+
+                return pooledEmbedding.ToArray();
+            }
+            finally
+            {
+                ArrayPool<float>.Shared.Return(pooledEmbeddingArray);
+            }
+        }
+
+
         public async Task<float[]> GenerateGameEmbeddingAsync(GameEmbeddingInput gameInput)
         {
             var gameText = BuildGameText(gameInput);
-            var textEmbedding = await GenerateEmbeddingAsync(gameText, gameInput);
-            var structuredFeatures = ExtractStructuredFeatures(gameInput);
-            return CombineEmbeddings(textEmbedding, structuredFeatures);
+
+            // Check cache first
+            if (_cacheManager.TryGetEmbedding(gameText, out var cachedEmbedding))
+            {
+                return cachedEmbedding;
+            }
+
+            var textEmbedding = await GenerateRawTextEmbeddingAsync(gameText);
+
+            // Validate text embedding dimensions
+            if (textEmbedding.Length != EmbeddingConstants.BASE_TEXT_EMBEDDING_DIMENSIONS)
+            {
+                _logger.LogError("Text embedding dimension mismatch: got {Actual}, expected {Expected}. Resizing...",
+                    textEmbedding.Length, EmbeddingConstants.BASE_TEXT_EMBEDDING_DIMENSIONS);
+                textEmbedding = ResizeEmbedding(textEmbedding, EmbeddingConstants.BASE_TEXT_EMBEDDING_DIMENSIONS);
+            }
+
+            // Final validation
+            if (!EmbeddingConstants.ValidateDimensions(textEmbedding.Length))
+            {
+                var errorMessage = $"CRITICAL: Final embedding validation failed! Got {textEmbedding.Length}, expected {EmbeddingConstants.TOTAL_EMBEDDING_DIMENSIONS}";
+                _logger.LogCritical(errorMessage);
+                throw new InvalidOperationException(errorMessage);
+            }
+
+            // Cache the result
+            _cacheManager.CacheEmbedding(gameText, textEmbedding);
+
+            _logger.LogDebug("Successfully generated ONNX-only embedding: {TotalDims} dimensions", textEmbedding.Length);
+
+            return textEmbedding;
+        }
+
+        /// <summary>
+        /// Process multiple games efficiently using batch ONNX inference
+        /// </summary>
+        public async Task<List<float[]>> ProcessGamesInBatch(List<GameEmbeddingInput> gameInputs)
+        {
+            if (gameInputs == null || gameInputs.Count == 0)
+                return new List<float[]>();
+
+            // Increase batch size for better ONNX throughput - ONNX performs much better with larger batches
+            const int maxBatchSize = 128;
+            if (gameInputs.Count > maxBatchSize)
+            {
+                _logger.LogWarning("Batch size {BatchSize} exceeds maximum {MaxSize}, processing in chunks",
+                    gameInputs.Count, maxBatchSize);
+
+                var allResults = new List<float[]>();
+                for (int i = 0; i < gameInputs.Count; i += maxBatchSize)
+                {
+                    var chunk = gameInputs.Skip(i).Take(maxBatchSize).ToList();
+                    var chunkResults = await ProcessGamesInBatch(chunk);
+                    allResults.AddRange(chunkResults);
+                }
+                return allResults;
+            }
+
+            var results = new float[gameInputs.Count][];
+            var gamesNeedingEmbeddings = new List<(GameEmbeddingInput game, string text, int index)>();
+
+            // Check cache for all games first
+            for (int i = 0; i < gameInputs.Count; i++)
+            {
+                var gameText = BuildGameText(gameInputs[i]);
+                if (_cacheManager.TryGetEmbedding(gameText, out var cachedEmbedding))
+                {
+                    results[i] = cachedEmbedding;
+                }
+                else
+                {
+                    gamesNeedingEmbeddings.Add((gameInputs[i], gameText, i));
+                }
+            }
+
+            // Process uncached games in batches to respect MaxBatchSize limit
+            for (int offset = 0; offset < gamesNeedingEmbeddings.Count; offset += MaxBatchSize)
+            {
+                try
+                {
+                    var batchSize = Math.Min(MaxBatchSize, gamesNeedingEmbeddings.Count - offset);
+                    var batchGames = new List<(GameEmbeddingInput game, string text, int index)>(batchSize);
+                    var textsToEmbed = new List<string>(batchSize);
+
+                    for (int i = offset; i < offset + batchSize && i < gamesNeedingEmbeddings.Count; i++)
+                    {
+                        batchGames.Add(gamesNeedingEmbeddings[i]);
+                        textsToEmbed.Add(gamesNeedingEmbeddings[i].text);
+                    }
+
+                    var newEmbeddings = await CreateEmbeddingsFromBatch(textsToEmbed);
+
+                    // Validate we got the expected number of embeddings
+                    if (newEmbeddings.Count != batchGames.Count)
+                    {
+                        _logger.LogError("Embedding count mismatch: expected {Expected}, got {Actual}",
+                            batchGames.Count, newEmbeddings.Count);
+                        continue;
+                    }
+
+                    // Put results in correct positions and cache them
+                    for (int i = 0; i < batchGames.Count; i++)
+                    {
+                        var (_, text, originalIndex) = batchGames[i];
+                        var embedding = newEmbeddings[i];
+                        results[originalIndex] = embedding;
+                        _cacheManager.CacheEmbedding(text, embedding);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Failed to process embedding batch at offset {Offset}", offset);
+                    continue;
+                }
+            }
+
+            return results.ToList();
+        }
+
+        /// <summary>
+        /// Create embeddings from multiple texts using single ONNX inference
+        /// </summary>
+        private Task<List<float[]>> CreateEmbeddingsFromBatch(List<string> texts)
+        {
+            if (_session == null)
+                throw new InvalidOperationException("ONNX session not initialized");
+
+            const int maxSequenceLength = 512;
+            var actualBatchSize = Math.Min(texts.Count, MaxBatchSize);
+            var totalSize = actualBatchSize * maxSequenceLength;
+
+            // Rent arrays from pool
+            var inputIds = _longArrayPool.Rent(totalSize);
+            var attentionMasks = _longArrayPool.Rent(totalSize);
+            var tokenTypeIds = _longArrayPool.Rent(totalSize);
+
+            try
+            {
+                // Clear token type ids (should be zeros)
+                Array.Clear(tokenTypeIds, 0, totalSize);
+
+                // Tokenize each text and fill batch arrays using spans
+                for (int i = 0; i < actualBatchSize; i++)
+                {
+                    var (textInputIds, textAttentionMask) = GetCachedTokenizationStrategy().TokenizeForBert(texts[i], maxSequenceLength);
+                    var startPosition = i * maxSequenceLength;
+
+                    textInputIds.AsSpan().CopyTo(inputIds.AsSpan(startPosition, maxSequenceLength));
+                    textAttentionMask.AsSpan().CopyTo(attentionMasks.AsSpan(startPosition, maxSequenceLength));
+                }
+
+                // Create ONNX input tensors using rented arrays
+                var inputTensor = new DenseTensor<long>(inputIds.AsMemory(0, totalSize), new[] { actualBatchSize, maxSequenceLength });
+                var maskTensor = new DenseTensor<long>(attentionMasks.AsMemory(0, totalSize), new[] { actualBatchSize, maxSequenceLength });
+                var tokenTypeTensor = new DenseTensor<long>(tokenTypeIds.AsMemory(0, totalSize), new[] { actualBatchSize, maxSequenceLength });
+
+                var onnxInputs = new List<NamedOnnxValue>
+                {
+                    NamedOnnxValue.CreateFromTensor("input_ids", inputTensor),
+                    NamedOnnxValue.CreateFromTensor("attention_mask", maskTensor),
+                    NamedOnnxValue.CreateFromTensor("token_type_ids", tokenTypeTensor)
+                };
+
+                // Run single ONNX inference for entire batch
+                using var onnxResults = _session.Run(onnxInputs);
+                var batchOutput = onnxResults[0]?.AsTensor<float>()
+                    ?? throw new InvalidOperationException("ONNX model returned no output");
+
+                // Extract individual embeddings from batch results
+                var embeddings = new List<float[]>();
+                for (int i = 0; i < actualBatchSize; i++)
+                {
+                    var maskSpan = attentionMasks.AsSpan(i * maxSequenceLength, maxSequenceLength);
+                    var embedding = ExtractEmbeddingFromBatchResult(batchOutput, maskSpan, i);
+                    embeddings.Add(embedding);
+                }
+
+                return Task.FromResult(embeddings);
+            }
+            finally
+            {
+                // Return arrays to pool
+                _longArrayPool.Return(inputIds);
+                _longArrayPool.Return(attentionMasks);
+                _longArrayPool.Return(tokenTypeIds);
+            }
+        }
+
+        /// <summary>
+        /// Get cached working tokenization strategy to avoid cascade overhead
+        /// </summary>
+        private ITokenizationStrategy GetCachedTokenizationStrategy()
+        {
+            if (_cachedWorkingStrategy != null)
+                return _cachedWorkingStrategy;
+
+            // Find the first working strategy and cache it
+            if (_tokenizationStrategy is CascadeStrategy cascade)
+            {
+                var strategies = cascade.GetType().GetField("_strategies", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)?
+                    .GetValue(cascade) as List<ITokenizationStrategy>;
+
+                _cachedWorkingStrategy = strategies?.FirstOrDefault(s => s.IsAvailable) ?? _tokenizationStrategy;
+            }
+            else
+            {
+                _cachedWorkingStrategy = _tokenizationStrategy;
+            }
+
+            return _cachedWorkingStrategy;
+        }
+
+        /// <summary>
+        /// Extract single embedding from batch ONNX results using mean pooling
+        /// </summary>
+        private float[] ExtractEmbeddingFromBatchResult(Tensor<float> batchResults, ReadOnlySpan<long> attentionMask, int itemIndex)
+        {
+            var sequenceLength = batchResults.Dimensions[1];
+            var embeddingDim = batchResults.Dimensions[2];
+
+            // Rent pooled embedding array
+            var pooledEmbedding = _floatArrayPool.Rent(embeddingDim);
+            var validTokenCount = 0;
+
+            try
+            {
+                // Clear the rented array
+                Array.Clear(pooledEmbedding, 0, embeddingDim);
+
+                // Vectorized mean pooling using spans
+                for (int seq = 0; seq < sequenceLength && seq < attentionMask.Length; seq++)
+                {
+                    if (attentionMask[seq] > 0)
+                    {
+                        validTokenCount++;
+                        var embeddingSpan = pooledEmbedding.AsSpan(0, embeddingDim);
+
+                        // Add entire embedding vector at once
+                        for (int dim = 0; dim < embeddingDim; dim++)
+                        {
+                            embeddingSpan[dim] += batchResults[itemIndex, seq, dim];
+                        }
+                    }
+                }
+
+                // Calculate mean in-place
+                if (validTokenCount > 0)
+                {
+                    var embeddingSpan = pooledEmbedding.AsSpan(0, embeddingDim);
+                    var invCount = 1.0f / validTokenCount;
+                    for (int dim = 0; dim < embeddingDim; dim++)
+                    {
+                        embeddingSpan[dim] *= invCount;
+                    }
+                }
+
+                // Copy to final result array
+                var result = new float[embeddingDim];
+                pooledEmbedding.AsSpan(0, embeddingDim).CopyTo(result);
+                return NormalizeVector(result);
+            }
+            finally
+            {
+                _floatArrayPool.Return(pooledEmbedding);
+            }
+
         }
 
         public async Task<float[]> GenerateUserPreferenceEmbeddingAsync(UserPreferenceInput userInput)
@@ -257,176 +639,171 @@ namespace Backend.Services.Recommendation
 
         private static string BuildGameText(GameEmbeddingInput gameInput)
         {
-            var parts = new List<string>
+            // Estimate capacity to reduce StringBuilder reallocations
+            var estimatedLength = gameInput.Name.Length + 100 +
+                (gameInput.Genres.Sum(g => g.Length) + gameInput.Genres.Count * 2) +
+                (gameInput.Platforms.Sum(p => p.Length) + gameInput.Platforms.Count * 2) +
+                (gameInput.GameModes.Sum(m => m.Length) + gameInput.GameModes.Count * 2) +
+                (gameInput.Companies.Sum(c => c.Length) + gameInput.Companies.Count * 2);
+
+            var sb = new StringBuilder(estimatedLength);
+
+            // Build text directly without intermediate collections
+            sb.Append("Game: ").Append(gameInput.Name);
+
+            if (gameInput.Genres.Count > 0)
             {
-                $"Game: {gameInput.Name}",
-                $"Summary: {gameInput.Summary}",
-                !string.IsNullOrEmpty(gameInput.Storyline) ? $"Storyline: {gameInput.Storyline}" : "",
-                gameInput.Genres.Count > 0 ? $"Genres: {string.Join(", ", gameInput.Genres)}" : "",
-                gameInput.Platforms.Count > 0 ? $"Platforms: {string.Join(", ", gameInput.Platforms)}" : "",
-                gameInput.GameModes.Count > 0 ? $"Game Modes: {string.Join(", ", gameInput.GameModes)}" : "",
-                gameInput.PlayerPerspectives.Count > 0 ? $"Perspectives: {string.Join(", ", gameInput.PlayerPerspectives)}" : "",
-                gameInput.Rating.HasValue ? $"Rating: {gameInput.Rating:F1}" : "",
-                gameInput.ReleaseDate.HasValue ? $"Released: {gameInput.ReleaseDate:yyyy}" : ""
-            };
+                sb.Append(". Genres: ");
+                for (int i = 0; i < gameInput.Genres.Count; i++)
+                {
+                    if (i > 0) sb.Append(", ");
+                    sb.Append(gameInput.Genres[i]);
+                }
+            }
 
-            // Enhance text with extracted semantic keywords for richer context
-            AddSemanticKeywordsToText(parts, gameInput);
+            if (gameInput.Platforms.Count > 0)
+            {
+                sb.Append(". Platforms: ");
+                for (int i = 0; i < gameInput.Platforms.Count; i++)
+                {
+                    if (i > 0) sb.Append(", ");
+                    sb.Append(gameInput.Platforms[i]);
+                }
+            }
 
-            return string.Join(". ", parts.Where(p => !string.IsNullOrEmpty(p)));
+            if (gameInput.GameModes.Count > 0)
+            {
+                sb.Append(". Game Modes: ");
+                for (int i = 0; i < gameInput.GameModes.Count; i++)
+                {
+                    if (i > 0) sb.Append(", ");
+                    sb.Append(gameInput.GameModes[i]);
+                }
+            }
+
+            if (gameInput.PlayerPerspectives.Count > 0)
+            {
+                sb.Append(". Player Perspective: ");
+                for (int i = 0; i < gameInput.PlayerPerspectives.Count; i++)
+                {
+                    if (i > 0) sb.Append(", ");
+                    sb.Append(gameInput.PlayerPerspectives[i]);
+                }
+            }
+
+            // if (gameInput.AgeRatings.Count > 0)
+            // {
+            //     sb.Append(". Age Rating: ");
+            //     for (int i = 0; i < gameInput.AgeRatings.Count; i++)
+            //     {
+            //         if (i > 0) sb.Append(", ");
+            //         sb.Append(gameInput.AgeRatings[i]);
+            //     }
+            // }
+
+            if (gameInput.Companies.Count > 0)
+            {
+                sb.Append(". Companies: ");
+                for (int i = 0; i < gameInput.Companies.Count; i++)
+                {
+                    if (i > 0) sb.Append(", ");
+                    sb.Append(gameInput.Companies[i]);
+                }
+            }
+
+            if (!string.IsNullOrEmpty(gameInput.GameType))
+            {
+                sb.Append(". Game Type: ").Append(gameInput.GameType);
+            }
+
+            if (gameInput.ReleaseDate.HasValue)
+            {
+                sb.Append(". Released: ").Append(gameInput.ReleaseDate.Value.Year);
+            }
+
+            if (gameInput.Rating.HasValue)
+            {
+                sb.Append(". Rating: ").Append(gameInput.Rating.Value.ToString("F1"));
+            }
+
+            // Add semantic keywords efficiently
+            AddSemanticKeywordsToText(sb, gameInput);
+
+            return sb.ToString();
         }
 
-        private static void AddSemanticKeywordsToText(List<string> parts, GameEmbeddingInput gameInput)
+        private static void AddSemanticKeywordsToText(StringBuilder sb, GameEmbeddingInput gameInput)
         {
             // Add semantic keywords if they were extracted by the GameIndexingService
-            if (HasEnhancedSemanticKeywords(gameInput))
+            if (gameInput.ExtractedGenreKeywords.Count > 0 || gameInput.ExtractedMechanicKeywords.Count > 0 ||
+                gameInput.ExtractedThemeKeywords.Count > 0 || gameInput.ExtractedMoodKeywords.Count > 0)
             {
                 // Add genre-specific descriptors
                 if (gameInput.ExtractedGenreKeywords.Count > 0)
                 {
-                    var genreDescriptors = string.Join(", ", gameInput.ExtractedGenreKeywords.Take(5));
-                    parts.Add($"Genre Characteristics: {genreDescriptors}");
+                    sb.Append(". Genre Characteristics: ");
+                    for (int i = 0; i < Math.Min(5, gameInput.ExtractedGenreKeywords.Count); i++)
+                    {
+                        if (i > 0) sb.Append(", ");
+                        sb.Append(gameInput.ExtractedGenreKeywords[i]);
+                    }
                 }
 
                 // Add gameplay mechanics
                 if (gameInput.ExtractedMechanicKeywords.Count > 0)
                 {
-                    var mechanicDescriptors = string.Join(", ", gameInput.ExtractedMechanicKeywords.Take(5));
-                    parts.Add($"Gameplay: {mechanicDescriptors}");
+                    sb.Append(". Gameplay: ");
+                    for (int i = 0; i < Math.Min(5, gameInput.ExtractedMechanicKeywords.Count); i++)
+                    {
+                        if (i > 0) sb.Append(", ");
+                        sb.Append(gameInput.ExtractedMechanicKeywords[i]);
+                    }
                 }
 
                 // Add thematic elements
                 if (gameInput.ExtractedThemeKeywords.Count > 0)
                 {
-                    var themeDescriptors = string.Join(", ", gameInput.ExtractedThemeKeywords.Take(4));
-                    parts.Add($"Themes: {themeDescriptors}");
+                    sb.Append(". Themes: ");
+                    for (int i = 0; i < Math.Min(4, gameInput.ExtractedThemeKeywords.Count); i++)
+                    {
+                        if (i > 0) sb.Append(", ");
+                        sb.Append(gameInput.ExtractedThemeKeywords[i]);
+                    }
                 }
 
                 // Add mood and atmosphere
                 if (gameInput.ExtractedMoodKeywords.Count > 0)
                 {
-                    var moodDescriptors = string.Join(", ", gameInput.ExtractedMoodKeywords.Take(4));
-                    parts.Add($"Atmosphere: {moodDescriptors}");
+                    sb.Append(". Atmosphere: ");
+                    for (int i = 0; i < Math.Min(4, gameInput.ExtractedMoodKeywords.Count); i++)
+                    {
+                        if (i > 0) sb.Append(", ");
+                        sb.Append(gameInput.ExtractedMoodKeywords[i]);
+                    }
                 }
 
                 // Add art style if available
                 if (gameInput.ExtractedArtStyleKeywords.Count > 0)
                 {
-                    var artDescriptors = string.Join(", ", gameInput.ExtractedArtStyleKeywords.Take(3));
-                    parts.Add($"Art Style: {artDescriptors}");
+                    sb.Append(". Art Style: ");
+                    for (int i = 0; i < Math.Min(3, gameInput.ExtractedArtStyleKeywords.Count); i++)
+                    {
+                        if (i > 0) sb.Append(", ");
+                        sb.Append(gameInput.ExtractedArtStyleKeywords[i]);
+                    }
                 }
 
                 // Add target audience information
                 if (gameInput.ExtractedAudienceKeywords.Count > 0)
                 {
-                    var audienceDescriptors = string.Join(", ", gameInput.ExtractedAudienceKeywords.Take(3));
-                    parts.Add($"Target Audience: {audienceDescriptors}");
-                }
-
-                // Add hierarchical boost information for additional context
-                if (gameInput.HierarchicalBoosts.Count > 0)
-                {
-                    var boostDescriptors = string.Join(", ", gameInput.HierarchicalBoosts.Take(3));
-                    parts.Add($"Special Characteristics: {boostDescriptors}");
+                    sb.Append(". Target Audience: ");
+                    for (int i = 0; i < Math.Min(3, gameInput.ExtractedAudienceKeywords.Count); i++)
+                    {
+                        if (i > 0) sb.Append(", ");
+                        sb.Append(gameInput.ExtractedAudienceKeywords[i]);
+                    }
                 }
             }
-        }
-
-        private float[] ExtractStructuredFeatures(GameEmbeddingInput gameInput)
-        {
-            var features = new List<float>
-            {
-                // Rating feature (normalized 0-1)
-                gameInput.Rating.HasValue ? (float)gameInput.Rating.Value / 10f : 0f,
-            };
-
-            // Release year feature (normalized, recent = higher)
-            if (gameInput.ReleaseDate.HasValue)
-            {
-                var year = gameInput.ReleaseDate.Value.Year;
-                var normalizedYear = Math.Max(0, Math.Min(1, (year - 1980) / (DateTime.Now.Year - 1980 + 5f)));
-                features.Add(normalizedYear);
-            }
-            else
-            {
-                features.Add(0f);
-            }
-
-            // Genre diversity and platform availability
-            features.Add(Math.Min(1f, gameInput.Genres.Count / 5f));
-            features.Add(Math.Min(1f, gameInput.Platforms.Count / 10f));
-
-            // Enhanced semantic features if available
-            if (HasEnhancedSemanticKeywords(gameInput))
-            {
-                // Semantic keyword richness (normalized)
-                var totalKeywords = gameInput.ExtractedGenreKeywords.Count +
-                                  gameInput.ExtractedMechanicKeywords.Count +
-                                  gameInput.ExtractedThemeKeywords.Count +
-                                  gameInput.ExtractedMoodKeywords.Count +
-                                  gameInput.ExtractedArtStyleKeywords.Count +
-                                  gameInput.ExtractedAudienceKeywords.Count;
-                features.Add(Math.Min(1f, totalKeywords / 20f)); // Normalize to max 20 keywords
-
-                // Cross-category boost strength
-                var boostStrength = gameInput.HierarchicalBoosts.Count > 0 ?
-                    Math.Min(1f, gameInput.HierarchicalBoosts.Count / 10f) : 0f;
-                features.Add(boostStrength);
-
-                // Semantic weight distribution balance (measure of how balanced the keyword distribution is)
-                if (gameInput.SemanticWeights.Count > 0)
-                {
-                    var weightVariance = CalculateWeightVariance(gameInput.SemanticWeights);
-                    features.Add(Math.Min(1f, weightVariance));
-                }
-                else
-                {
-                    features.Add(0f);
-                }
-
-                // Category coverage (how many semantic categories are represented)
-                var categoryCount = 0;
-                if (gameInput.ExtractedGenreKeywords.Count > 0) categoryCount++;
-                if (gameInput.ExtractedMechanicKeywords.Count > 0) categoryCount++;
-                if (gameInput.ExtractedThemeKeywords.Count > 0) categoryCount++;
-                if (gameInput.ExtractedMoodKeywords.Count > 0) categoryCount++;
-                if (gameInput.ExtractedArtStyleKeywords.Count > 0) categoryCount++;
-                if (gameInput.ExtractedAudienceKeywords.Count > 0) categoryCount++;
-                features.Add(categoryCount / 6f); // Normalize to 0-1
-            }
-            else
-            {
-                // Add zeros for missing semantic features to maintain consistent size
-                features.Add(0f); // keyword richness
-                features.Add(0f); // boost strength
-                features.Add(0f); // weight variance
-                features.Add(0f); // category coverage
-            }
-
-            // Pad to fixed size using configured structured features count
-            while (features.Count < _dimensions.StructuredFeatures) features.Add(0f);
-            return [.. features.Take(_dimensions.StructuredFeatures)];
-        }
-
-        private static float CalculateWeightVariance(Dictionary<string, float> weights)
-        {
-            if (weights.Count == 0) return 0f;
-
-            var validWeights = weights.Values.Where(w => w > 0).ToList();
-            if (validWeights.Count <= 1) return 0f;
-
-            var mean = validWeights.Average();
-            var variance = validWeights.Sum(w => Math.Pow(w - mean, 2)) / validWeights.Count;
-
-            return (float)Math.Sqrt(variance); // Return standard deviation normalized
-        }
-
-        private static float[] CombineEmbeddings(float[] textEmbedding, float[] structuredFeatures)
-        {
-            var combined = new float[textEmbedding.Length + structuredFeatures.Length];
-            Array.Copy(textEmbedding, 0, combined, 0, textEmbedding.Length);
-            Array.Copy(structuredFeatures, 0, combined, textEmbedding.Length, structuredFeatures.Length);
-            return NormalizeVector(combined);
         }
 
         private float[] AverageEmbeddings(List<float[]> embeddings)
@@ -451,330 +828,9 @@ namespace Backend.Services.Recommendation
             return avgEmbedding;
         }
 
-        private float[] GenerateSimpleEmbedding(string text, GameEmbeddingInput? gameInput = null)
-        {
-            // Start with a zero embedding for purely semantic-based generation
-            var embedding = new float[_dimensions.BaseTextEmbedding];
-            
-            // Apply semantic features as the primary signal source (preserve their relative strength)
-            ApplySemanticKeywords(embedding, text, gameInput);
-            
-            // Calculate semantic signal strength before adding text features
-            var semanticMagnitude = CalculateMagnitude(embedding);
-            
-            // Add text-based semantic features using TF-IDF-like approach
-            AddTextBasedFeatures(embedding, text);
-            
-            // Apply magnitude-preserving normalization that maintains semantic signal ratios
-            return ApplySemanticPreservingNormalization(embedding, semanticMagnitude);
-        }
-
-        private void AddTextBasedFeatures(float[] embedding, string text)
-        {
-            var words = text.ToLowerInvariant().Split(new[] { ' ', '.', ',', '!', '?', ';', ':' }, StringSplitOptions.RemoveEmptyEntries);
-            var ranges = _dimensions.CategoryRanges;
-            
-            // Calculate word frequency and importance
-            var wordCounts = words.GroupBy(w => w).ToDictionary(g => g.Key, g => g.Count());
-            var totalWords = words.Length;
-            
-            foreach (var (word, count) in wordCounts)
-            {
-                if (word.Length < 3) continue; // Skip short words
-                
-                // Calculate TF (term frequency) 
-                var tf = (float)count / totalWords;
-                
-                // Simple IDF approximation based on word length and rarity indicators
-                var idf = word.Length > 6 ? 1.5f : 1.0f; // Longer words get higher weight
-                var weight = tf * idf * 0.3f; // Scale down to avoid overwhelming semantic signals
-                
-                // Map word to embedding position using hash
-                var hash = Math.Abs(word.GetHashCode());
-                var basePosition = hash % _dimensions.BaseTextEmbedding;
-                
-                // Distribute across multiple positions for better representation
-                for (int i = 0; i < 3; i++)
-                {
-                    var position = (basePosition + i * 17) % _dimensions.BaseTextEmbedding; // Prime number spreading
-                    if (position < embedding.Length)
-                    {
-                        embedding[position] += weight / (i + 1); // Decay weight for spread positions
-                    }
-                }
-            }
-        }
-
-        private void ApplySemanticKeywords(float[] embedding, string text, GameEmbeddingInput? gameInput = null)
-        {
-            var lowerText = text.ToLowerInvariant();
-            var keywordMatches = new List<(string keyword, float weight, int position)>();
-
-            // If we have enhanced semantic keywords from GameIndexingService, use them
-            if (gameInput != null && HasEnhancedSemanticKeywords(gameInput))
-            {
-                ApplyEnhancedSemanticKeywords(embedding, gameInput);
-                return;
-            }
-
-            // Fallback: Apply basic semantic keywords using configuration
-            ApplyConfigurableSemanticKeywords(embedding, lowerText);
-        }
-
-        private static bool HasEnhancedSemanticKeywords(GameEmbeddingInput gameInput)
-        {
-            return gameInput.ExtractedGenreKeywords.Count > 0 ||
-                   gameInput.ExtractedMechanicKeywords.Count > 0 ||
-                   gameInput.ExtractedThemeKeywords.Count > 0 ||
-                   gameInput.ExtractedMoodKeywords.Count > 0 ||
-                   gameInput.ExtractedArtStyleKeywords.Count > 0 ||
-                   gameInput.ExtractedAudienceKeywords.Count > 0;
-        }
-
-        private void ApplyEnhancedSemanticKeywords(float[] embedding, GameEmbeddingInput gameInput)
-        {
-            var keywordMatches = new List<(string keyword, float weight, int position)>();
-
-            // Get semantic weights from the game input
-            var weights = gameInput.SemanticWeights;
-            var genreWeight = weights.GetValueOrDefault("genre", 0.25f);
-            var mechanicsWeight = weights.GetValueOrDefault("mechanics", 0.20f);
-            var themeWeight = weights.GetValueOrDefault("theme", 0.15f);
-            var moodWeight = weights.GetValueOrDefault("mood", 0.15f);
-            var artStyleWeight = weights.GetValueOrDefault("artstyle", 0.10f);
-            var audienceWeight = weights.GetValueOrDefault("audience", 0.05f);
-            var crossCategoryBoost = weights.GetValueOrDefault("cross_category_boost", 1.5f);
-
-            // Apply keywords using standardized position ranges
-            var ranges = _dimensions.CategoryRanges;
-
-            ApplyKeywordCategory(gameInput.ExtractedGenreKeywords, genreWeight, ranges.Genre.Start, ranges.Genre.End, keywordMatches);
-            ApplyKeywordCategory(gameInput.ExtractedMechanicKeywords, mechanicsWeight, ranges.Mechanics.Start, ranges.Mechanics.End, keywordMatches);
-            ApplyKeywordCategory(gameInput.ExtractedThemeKeywords, themeWeight, ranges.Theme.Start, ranges.Theme.End, keywordMatches);
-            ApplyKeywordCategory(gameInput.ExtractedMoodKeywords, moodWeight, ranges.Mood.Start, ranges.Mood.End, keywordMatches);
-            ApplyKeywordCategory(gameInput.ExtractedArtStyleKeywords, artStyleWeight, ranges.ArtStyle.Start, ranges.ArtStyle.End, keywordMatches);
-            ApplyKeywordCategory(gameInput.ExtractedAudienceKeywords, audienceWeight, ranges.Audience.Start, ranges.Audience.End, keywordMatches);
-
-            // Apply hierarchical boosts using standardized range
-            foreach (var boost in gameInput.HierarchicalBoosts)
-            {
-                var boostRange = ranges.HierarchicalBoosts;
-                var boostPosition = Math.Abs(boost.GetHashCode()) % boostRange.Size + boostRange.Start;
-                if (boostPosition < embedding.Length)
-                {
-                    keywordMatches.Add((boost, crossCategoryBoost * 0.3f, boostPosition));
-                }
-            }
-
-            // Apply all matched keywords to embedding
-            ApplyKeywordMatchesToEmbedding(embedding, keywordMatches);
-        }
-
-        private static void ApplyKeywordCategory(
-            List<string> keywords,
-            float baseWeight,
-            int startPosition,
-            int endPosition,
-            List<(string keyword, float weight, int position)> keywordMatches)
-        {
-            if (keywords.Count == 0) return;
-
-            var positionRange = endPosition - startPosition;
-            var positionStep = Math.Max(1, positionRange / Math.Max(keywords.Count, 1));
-
-            for (int i = 0; i < keywords.Count; i++)
-            {
-                var position = startPosition + (i * positionStep);
-                var weight = baseWeight * (1.0f + (0.1f * (keywords.Count - i))); // Boost earlier keywords slightly
-                keywordMatches.Add((keywords[i], weight, Math.Min(position, endPosition - 1)));
-            }
-        }
-
-        private void ApplyConfigurableSemanticKeywords(float[] embedding, string lowerText)
-        {
-            // Load basic semantic keywords from configuration or defaults
-            var config = LoadBasicSemanticConfig();
-            var ranges = _dimensions.CategoryRanges;
-            
-            // Apply genre keywords
-            ApplyKeywordCategory(config.GenreKeywords, lowerText, embedding, ranges.Genre.Start, ranges.Genre.Size, 1.2f);
-            
-            // Apply mechanics keywords with platform-aware enhancements
-            var enhancedMechanics = EnhanceMechanicsWithPlatformKeywords(config.MechanicsKeywords, lowerText);
-            ApplyKeywordCategory(enhancedMechanics, lowerText, embedding, ranges.Mechanics.Start, ranges.Mechanics.Size, 1.0f);
-            
-            // Apply theme keywords
-            ApplyKeywordCategory(config.ThemeKeywords, lowerText, embedding, ranges.Theme.Start, ranges.Theme.Size, 0.8f);
-            
-            // Apply mood keywords
-            ApplyKeywordCategory(config.MoodKeywords, lowerText, embedding, ranges.Mood.Start, ranges.Mood.Size, 0.7f);
-            
-            // Apply art style keywords
-            ApplyKeywordCategory(config.ArtStyleKeywords, lowerText, embedding, ranges.ArtStyle.Start, ranges.ArtStyle.Size, 0.6f);
-            
-            // Apply audience keywords
-            ApplyKeywordCategory(config.AudienceKeywords, lowerText, embedding, ranges.Audience.Start, ranges.Audience.Size, 0.5f);
-        }
-
-        private static List<string> EnhanceMechanicsWithPlatformKeywords(List<string> mechanicsKeywords, string text)
-        {
-            var enhanced = new List<string>(mechanicsKeywords);
-            
-            // Extract potential platform names from text and add their semantic keywords
-            var potentialPlatforms = ExtractPlatformNamesFromText(text);
-            foreach (var platform in potentialPlatforms)
-            {
-                var platformKeywords = PlatformAliasService.GetPlatformSemanticKeywords(platform);
-                // Add platform-specific semantic keywords to mechanics
-                enhanced.AddRange(platformKeywords.Where(k => 
-                    k.Contains("controller") || k.Contains("portable") || k.Contains("touchscreen") || 
-                    k.Contains("motion-controls") || k.Contains("backwards-compatible") || k.Contains("mods")));
-            }
-            
-            return enhanced.Distinct(StringComparer.OrdinalIgnoreCase).ToList();
-        }
-
-        private static List<string> ExtractPlatformNamesFromText(string text)
-        {
-            var platforms = new List<string>();
-            var lowerText = text.ToLowerInvariant();
-            
-            // Common platform keywords that might appear in game text
-            var platformIndicators = new[]
-            {
-                "pc", "ps5", "ps4", "xbox", "switch", "nintendo", "playstation", "mobile", 
-                "android", "ios", "steam", "windows", "mac", "linux", "console"
-            };
-            
-            foreach (var indicator in platformIndicators)
-            {
-                if (lowerText.Contains(indicator))
-                {
-                    platforms.Add(indicator);
-                }
-            }
-            
-            return platforms.Distinct(StringComparer.OrdinalIgnoreCase).ToList();
-        }
-
-        private static void ApplyKeywordCategory(List<string> keywords, string text, float[] embedding, int startPos, int rangeSize, float baseWeight)
-        {
-            if (keywords.Count == 0) return;
-            
-            var positionStep = Math.Max(1, rangeSize / Math.Max(keywords.Count, 1));
-            
-            for (int i = 0; i < keywords.Count; i++)
-            {
-                if (text.Contains(keywords[i], StringComparison.OrdinalIgnoreCase))
-                {
-                    var position = startPos + (i * positionStep);
-                    if (position < embedding.Length)
-                    {
-                        var weight = baseWeight * (1.0f + (0.2f * (keywords.Count - i) / keywords.Count));
-                        embedding[position] += weight;
-                        
-                        // Spread influence to nearby positions for better semantic clustering
-                        for (int j = 1; j <= 2; j++)
-                        {
-                            var decayWeight = weight * (0.4f / j);
-                            if (position + j < embedding.Length) embedding[position + j] += decayWeight;
-                            if (position - j >= 0) embedding[position - j] += decayWeight;
-                        }
-                    }
-                }
-            }
-        }
-
-        private BasicSemanticConfig LoadBasicSemanticConfig()
-        {
-            try
-            {
-                var configPath = Path.Combine(AppContext.BaseDirectory, "Configuration", "BasicSemanticKeywords.json");
-                if (File.Exists(configPath))
-                {
-                    var jsonContent = File.ReadAllText(configPath);
-                    var config = JsonSerializer.Deserialize<BasicSemanticConfig>(jsonContent, JsonOptions);
-                    return config ?? GetDefaultBasicSemanticConfig();
-                }
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error loading basic semantic configuration, using defaults");
-            }
-            
-            return GetDefaultBasicSemanticConfig();
-        }
-
-        private static BasicSemanticConfig GetDefaultBasicSemanticConfig()
-        {
-            return new BasicSemanticConfig
-            {
-                GenreKeywords = ["rpg", "action", "adventure", "strategy", "simulation", "puzzle", "racing", "sports", "fighting", "shooter", "fps", "platformer", "roguelike", "mmorpg", "rts", "tower defense", "horror", "survival", "sandbox", "battle royale", "moba", "visual novel"],
-                MechanicsKeywords = ["multiplayer", "co-op", "single-player", "open world", "crafting", "building", "exploration", "stealth", "combat", "leveling", "character progression", "skill tree", "inventory", "quest", "boss battles", "permadeath", "real-time", "turn-based"],
-                ThemeKeywords = ["fantasy", "sci-fi", "cyberpunk", "steampunk", "post-apocalyptic", "medieval", "modern", "futuristic", "space", "underwater", "mythology", "anime", "realistic", "dystopian", "military", "pirate", "detective", "supernatural"],
-                MoodKeywords = ["dark", "light-hearted", "serious", "comedic", "atmospheric", "intense", "relaxing", "mysterious", "epic", "emotional", "thrilling", "suspenseful", "peaceful", "chaotic", "nostalgic", "uplifting", "creepy", "energetic"],
-                ArtStyleKeywords = ["pixel art", "8-bit", "16-bit", "hand-drawn", "3d", "realistic", "stylized", "minimalist", "retro", "colorful", "cel-shaded", "low-poly", "cartoon", "beautiful", "detailed", "artistic"],
-                AudienceKeywords = ["casual", "hardcore", "family", "children", "mature", "beginner", "challenging", "difficult", "accessible", "complex", "competitive", "social"]
-            };
-        }
-
-
-        private static void ApplyKeywordMatchesToEmbedding(float[] embedding, List<(string keyword, float weight, int position)> keywordMatches)
-        {
-            foreach (var (_, weight, position) in keywordMatches)
-            {
-                if (position < embedding.Length)
-                {
-                    embedding[position] += weight;
-
-                    // Spread influence to nearby positions for semantic clustering
-                    var spreadRange = 3;
-                    for (int i = 1; i <= spreadRange; i++)
-                    {
-                        var decayWeight = weight * (0.3f / i);
-                        if (position + i < embedding.Length) embedding[position + i] += decayWeight;
-                        if (position - i >= 0) embedding[position - i] += decayWeight;
-                    }
-                }
-            }
-        }
-
-
-        private float[] PadEmbeddingToGameSize(float[] textEmbedding)
-        {
-            // Add structured features to match game embedding size using total dimensions
-            var paddedEmbedding = new float[_dimensions.TotalDimensions];
-            Array.Copy(textEmbedding, 0, paddedEmbedding, 0, Math.Min(textEmbedding.Length, _dimensions.BaseTextEmbedding));
-            // Remaining elements are already initialized to 0
-            return paddedEmbedding;
-        }
-
         private static float CalculateMagnitude(float[] vector)
         {
             return (float)Math.Sqrt(vector.Sum(x => x * x));
-        }
-
-        private static float[] ApplySemanticPreservingNormalization(float[] embedding, float semanticMagnitude)
-        {
-            var currentMagnitude = CalculateMagnitude(embedding);
-            
-            if (currentMagnitude == 0) return embedding;
-            
-            // Preserve semantic signal strength while applying gentle normalization
-            // This approach maintains the relative importance of semantic signals
-            // while preventing the embedding from becoming too extreme in magnitude
-            
-            var semanticRatio = semanticMagnitude > 0 ? semanticMagnitude / currentMagnitude : 0f;
-            var targetMagnitude = Math.Max(0.5f, Math.Min(1.5f, semanticRatio)); // Bounded normalization
-            
-            var scalingFactor = targetMagnitude / currentMagnitude;
-            
-            for (int i = 0; i < embedding.Length; i++)
-            {
-                embedding[i] *= scalingFactor;
-            }
-            
-            return embedding;
         }
 
         private static float[] NormalizeVector(float[] vector)
@@ -790,7 +846,29 @@ namespace Backend.Services.Recommendation
             return vector;
         }
 
+        /// <summary>
+        /// Resizes an embedding to the target dimension by truncating or padding with zeros
+        /// </summary>
+        private static float[] ResizeEmbedding(float[] embedding, int targetDimensions)
+        {
+            if (embedding.Length == targetDimensions)
+                return embedding;
 
+            var resized = new float[targetDimensions];
+            var copyLength = Math.Min(embedding.Length, targetDimensions);
+            Array.Copy(embedding, 0, resized, 0, copyLength);
+
+            // Remaining elements are already initialized to 0 by default
+            return resized;
+        }
+
+        /// <summary>
+        /// Get cache statistics for performance monitoring
+        /// </summary>
+        public CacheStats GetCacheStats()
+        {
+            return _cacheManager.GetStats();
+        }
 
         public void Dispose()
         {

@@ -40,10 +40,10 @@ Add to your `appsettings.json`:
     "ApiKey": "your-groq-api-key-here"
   },
   "EmbeddingModel": {
-    "UseOnnx": false,  // false in dev, true in production
-    "Path": "./models/all-MiniLM-L6-v2/model.onnx",
-    "TokenizerPath": "./models/all-MiniLM-L6-v2/tokenizer.json",
-    "ConfigPath": "./models/all-MiniLM-L6-v2/config.json"
+    "UseOnnx": true,  // true for ONNX model usage
+    "Path": "./MLModel/model.onnx",
+    "TokenizerPath": "./MLModel/vocab.txt",
+    "ConfigPath": "./MLModel/config.json"
   }
 }
 ```

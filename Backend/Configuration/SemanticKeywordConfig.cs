@@ -6,7 +6,6 @@ namespace Backend.Configuration
         public Dictionary<string, SemanticCategoryMapping> PlatformMappings { get; set; } = new();
         public Dictionary<string, SemanticCategoryMapping> GameModeMappings { get; set; } = new();
         public Dictionary<string, SemanticCategoryMapping> PerspectiveMappings { get; set; } = new();
-        public Dictionary<string, List<CrossCategoryBoost>> CrossCategoryBoosts { get; set; } = new();
         public SemanticWeights DefaultWeights { get; set; } = new();
         public EmbeddingDimensions Dimensions { get; set; } = new();
     }
@@ -21,43 +20,30 @@ namespace Backend.Configuration
         public List<string> AudienceKeywords { get; set; } = new();
     }
 
-    public class CrossCategoryBoost
-    {
-        public string TriggerKeyword { get; set; } = string.Empty;
-        public string Category { get; set; } = string.Empty;
-        public List<string> BoostKeywords { get; set; } = new();
-        public float BoostWeight { get; set; } = 0.3f;
-        public string Condition { get; set; } = "any"; // "any", "all", "exact"
-    }
 
     public class SemanticWeights
     {
-        public float GenreWeight { get; set; } = 0.25f;
-        public float MechanicsWeight { get; set; } = 0.20f;
-        public float ThemeWeight { get; set; } = 0.15f;
-        public float MoodWeight { get; set; } = 0.15f;
-        public float ArtStyleWeight { get; set; } = 0.10f;
-        public float AudienceWeight { get; set; } = 0.05f;
-        public float HierarchicalBoostMultiplier { get; set; } = 1.3f;
-        public float CrossCategoryBoostMultiplier { get; set; } = 1.5f;
+        // Default values match DefaultSemanticKeywordMappings.json configuration
+        // These prioritize structured game metadata over potentially poor text descriptions
+        public float GenreWeight { get; set; } = 0.4f;                    // Highest priority - structured metadata
+        public float MechanicsWeight { get; set; } = 0.3f;               // High priority - structured metadata
+        public float ThemeWeight { get; set; } = 0.2f;                   // Medium priority - structured metadata
+        public float MoodWeight { get; set; } = 0.1f;                    // Lower priority - may be text-derived
+        public float ArtStyleWeight { get; set; } = 0.05f;               // Low priority - often subjective
+        public float AudienceWeight { get; set; } = 0.03f;               // Lowest priority - often inferred
     }
 
     public class EmbeddingDimensions
     {
         /// <summary>
-        /// Base text embedding dimensions (default: 384 for sentence transformers)
+        /// Base text embedding dimensions (default: from EmbeddingConstants)
         /// </summary>
-        public int BaseTextEmbedding { get; set; } = 384;
+        public int BaseTextEmbedding { get; set; } = EmbeddingConstants.BASE_TEXT_EMBEDDING_DIMENSIONS;
         
         /// <summary>
-        /// Additional structured feature dimensions (default: 20)
+        /// Total embedding dimensions (ONNX-only, no structured features)
         /// </summary>
-        public int StructuredFeatures { get; set; } = 20;
-        
-        /// <summary>
-        /// Total combined embedding dimensions
-        /// </summary>
-        public int TotalDimensions => BaseTextEmbedding + StructuredFeatures;
+        public int TotalDimensions => BaseTextEmbedding;
         
         /// <summary>
         /// Semantic category position ranges for keyword placement
@@ -67,13 +53,12 @@ namespace Backend.Configuration
 
     public class CategoryPositionRanges
     {
-        public PositionRange Genre { get; set; } = new(0, 30);
-        public PositionRange Mechanics { get; set; } = new(30, 60);
-        public PositionRange Theme { get; set; } = new(60, 90);
-        public PositionRange Mood { get; set; } = new(90, 120);
-        public PositionRange ArtStyle { get; set; } = new(120, 140);
-        public PositionRange Audience { get; set; } = new(150, 170);
-        public PositionRange HierarchicalBoosts { get; set; } = new(170, 220);
+        public PositionRange Genre { get; set; } = EmbeddingConstants.CategoryRanges.Genre;
+        public PositionRange Mechanics { get; set; } = EmbeddingConstants.CategoryRanges.Mechanics;
+        public PositionRange Theme { get; set; } = EmbeddingConstants.CategoryRanges.Theme;
+        public PositionRange Mood { get; set; } = EmbeddingConstants.CategoryRanges.Mood;
+        public PositionRange ArtStyle { get; set; } = EmbeddingConstants.CategoryRanges.ArtStyle;
+        public PositionRange Audience { get; set; } = EmbeddingConstants.CategoryRanges.Audience;
     }
 
     public record PositionRange(int Start, int End)
