@@ -7,10 +7,10 @@ namespace Backend.Services.Recommendation.Tokenization
     /// <summary>
     /// Tokenization strategy using tokenizer.json configuration file
     /// </summary>
-    public class TokenizerJsonStrategy : TokenizationStrategyBase
+    public class TokenizerJsonStrategy(IConfiguration configuration, ILogger logger) : TokenizationStrategyBase
     {
-        private readonly IConfiguration _configuration;
-        private readonly ILogger _logger;
+        private readonly IConfiguration _configuration = configuration;
+        private readonly ILogger _logger = logger;
         private static TokenizerConfig? _tokenizerConfig;
         private static readonly object _configLock = new();
 
@@ -28,12 +28,6 @@ namespace Backend.Services.Recommendation.Tokenization
                 var config = GetTokenizerConfig();
                 return config?.Model?.Vocab != null && config.Model.Vocab.Count > 0;
             }
-        }
-
-        public TokenizerJsonStrategy(IConfiguration configuration, ILogger logger)
-        {
-            _configuration = configuration;
-            _logger = logger;
         }
 
         public override (long[] inputIds, long[] attentionMask) TokenizeForBert(string text, int maxLength)
@@ -101,14 +95,14 @@ namespace Backend.Services.Recommendation.Tokenization
         /// <summary>
         /// Advanced WordPiece tokenization using tokenizer.json configuration
         /// </summary>
-        private List<int> TokenizeWithTokenizerJson(string text, TokenizerConfig config)
+        private static List<int> TokenizeWithTokenizerJson(string text, TokenizerConfig config)
         {
             var tokens = new List<int>();
 
             // Apply BERT normalization
-            var normalizedText = ApplyBertNormalization(text, 
-                config.Normalizer.CleanText, 
-                config.Normalizer.Lowercase, 
+            var normalizedText = ApplyBertNormalization(text,
+                config.Normalizer.CleanText,
+                config.Normalizer.Lowercase,
                 config.Normalizer.HandleChineseChars);
 
             // Pre-tokenization: split on whitespace and punctuation (BERT style)

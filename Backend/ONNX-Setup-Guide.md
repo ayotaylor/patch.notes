@@ -53,7 +53,7 @@ The system will automatically detect and use the ONNX model when:
 ### Gaming-Optimized Configuration
 
 The production tokenizer automatically includes:
-- ✅ **All semantic keywords** from your `DefaultSemanticKeywordMappings.json`
+- ✅ **All semantic keywords** from your `SemanticKeywordMappings.json`
 - ✅ **Game genres**: action, rpg, strategy, shooter, etc.
 - ✅ **Platform terms**: pc, playstation, xbox, nintendo, mobile
 - ✅ **Gaming mechanics**: multiplayer, co-op, open-world, crafting
@@ -106,13 +106,13 @@ Solution: Check file permissions and paths in appsettings.json
 ```
 Solution: Ensure BASE_TEXT_EMBEDDING_DIMENSIONS matches your model's output size
 - all-MiniLM-L6-v2: 384 dimensions
-- all-MiniLM-L12-v2: 384 dimensions  
+- all-MiniLM-L12-v2: 384 dimensions
 - all-mpnet-base-v2: 768 dimensions
 ```
 
 **Issue: Still getting low confidence scores**
 ```
-Solution: 
+Solution:
 1. Verify ONNX model is actually loading (check logs)
 2. Remove the 0.15 minimum threshold in GameRecommendationService.cs
 3. Re-index your games after enabling ONNX
@@ -138,7 +138,7 @@ If ONNX fails to load:
 
 ### Docker Configuration
 ```dockerfile
-# Copy model files  
+# Copy model files
 COPY MLModel/ ./MLModel/
 
 # Ensure proper permissions
@@ -177,7 +177,7 @@ EmbeddingModel__ConfigPath=./MLModel/config.json
 
 The system includes comprehensive logging and validation:
 - Dimension mismatches are caught at startup
-- Model loading failures are logged clearly  
+- Model loading failures are logged clearly
 - Fallback mechanisms ensure system stability
 
 For issues, check the application logs for detailed error messages.

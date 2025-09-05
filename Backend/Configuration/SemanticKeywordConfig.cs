@@ -23,7 +23,7 @@ namespace Backend.Configuration
 
     public class SemanticWeights
     {
-        // Default values match DefaultSemanticKeywordMappings.json configuration
+        // Default values match SemanticKeywordMappings.json configuration
         // These prioritize structured game metadata over potentially poor text descriptions
         public float GenreWeight { get; set; } = 0.4f;                    // Highest priority - structured metadata
         public float MechanicsWeight { get; set; } = 0.3f;               // High priority - structured metadata
@@ -39,12 +39,12 @@ namespace Backend.Configuration
         /// Base text embedding dimensions (default: from EmbeddingConstants)
         /// </summary>
         public int BaseTextEmbedding { get; set; } = EmbeddingConstants.BASE_TEXT_EMBEDDING_DIMENSIONS;
-        
+
         /// <summary>
         /// Total embedding dimensions (ONNX-only, no structured features)
         /// </summary>
         public int TotalDimensions => BaseTextEmbedding;
-        
+
         /// <summary>
         /// Semantic category position ranges for keyword placement
         /// </summary>

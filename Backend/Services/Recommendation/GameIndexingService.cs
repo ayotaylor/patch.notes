@@ -423,7 +423,7 @@ namespace Backend.Services.Recommendation
         {
             try
             {
-                var configPath = Path.Combine(AppContext.BaseDirectory, "Configuration", "DefaultSemanticKeywordMappings.json");
+                var configPath = Path.Combine(AppContext.BaseDirectory, "Configuration", "SemanticKeywordMappings.json");
                 if (File.Exists(configPath))
                 {
                     var jsonContent = File.ReadAllText(configPath);

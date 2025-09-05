@@ -15,12 +15,12 @@ namespace Backend.Services.Recommendation
         private readonly IMemoryCache _cache;
         private readonly ILogger<SemanticKeywordCache> _logger;
         private SemanticKeywordConfig? _semanticConfig;
-        
+
         private const string CACHE_KEY_PREFIX = "precomputed_semantic_";
         private const string INIT_STATUS_KEY = "semantic_cache_initialized";
         private const string STATS_KEY = "semantic_cache_stats";
         private readonly TimeSpan CACHE_DURATION = TimeSpan.FromDays(1);
-        
+
         public SemanticKeywordCache(
             IServiceScopeFactory scopeFactory,
             IMemoryCache cache,
@@ -51,7 +51,7 @@ namespace Backend.Services.Recommendation
                 if (genres.Count == 0 && platforms.Count == 0 && gameModes.Count == 0 && perspectives.Count == 0)
                 {
                     _logger.LogWarning("All database queries returned empty results. This may indicate a database connection issue. Cache will be initialized with fallback data from configuration.");
-                    
+
                     // Use fallback data from semantic configuration
                     if (_semanticConfig != null)
                     {
@@ -59,7 +59,7 @@ namespace Backend.Services.Recommendation
                         platforms = _semanticConfig.PlatformMappings.Keys.ToList();
                         gameModes = _semanticConfig.GameModeMappings.Keys.ToList();
                         perspectives = _semanticConfig.PerspectiveMappings.Keys.ToList();
-                        
+
                         _logger.LogInformation("Using fallback data from configuration: {GenreCount} genres, {PlatformCount} platforms, {GameModeCount} game modes, {PerspectiveCount} perspectives",
                             genres.Count, platforms.Count, gameModes.Count, perspectives.Count);
                     }
@@ -109,10 +109,10 @@ namespace Backend.Services.Recommendation
         public async Task<bool> RefreshCacheAsync()
         {
             _logger.LogInformation("Manually refreshing semantic keyword cache");
-            
+
             // Clear existing cache entries
             ClearCacheEntries();
-            
+
             return await InitializeCacheAsync();
         }
 
@@ -174,7 +174,7 @@ namespace Backend.Services.Recommendation
             {
                 using var scope = _scopeFactory.CreateScope();
                 var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-                
+
                 return await context.Genres
                     .Select(g => g.Name)
                     .Distinct()
@@ -193,7 +193,7 @@ namespace Backend.Services.Recommendation
             {
                 using var scope = _scopeFactory.CreateScope();
                 var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-                
+
                 return await context.Platforms
                     .Select(p => p.Name)
                     .Distinct()
@@ -212,7 +212,7 @@ namespace Backend.Services.Recommendation
             {
                 using var scope = _scopeFactory.CreateScope();
                 var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-                
+
                 return await context.GameModes
                     .Select(gm => gm.Name)
                     .Distinct()
@@ -231,7 +231,7 @@ namespace Backend.Services.Recommendation
             {
                 using var scope = _scopeFactory.CreateScope();
                 var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-                
+
                 return await context.PlayerPerspectives
                     .Select(pp => pp.Name)
                     .Distinct()
@@ -387,7 +387,7 @@ namespace Backend.Services.Recommendation
             // Platform + Genre combinations for major genres
             var majorGenres = genres.Where(g => new[] { "Action", "RPG", "Strategy", "Shooter", "Horror" }
                 .Any(major => g.Contains(major, StringComparison.OrdinalIgnoreCase))).Take(5);
-            
+
             foreach (var genre in majorGenres)
             {
                 foreach (var platform in platforms.Take(3)) // Limit to top 3 platforms

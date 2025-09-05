@@ -11,12 +11,12 @@ namespace Backend.Services.Recommendation
         private readonly ConcurrentDictionary<string, List<int>> _tokenCache = new();
         private readonly ConcurrentDictionary<string, DateTime> _embeddingAccessTimes = new();
         private readonly ConcurrentDictionary<string, DateTime> _tokenAccessTimes = new();
-        private readonly object _cleanupLock = new();
-        
+        private readonly Lock _cleanupLock = new();
+
         private readonly int _maxEmbeddingCacheSize;
         private readonly int _maxTokenCacheSize;
         private readonly TimeSpan _cacheExpiry;
-        
+
         public EmbeddingCacheManager(
             int maxEmbeddingCacheSize = 10000,
             int maxTokenCacheSize = 50000,
@@ -37,7 +37,7 @@ namespace Backend.Services.Recommendation
                 _embeddingAccessTimes.TryAdd(key, DateTime.UtcNow);
                 return true;
             }
-            
+
             embedding = Array.Empty<float>();
             return false;
         }
@@ -70,7 +70,7 @@ namespace Backend.Services.Recommendation
                 _tokenAccessTimes.TryAdd(key, DateTime.UtcNow);
                 return true;
             }
-            
+
             tokens = new List<int>();
             return false;
         }
