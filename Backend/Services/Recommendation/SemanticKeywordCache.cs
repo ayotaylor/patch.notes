@@ -373,9 +373,9 @@ namespace Backend.Services.Recommendation
                 MergeMappings(combinedMapping, perspectiveMapping);
             }
 
-            return combinedMapping.GenreKeywords.Any() || combinedMapping.MechanicKeywords.Any() ||
-                   combinedMapping.ThemeKeywords.Any() || combinedMapping.MoodKeywords.Any() ||
-                   combinedMapping.ArtStyleKeywords.Any() || combinedMapping.AudienceKeywords.Any()
+            return combinedMapping.GenreKeywords.Count != 0 || combinedMapping.MechanicKeywords.Count != 0 ||
+                   combinedMapping.ThemeKeywords.Count != 0 || combinedMapping.MoodKeywords.Count != 0 ||
+                   combinedMapping.ArtStyleKeywords.Count != 0 || combinedMapping.AudienceKeywords.Count != 0
                 ? combinedMapping
                 : null;
         }
@@ -413,19 +413,56 @@ namespace Backend.Services.Recommendation
             var combinations = new List<string>();
 
             // Theme-based combinations
-            var genresByTheme = genres
-                .Where(g => genreMappings.ContainsKey(g))
-                .GroupBy(g => genreMappings[g].ThemeKeywords.FirstOrDefault() ?? string.Empty)
-                .Where(group => !string.IsNullOrEmpty(group.Key) && group.Count() > 1);
+            var genreThemeGroups = new Dictionary<string, List<string>>();
 
-            foreach (var themeGroup in genresByTheme)
+            // Step 1 & 2: Iterate through all keywords and group genres by theme
+            foreach (var genre in genres.Where(g => genreMappings.ContainsKey(g)))
             {
-                var genreList = themeGroup.Take(SemanticCombinationConfig.MaxGenresPerTheme).ToList();
-                for (int i = 0; i < genreList.Count - 1; i++)
+                var genreMapping = genreMappings[genre];
+                foreach (var themeKeyword in genreMapping.ThemeKeywords)
                 {
-                    for (int j = i + 1; j < genreList.Count; j++)
+                    if (!string.IsNullOrEmpty(themeKeyword))
                     {
-                        combinations.Add($"{genreList[i]} {genreList[j]}");
+                        if (!genreThemeGroups.ContainsKey(themeKeyword))
+                        {
+                            genreThemeGroups[themeKeyword] = new List<string>();
+                        }
+                        genreThemeGroups[themeKeyword].Add(genre);
+                    }
+                }
+            }
+
+            // mood based combinations
+            // var genreMoodGroups = new Dictionary<string, List<string>>();
+            // foreach (var genre in genres.Where(g => genreMappings.ContainsKey(g)))
+            // {
+            //     var genreMapping = genreMappings[genre];
+            //     foreach (var moodKeyword in genreMapping.MoodKeywords)
+            //     {
+            //         if (!string.IsNullOrEmpty(moodKeyword))
+            //         {
+            //             if (!genreMoodGroups.ContainsKey(moodKeyword))
+            //             {
+            //                 genreMoodGroups[moodKeyword] = new List<string>();
+            //             }
+            //             genreMoodGroups[moodKeyword].Add(genre);
+            //         }
+            //     }
+            // }
+
+            // Step 3: Generate combinations from the new theme groups
+            foreach (var themeGroup in genreThemeGroups)
+            {
+                // Only generate combinations for themes with more than one genre
+                if (themeGroup.Value.Count > 1)
+                {
+                    var genreList = themeGroup.Value.Distinct().Take(SemanticCombinationConfig.MaxGenresPerTheme).ToList();
+                    for (int i = 0; i < genreList.Count - 1; i++)
+                    {
+                        for (int j = i + 1; j < genreList.Count; j++)
+                        {
+                            combinations.Add($"{genreList[i]} {genreList[j]}");
+                        }
                     }
                 }
             }

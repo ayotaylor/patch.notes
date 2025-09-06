@@ -151,7 +151,7 @@ namespace Backend.Services.Recommendation
                 await EnsureSemanticCacheReadyAsync();
 
                 var indexed = 0;
-                var batchSize = 200;
+                var batchSize = 128;
                 var skip = 0;
                 var processingStartTime = DateTime.UtcNow;
 
@@ -223,8 +223,8 @@ namespace Backend.Services.Recommendation
                         successCount, games.Count, indexed, elapsed, gamesPerSecond, memoryMB);
 
 
-                    // Small delay between batches
-                    //await Task.Delay(10);
+                    // Small delay between batches to prevent connection pool exhaustion
+                    await Task.Delay(5);
                 }
 
                 _logger.LogInformation("Completed indexing {Total} games", indexed);
@@ -244,9 +244,9 @@ namespace Backend.Services.Recommendation
         {
             try
             {
-                // Use AsSplitQuery() to optimize relationship loading - reduces from 7 queries to 2 queries
+                // Use AsSplitQuery() to optimize relationship loading and improve connection pool efficiency
                 var games = await _context.Games
-                    .AsNoTracking() // Better performance for read-only operations
+                    .AsNoTracking() // Better performance for read-only operations, reduces connection time
                     .AsSplitQuery() // Handles relationship loading efficiently with split queries
                     .Include(g => g.GameGenres).ThenInclude(gg => gg.Genre)
                     .Include(g => g.GamePlatforms).ThenInclude(gp => gp.Platform)

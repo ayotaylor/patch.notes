@@ -60,7 +60,12 @@ builder.Services.AddSingleton<QdrantClient>(provider =>
             EnableMultipleHttp2Connections = true,
             KeepAlivePingDelay = TimeSpan.FromSeconds(30),
             KeepAlivePingTimeout = TimeSpan.FromSeconds(5),
-            PooledConnectionIdleTimeout = TimeSpan.FromMinutes(10)
+            PooledConnectionIdleTimeout = TimeSpan.FromMinutes(10),
+            PooledConnectionLifetime = TimeSpan.FromMinutes(30),
+            MaxConnectionsPerServer = 10,
+            ConnectTimeout = TimeSpan.FromSeconds(30),
+            ResponseDrainTimeout = TimeSpan.FromSeconds(10),
+            RequestHeaderEncodingSelector = (_, _) => Encoding.UTF8
         }
     };
 
@@ -105,7 +110,7 @@ builder.Services.AddOpenApi();
 // add db context for mysql
 // TODO: add connection string in cofnigguration
 var mySqlConnectionString = builder.Configuration.GetConnectionString("mysqldb");
-builder.Services.AddDbContext<ApplicationDbContext>(options =>
+builder.Services.AddDbContextPool<ApplicationDbContext>(options =>
 {
     options.UseMySql(mySqlConnectionString, new MySqlServerVersion(new Version()), mySqlOptions =>
     {
@@ -115,7 +120,7 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.EnableSensitiveDataLogging(false);
     options.EnableServiceProviderCaching();
     options.EnableDetailedErrors(false);
-});
+}, poolSize: 64);
 
 // add identity services
 builder.Services.AddIdentity<User, IdentityRole>()
