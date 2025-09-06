@@ -1,158 +1,40 @@
 {
-  "GenreMappings": {
-    "Role-playing (RPG)": {
-      "GenreKeywords": ["rpg", "role-playing", "character progression"],
-      "MechanicKeywords": ["leveling", "character progression", "skill trees", "stats", "equipment"],
-      "ThemeKeywords": ["epic", "adventure", "quest"],
-      "MoodKeywords": ["immersive", "epic", "story-driven"],
-      "ArtStyleKeywords": [],
-      "AudienceKeywords": ["hardcore", "story-focused"]
-    },
-    "Action": {
-      "GenreKeywords": ["action", "combat"],
-      "MechanicKeywords": ["real-time combat", "fast-paced", "reflex-based"],
-      "ThemeKeywords": [],
-      "MoodKeywords": ["intense", "adrenaline", "exciting"],
-      "ArtStyleKeywords": [],
-      "AudienceKeywords": ["action-lovers"]
-    },
-    "Adventure": {
-      "GenreKeywords": ["adventure", "exploration"],
-      "MechanicKeywords": ["exploration", "puzzle-solving", "narrative"],
-      "ThemeKeywords": ["mystery", "discovery"],
-      "MoodKeywords": ["atmospheric", "immersive"],
-      "ArtStyleKeywords": [],
-      "AudienceKeywords": ["story-focused"]
-    },
-    "Strategy": {
-      "GenreKeywords": ["strategy", "tactical"],
-      "MechanicKeywords": ["resource management", "planning", "turn-based", "real-time strategy"],
-      "ThemeKeywords": ["war", "empire", "civilization"],
-      "MoodKeywords": ["cerebral", "challenging"],
-      "ArtStyleKeywords": [],
-      "AudienceKeywords": ["hardcore", "strategic thinkers"]
-    },
-    "Shooter": {
-      "GenreKeywords": ["shooter", "fps", "tps"],
-      "MechanicKeywords": ["shooting", "aiming", "weapons", "competitive"],
-      "ThemeKeywords": ["combat", "warfare"],
-      "MoodKeywords": ["intense", "competitive"],
-      "ArtStyleKeywords": ["realistic", "detailed"],
-      "AudienceKeywords": ["competitive", "action-oriented"]
-    },
-    "Simulation": {
-      "GenreKeywords": ["simulation", "sim"],
-      "MechanicKeywords": ["management", "building", "realistic", "sandbox"],
-      "ThemeKeywords": ["realistic", "life"],
-      "MoodKeywords": ["relaxing", "meditative", "engaging"],
-      "ArtStyleKeywords": ["realistic", "detailed"],
-      "AudienceKeywords": ["casual", "builders"]
-    },
-    "Puzzle": {
-      "GenreKeywords": ["puzzle", "brain teaser"],
-      "MechanicKeywords": ["puzzle-solving", "logic", "problem-solving"],
-      "ThemeKeywords": [],
-      "MoodKeywords": ["cerebral", "relaxing", "satisfying"],
-      "ArtStyleKeywords": ["minimalist", "clean"],
-      "AudienceKeywords": ["puzzle-lovers", "casual"]
-    },
-    "Horror": {
-      "GenreKeywords": ["horror", "survival horror"],
-      "MechanicKeywords": ["stealth", "survival", "limited resources"],
-      "ThemeKeywords": ["horror", "supernatural", "psychological"],
-      "MoodKeywords": ["dark", "scary", "atmospheric", "tense"],
-      "ArtStyleKeywords": ["dark", "realistic"],
-      "AudienceKeywords": ["mature", "horror fans"]
-    }
-  },
-  "PlatformMappings": {
-    "PC (Microsoft Windows)": {
-      "ArtStyleKeywords": ["high-resolution", "detailed", "mod-support"],
-      "AudienceKeywords": ["pc gamers", "enthusiasts"],
-      "MechanicKeywords": ["complex controls", "keyboard-mouse"]
-    },
-    "PlayStation": {
-      "ArtStyleKeywords": ["cinematic", "polished"],
-      "AudienceKeywords": ["console gamers"],
-      "MechanicKeywords": ["controller-based"]
-    },
-    "Xbox": {
-      "ArtStyleKeywords": ["cinematic", "polished"],
-      "AudienceKeywords": ["console gamers"],
-      "MechanicKeywords": ["controller-based", "xbox live"]
-    },
-    "Nintendo Switch": {
-      "ArtStyleKeywords": ["colorful", "stylized"],
-      "AudienceKeywords": ["family-friendly", "portable gaming"],
-      "MechanicKeywords": ["portable", "local multiplayer"]
-    },
-    "Mobile": {
-      "ArtStyleKeywords": ["simple", "clear"],
-      "AudienceKeywords": ["casual", "mobile gamers"],
-      "MechanicKeywords": ["touch controls", "short sessions"]
-    }
-  },
-  "GameModeMappings": {
-    "Single-player": {
-      "MechanicKeywords": ["single-player", "solo"],
-      "MoodKeywords": ["immersive", "personal"],
-      "AudienceKeywords": ["solo players"]
-    },
-    "Multiplayer": {
-      "MechanicKeywords": ["multiplayer", "online", "social"],
-      "MoodKeywords": ["social", "competitive"],
-      "AudienceKeywords": ["social gamers"]
-    },
-    "Co-operative": {
-      "MechanicKeywords": ["co-op", "cooperative", "teamwork"],
-      "MoodKeywords": ["collaborative", "friendly"],
-      "AudienceKeywords": ["team players"]
-    },
-    "Massively Multiplayer Online (MMO)": {
-      "MechanicKeywords": ["mmo", "persistent world", "large scale"],
-      "ThemeKeywords": ["virtual world", "community"],
-      "MoodKeywords": ["social", "persistent"],
-      "AudienceKeywords": ["mmo players", "community focused"]
-    }
-  },
-  "PerspectiveMappings": {
-    "First person": {
-      "MechanicKeywords": ["first-person", "immersive view"],
-      "MoodKeywords": ["immersive", "personal"],
-      "ArtStyleKeywords": ["realistic"]
-    },
-    "Third person": {
-      "MechanicKeywords": ["third-person", "character view"],
-      "MoodKeywords": ["cinematic"]
-    },
-    "Top-down": {
-      "MechanicKeywords": ["top-down", "strategic view"],
-      "ArtStyleKeywords": ["strategic", "overview"]
-    },
-    "Side view": {
-      "MechanicKeywords": ["side-scrolling", "2d"],
-      "ArtStyleKeywords": ["2d", "classic"],
-      "MoodKeywords": ["nostalgic", "classic"]
-    }
-  },
   "DefaultWeights": {
     "GenreWeight": 0.4,
     "MechanicsWeight": 0.3,
     "ThemeWeight": 0.2,
     "MoodWeight": 0.1,
+    "PlatformTypeWeight": 0.15,
+    "EraWeight": 0.12,
+    "CapabilityWeight": 0.08,
+    "PlayerInteractionWeight": 0.1,
+    "ScaleWeight": 0.08,
+    "CommunicationWeight": 0.07,
     "ArtStyleWeight": 0.05,
+    "ViewpointWeight": 0.04,
+    "ImmersionWeight": 0.03,
+    "InterfaceWeight": 0.02,
     "AudienceWeight": 0.03
   },
   "Dimensions": {
     "BaseTextEmbedding": 384,
     "TotalDimensions": 384,
     "CategoryRanges": {
-      "Genre": { "Start": 0, "End": 64, "Size": 64 },
-      "Mechanics": { "Start": 64, "End": 192, "Size": 128 },
-      "Theme": { "Start": 192, "End": 256, "Size": 64 },
-      "Mood": { "Start": 256, "End": 320, "Size": 64 },
-      "ArtStyle": { "Start": 320, "End": 352, "Size": 32 },
-      "Audience": { "Start": 352, "End": 384, "Size": 32 }
+      "Genre": { "Start": 0, "End": 48 },
+      "Mechanics": { "Start": 48, "End": 96 },
+      "Theme": { "Start": 96, "End": 144 },
+      "Mood": { "Start": 144, "End": 180 },
+      "PlatformType": { "Start": 180, "End": 210 },
+      "Era": { "Start": 210, "End": 240 },
+      "Capability": { "Start": 240, "End": 264 },
+      "PlayerInteraction": { "Start": 264, "End": 288 },
+      "Scale": { "Start": 288, "End": 306 },
+      "Communication": { "Start": 306, "End": 324 },
+      "ArtStyle": { "Start": 324, "End": 342 },
+      "Viewpoint": { "Start": 342, "End": 360 },
+      "Immersion": { "Start": 360, "End": 372 },
+      "Interface": { "Start": 372, "End": 378 },
+      "Audience": { "Start": 378, "End": 384 }
     }
   }
 }

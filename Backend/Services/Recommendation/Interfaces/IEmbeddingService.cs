@@ -27,13 +27,30 @@ namespace Backend.Services.Recommendation.Interfaces
         public List<string> Companies { get; set; } = new();
         public string GameType { get; set; } = string.Empty;
 
-        // Enhanced semantic keyword fields (kept for existing compatibility)
+        // Enhanced semantic keyword fields (mapped to SemanticCategoryMapping properties)
+        // Core game properties
         public List<string> ExtractedGenreKeywords { get; set; } = new();
         public List<string> ExtractedMechanicKeywords { get; set; } = new();
         public List<string> ExtractedThemeKeywords { get; set; } = new();
         public List<string> ExtractedMoodKeywords { get; set; } = new();
         public List<string> ExtractedArtStyleKeywords { get; set; } = new();
         public List<string> ExtractedAudienceKeywords { get; set; } = new();
+        
+        // Platform-specific keywords
+        public List<string> ExtractedPlatformTypeKeywords { get; set; } = new();
+        public List<string> ExtractedEraKeywords { get; set; } = new();
+        public List<string> ExtractedCapabilityKeywords { get; set; } = new();
+        
+        // Game mode-specific keywords
+        public List<string> ExtractedPlayerInteractionKeywords { get; set; } = new();
+        public List<string> ExtractedScaleKeywords { get; set; } = new();
+        public List<string> ExtractedCommunicationKeywords { get; set; } = new();
+        
+        // Perspective-specific keywords
+        public List<string> ExtractedViewpointKeywords { get; set; } = new();
+        public List<string> ExtractedImmersionKeywords { get; set; } = new();
+        public List<string> ExtractedInterfaceKeywords { get; set; } = new();
+        
         public Dictionary<string, float> SemanticWeights { get; set; } = new();
     }
 

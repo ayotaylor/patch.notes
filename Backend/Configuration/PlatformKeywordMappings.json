@@ -1,0 +1,5811 @@
+{
+    "Legacy Computer": {
+        "PlatformType": [
+            "vintage-computer",
+            "obsolete",
+            "historical"
+        ],
+        "EraKeywords": [
+            "vintage",
+            "obsolete",
+            "legacy"
+        ],
+        "CapabilityKeywords": [
+            "obsolete",
+            "historical",
+            "legacy"
+        ],
+        "AudienceKeywords": [
+            "vintage-computing-preservationists",
+            "retro-computer-historians",
+            "obsolete-system-collectors"
+        ],
+        "MoodKeywords": [
+            "vintage",
+            "obsolete",
+            "historical"
+        ]
+    },
+    "Tapwave Zodiac": {
+        "PlatformType": [
+            "handheld",
+            "PDA-gaming",
+            "Palm-OS"
+        ],
+        "EraKeywords": [
+            "retro",
+            "early-2000s",
+            "PDA-gaming"
+        ],
+        "CapabilityKeywords": [
+            "PDA-gaming",
+            "Palm-OS",
+            "multimedia-handheld"
+        ],
+        "AudienceKeywords": [
+            "PDA-gaming-fans",
+            "Palm-OS-gaming-enthusiasts",
+            "handheld-PDA-hybrid-users"
+        ],
+        "MoodKeywords": [
+            "PDA-gaming",
+            "Palm-OS",
+            "multimedia-handheld"
+        ]
+    },
+    "Atari ST/STE": {
+        "PlatformType": [
+            "personal-computer",
+            "16-bit",
+            "music-workstation"
+        ],
+        "EraKeywords": [
+            "vintage",
+            "late-80s",
+            "16-bit-computer"
+        ],
+        "CapabilityKeywords": [
+            "16-bit",
+            "MIDI-capable",
+            "music-production"
+        ],
+        "AudienceKeywords": [
+            "Atari-16-bit-fans",
+            "music-production-computer-users",
+            "European-computer-enthusiasts"
+        ],
+        "MoodKeywords": [
+            "16-bit-power",
+            "music-production",
+            "MIDI-capable"
+        ]
+    },
+    "Panasonic M2": {
+        "PlatformType": [
+            "console",
+            "3DO-successor",
+            "unreleased"
+        ],
+        "EraKeywords": [
+            "retro",
+            "mid-90s",
+            "unreleased"
+        ],
+        "CapabilityKeywords": [
+            "3DO-successor",
+            "high-end",
+            "unreleased"
+        ],
+        "AudienceKeywords": [
+            "cancelled-console-collectors",
+            "3DO-successor-fans",
+            "unreleased-system-historians"
+        ],
+        "MoodKeywords": [
+            "cancelled",
+            "unreleased",
+            "3DO-successor"
+        ]
+    },
+    "Wii": {
+        "PlatformType": [
+            "console",
+            "motion-controlled",
+            "family-gaming"
+        ],
+        "EraKeywords": [
+            "retro",
+            "mid-2000s",
+            "motion-gaming-revolution"
+        ],
+        "CapabilityKeywords": [
+            "motion-controlled",
+            "family-gaming",
+            "innovative-controls"
+        ],
+        "AudienceKeywords": [
+            "motion-gaming-pioneers",
+            "family-gamers",
+            "casual-gaming-revolutionaries"
+        ],
+        "MoodKeywords": [
+            "motion-controlled",
+            "family-friendly",
+            "innovative"
+        ]
+    },
+    "Donner Model 30": {
+        "PlatformType": [
+            "computer-terminal",
+            "specialized",
+            "rare"
+        ],
+        "EraKeywords": [
+            "vintage",
+            "early-computing",
+            "terminal-era"
+        ],
+        "CapabilityKeywords": [
+            "terminal-based",
+            "specialized",
+            "rare"
+        ],
+        "AudienceKeywords": [
+            "vintage-terminal-collectors",
+            "computer-peripheral-historians",
+            "early-computing-enthusiasts"
+        ],
+        "MoodKeywords": [
+            "terminal-based",
+            "early-computing",
+            "professional"
+        ]
+    },
+    "TRS-80": {
+        "PlatformType": [
+            "home-computer",
+            "personal-computer",
+            "Radio-Shack"
+        ],
+        "EraKeywords": [
+            "vintage",
+            "late-70s",
+            "home-computer-pioneer"
+        ],
+        "CapabilityKeywords": [
+            "affordable",
+            "home-computer-pioneer",
+            "Radio-Shack-quality"
+        ],
+        "AudienceKeywords": [
+            "Radio-Shack-computer-fans",
+            "trash-80-nostalgics",
+            "home-computer-pioneers"
+        ],
+        "MoodKeywords": [
+            "affordable",
+            "Radio-Shack-branded",
+            "home-computer-pioneer"
+        ]
+    },
+    "R-Zone": {
+        "PlatformType": [
+            "head-mounted",
+            "VR-attempt",
+            "Tiger-Electronics"
+        ],
+        "EraKeywords": [
+            "retro",
+            "mid-90s",
+            "early-VR-attempt"
+        ],
+        "CapabilityKeywords": [
+            "head-mounted",
+            "90s-VR-attempt",
+            "Tiger-Electronics"
+        ],
+        "AudienceKeywords": [
+            "Tiger-Electronics-fans",
+            "head-mounted-gaming-pioneers",
+            "90s-VR-attempts-collectors"
+        ],
+        "MoodKeywords": [
+            "head-mounted",
+            "90s-VR-attempt",
+            "novelty"
+        ]
+    },
+    "Bally Astrocade": {
+        "PlatformType": [
+            "console",
+            "programmable",
+            "BASIC-enabled"
+        ],
+        "EraKeywords": [
+            "vintage",
+            "late-70s",
+            "programmable-console"
+        ],
+        "CapabilityKeywords": [
+            "programmable",
+            "BASIC-enabled",
+            "creative"
+        ],
+        "AudienceKeywords": [
+            "Bally-fans",
+            "creative-programming-enthusiasts",
+            "built-in-BASIC-lovers"
+        ],
+        "MoodKeywords": [
+            "programmable",
+            "BASIC-enabled",
+            "creative"
+        ]
+    },
+    "PlayStation Vita": {
+        "PlatformType": [
+            "handheld",
+            "premium-portable",
+            "OLED-screen"
+        ],
+        "EraKeywords": [
+            "modern",
+            "early-2010s",
+            "premium-handheld"
+        ],
+        "CapabilityKeywords": [
+            "premium-portable",
+            "OLED-screen",
+            "dual-analog"
+        ],
+        "AudienceKeywords": [
+            "premium-handheld-fans",
+            "OLED-screen-appreciators",
+            "console-quality-portable-seekers"
+        ],
+        "MoodKeywords": [
+            "premium-handheld",
+            "OLED-beautiful",
+            "console-quality"
+        ]
+    },
+    "Nintendo DS": {
+        "PlatformType": [
+            "handheld",
+            "dual-screen",
+            "touch-screen"
+        ],
+        "EraKeywords": [
+            "retro",
+            "mid-2000s",
+            "dual-screen-revolution"
+        ],
+        "CapabilityKeywords": [
+            "dual-screen",
+            "touch-screen",
+            "innovative-controls"
+        ],
+        "AudienceKeywords": [
+            "dual-screen-gaming-fans",
+            "touch-control-pioneers",
+            "portable-gaming-revolutionaries"
+        ],
+        "MoodKeywords": [
+            "dual-screen",
+            "touch-enabled",
+            "innovative"
+        ]
+    },
+    "Microcomputer": {
+        "PlatformType": [
+            "personal-computer",
+            "microprocessor-based",
+            "home-computer"
+        ],
+        "EraKeywords": [
+            "vintage",
+            "70s-80s",
+            "microcomputer-era"
+        ],
+        "CapabilityKeywords": [
+            "microprocessor-based",
+            "personal",
+            "affordable"
+        ],
+        "AudienceKeywords": [
+            "early-personal-computer-fans",
+            "microprocessor-era-enthusiasts",
+            "home-computing-pioneers"
+        ],
+        "MoodKeywords": [
+            "pioneering",
+            "personal",
+            "microprocessor-based"
+        ]
+    },
+    "VC 4000": {
+        "PlatformType": [
+            "console",
+            "cartridge-based",
+            "European"
+        ],
+        "EraKeywords": [
+            "vintage",
+            "70s-era",
+            "European-console"
+        ],
+        "CapabilityKeywords": [
+            "cartridge-based",
+            "European",
+            "simple"
+        ],
+        "AudienceKeywords": [
+            "European-console-collectors",
+            "Interton-fans",
+            "rare-system-hunters"
+        ],
+        "MoodKeywords": [
+            "European",
+            "rare",
+            "70s-era"
+        ]
+    },
+    "Leapster": {
+        "PlatformType": [
+            "educational-handheld",
+            "children-focused",
+            "learning-device"
+        ],
+        "EraKeywords": [
+            "modern",
+            "educational-handheld",
+            "children-learning"
+        ],
+        "CapabilityKeywords": [
+            "educational",
+            "children-focused",
+            "learning-oriented"
+        ],
+        "AudienceKeywords": [
+            "educational-handheld-buyers",
+            "learning-focused-parents",
+            "LeapFrog-fans"
+        ],
+        "MoodKeywords": [
+            "educational",
+            "child-focused",
+            "learning-oriented"
+        ]
+    },
+    "Nintendo Switch 2": {
+        "PlatformType": [
+            "hybrid-console",
+            "next-gen",
+            "portable-console"
+        ],
+        "EraKeywords": [
+            "future",
+            "next-generation",
+            "upcoming"
+        ],
+        "CapabilityKeywords": [
+            "next-generation",
+            "hybrid-evolution",
+            "upgraded"
+        ],
+        "AudienceKeywords": [
+            "next-gen-Nintendo-fans",
+            "hybrid-gaming-evolutionists",
+            "early-adopters"
+        ],
+        "MoodKeywords": [
+            "next-generation",
+            "evolved-hybrid",
+            "anticipated"
+        ]
+    },
+    "Playdate": {
+        "PlatformType": [
+            "handheld",
+            "indie-handheld",
+            "crank-controlled"
+        ],
+        "EraKeywords": [
+            "modern",
+            "indie-handheld",
+            "unique-gaming"
+        ],
+        "CapabilityKeywords": [
+            "crank-controlled",
+            "indie-focused",
+            "unique-controls"
+        ],
+        "AudienceKeywords": [
+            "indie-handheld-fans",
+            "crank-gaming-enthusiasts",
+            "unique-control-lovers"
+        ],
+        "MoodKeywords": [
+            "unique",
+            "crank-controlled",
+            "indie"
+        ]
+    },
+    "Virtual Boy": {
+        "PlatformType": [
+            "VR-console",
+            "head-mounted",
+            "red-monochrome"
+        ],
+        "EraKeywords": [
+            "retro",
+            "mid-90s",
+            "failed-VR"
+        ],
+        "CapabilityKeywords": [
+            "red-monochrome",
+            "head-mounted",
+            "failed-VR"
+        ],
+        "AudienceKeywords": [
+            "Nintendo-oddity-collectors",
+            "red-monochrome-VR-fans",
+            "failed-console-historians"
+        ],
+        "MoodKeywords": [
+            "red-monochrome",
+            "headache-inducing",
+            "failed-VR"
+        ]
+    },
+    "Mega Duck/Cougar Boy": {
+        "PlatformType": [
+            "handheld",
+            "Game-Boy-clone",
+            "budget"
+        ],
+        "EraKeywords": [
+            "retro",
+            "early-90s",
+            "Game-Boy-clone"
+        ],
+        "CapabilityKeywords": [
+            "Game-Boy-clone",
+            "budget-alternative",
+            "rare"
+        ],
+        "AudienceKeywords": [
+            "Game-Boy-clone-collectors",
+            "budget-handheld-historians",
+            "rare-portable-hunters"
+        ],
+        "MoodKeywords": [
+            "Game-Boy-clone",
+            "budget",
+            "rare"
+        ]
+    },
+    "Neo Geo AES": {
+        "PlatformType": [
+            "console",
+            "home-arcade",
+            "premium"
+        ],
+        "EraKeywords": [
+            "retro",
+            "90s-era",
+            "premium-console"
+        ],
+        "CapabilityKeywords": [
+            "home-arcade",
+            "arcade-perfect",
+            "premium"
+        ],
+        "AudienceKeywords": [
+            "home-arcade-enthusiasts",
+            "SNK-collectors",
+            "premium-console-buyers"
+        ],
+        "MoodKeywords": [
+            "arcade-perfect",
+            "premium",
+            "expensive"
+        ]
+    },
+    "Amiga": {
+        "PlatformType": [
+            "personal-computer",
+            "multimedia-computer",
+            "16-bit"
+        ],
+        "EraKeywords": [
+            "vintage",
+            "80s-90s",
+            "multimedia-era"
+        ],
+        "CapabilityKeywords": [
+            "multimedia-powerhouse",
+            "16-bit",
+            "creative-workstation"
+        ],
+        "AudienceKeywords": [
+            "multimedia-computer-fans",
+            "creative-professionals",
+            "European-computer-enthusiasts"
+        ],
+        "MoodKeywords": [
+            "multimedia-powerhouse",
+            "creative",
+            "European-popular"
+        ]
+    },
+    "Xbox One": {
+        "PlatformType": [
+            "console",
+            "entertainment-system",
+            "all-in-one"
+        ],
+        "EraKeywords": [
+            "modern",
+            "early-2010s",
+            "entertainment-hub"
+        ],
+        "CapabilityKeywords": [
+            "all-in-one",
+            "TV-integrated",
+            "entertainment-hub"
+        ],
+        "AudienceKeywords": [
+            "all-in-one-entertainment-seekers",
+            "Microsoft-ecosystem-users",
+            "TV-integration-fans"
+        ],
+        "MoodKeywords": [
+            "all-in-one",
+            "entertainment-hub",
+            "TV-integrated"
+        ]
+    },
+    "Daydream": {
+        "PlatformType": [
+            "mobile-VR",
+            "smartphone-VR",
+            "Google-VR"
+        ],
+        "EraKeywords": [
+            "modern",
+            "mobile-VR-era",
+            "smartphone-VR"
+        ],
+        "CapabilityKeywords": [
+            "mobile-VR",
+            "smartphone-based",
+            "Google-VR"
+        ],
+        "AudienceKeywords": [
+            "mobile-VR-users",
+            "Google-VR-fans",
+            "smartphone-VR-adopters"
+        ],
+        "MoodKeywords": [
+            "mobile-VR",
+            "smartphone-based",
+            "Google-backed"
+        ]
+    },
+    "AY-3-8760": {
+        "PlatformType": [
+            "sound-chip",
+            "audio-chip",
+            "electronics"
+        ],
+        "EraKeywords": [
+            "vintage",
+            "70s-era",
+            "sound-chip-era"
+        ],
+        "CapabilityKeywords": [
+            "sound-chip",
+            "audio-focused",
+            "primitive"
+        ],
+        "AudienceKeywords": [
+            "sound-chip-collectors",
+            "retro-audio-enthusiasts",
+            "electronics-hobbyists"
+        ],
+        "MoodKeywords": [
+            "audio-focused",
+            "sound-chip",
+            "electronic"
+        ]
+    },
+    "PlayStation VR2": {
+        "PlatformType": [
+            "VR-headset",
+            "next-gen-VR",
+            "PlayStation-accessory"
+        ],
+        "EraKeywords": [
+            "cutting-edge",
+            "next-gen-VR",
+            "current-gen"
+        ],
+        "CapabilityKeywords": [
+            "next-gen-VR",
+            "haptic-feedback",
+            "premium-VR"
+        ],
+        "AudienceKeywords": [
+            "next-gen-VR-enthusiasts",
+            "PlayStation-5-owners",
+            "premium-VR-users"
+        ],
+        "MoodKeywords": [
+            "next-gen-VR",
+            "haptic-rich",
+            "premium"
+        ]
+    },
+    "Exidy Sorcerer": {
+        "PlatformType": [
+            "personal-computer",
+            "S-100-bus",
+            "kit-computer"
+        ],
+        "EraKeywords": [
+            "vintage",
+            "late-70s",
+            "S-100-era"
+        ],
+        "CapabilityKeywords": [
+            "S-100-bus",
+            "expandable",
+            "kit-computer"
+        ],
+        "AudienceKeywords": [
+            "S-100-bus-enthusiasts",
+            "vintage-computer-collectors",
+            "Exidy-fans"
+        ],
+        "MoodKeywords": [
+            "S-100-bus",
+            "expandable",
+            "70s-era"
+        ]
+    },
+    "Digiblast": {
+        "PlatformType": [
+            "unknown",
+            "obscure",
+            "rare"
+        ],
+        "EraKeywords": [
+            "unknown",
+            "obscure",
+            "mysterious"
+        ],
+        "CapabilityKeywords": [
+            "obscure",
+            "rare",
+            "unknown"
+        ],
+        "AudienceKeywords": [
+            "obscure-console-collectors",
+            "rare-gaming-historians",
+            "unknown-system-hunters"
+        ],
+        "MoodKeywords": [
+            "obscure",
+            "rare",
+            "unknown"
+        ]
+    },
+    "Pokémon mini": {
+        "PlatformType": [
+            "ultra-portable",
+            "miniature-handheld",
+            "Pokemon-branded"
+        ],
+        "EraKeywords": [
+            "retro",
+            "early-2000s",
+            "ultra-portable"
+        ],
+        "CapabilityKeywords": [
+            "ultra-portable",
+            "miniature",
+            "Pokemon-branded"
+        ],
+        "AudienceKeywords": [
+            "ultra-portable-gaming-fans",
+            "Pokemon-collectors",
+            "miniature-handheld-lovers"
+        ],
+        "MoodKeywords": [
+            "ultra-portable",
+            "tiny",
+            "Pokemon-branded"
+        ]
+    },
+    "Oculus VR": {
+        "PlatformType": [
+            "VR-platform",
+            "Oculus-brand",
+            "virtual-reality"
+        ],
+        "EraKeywords": [
+            "modern",
+            "VR-era",
+            "Oculus-brand"
+        ],
+        "CapabilityKeywords": [
+            "virtual-reality",
+            "immersive",
+            "Oculus-branded"
+        ],
+        "AudienceKeywords": [
+            "VR-technology-fans",
+            "Oculus-brand-loyalists",
+            "virtual-reality-pioneers"
+        ],
+        "MoodKeywords": [
+            "VR-focused",
+            "immersive",
+            "virtual-reality"
+        ]
+    },
+    "Nintendo Entertainment System": {
+        "PlatformType": [
+            "console",
+            "8-bit",
+            "cartridge-based"
+        ],
+        "EraKeywords": [
+            "retro",
+            "80s-era",
+            "8-bit-era"
+        ],
+        "CapabilityKeywords": [
+            "8-bit",
+            "cartridge-based",
+            "home-console-savior"
+        ],
+        "AudienceKeywords": [
+            "classic-console-revivalists",
+            "80s-gaming-nostalgics",
+            "Nintendo-purists"
+        ],
+        "MoodKeywords": [
+            "iconic",
+            "classic",
+            "home-console-savior"
+        ]
+    },
+    "Microvision": {
+        "PlatformType": [
+            "handheld",
+            "first-handheld",
+            "LED-based"
+        ],
+        "EraKeywords": [
+            "vintage",
+            "late-70s",
+            "first-handheld"
+        ],
+        "CapabilityKeywords": [
+            "first-handheld",
+            "LED-based",
+            "cartridge-handheld"
+        ],
+        "AudienceKeywords": [
+            "handheld-gaming-pioneers",
+            "Milton-Bradley-fans",
+            "early-portable-collectors"
+        ],
+        "MoodKeywords": [
+            "pioneering-handheld",
+            "LED-based",
+            "primitive"
+        ]
+    },
+    "Acorn Archimedes": {
+        "PlatformType": [
+            "personal-computer",
+            "ARM-based",
+            "RISC-OS"
+        ],
+        "EraKeywords": [
+            "vintage",
+            "late-80s",
+            "ARM-era"
+        ],
+        "CapabilityKeywords": [
+            "ARM-processor",
+            "RISC-OS",
+            "advanced"
+        ],
+        "AudienceKeywords": [
+            "ARM-processor-pioneers",
+            "British-computer-enthusiasts",
+            "RISC-OS-fans"
+        ],
+        "MoodKeywords": [
+            "ARM-powered",
+            "British",
+            "advanced"
+        ]
+    },
+    "WonderSwan": {
+        "PlatformType": [
+            "handheld",
+            "monochrome",
+            "vertical-horizontal"
+        ],
+        "EraKeywords": [
+            "retro",
+            "late-90s",
+            "monochrome-handheld"
+        ],
+        "CapabilityKeywords": [
+            "monochrome",
+            "vertical-horizontal",
+            "battery-efficient"
+        ],
+        "AudienceKeywords": [
+            "Bandai-handheld-fans",
+            "Japanese-portable-collectors",
+            "Square-RPG-players"
+        ],
+        "MoodKeywords": [
+            "Japanese",
+            "RPG-focused",
+            "monochrome"
+        ]
+    },
+    "PlayStation 4": {
+        "PlatformType": [
+            "console",
+            "8th-generation",
+            "social-gaming"
+        ],
+        "EraKeywords": [
+            "modern",
+            "mid-2010s",
+            "8th-generation"
+        ],
+        "CapabilityKeywords": [
+            "social-gaming",
+            "streaming-friendly",
+            "share-button",
+            "Blu-ray-playback"
+        ],
+        "AudienceKeywords": [
+            "modern-console-gamers",
+            "PlayStation-loyalists",
+            "exclusive-game-fans"
+        ],
+        "MoodKeywords": [
+            "modern",
+            "social",
+            "streaming-friendly"
+        ]
+    },
+    "PlayStation VR": {
+        "PlatformType": [
+            "VR-headset",
+            "console-VR",
+            "PlayStation-accessory"
+        ],
+        "EraKeywords": [
+            "modern",
+            "console-VR-era",
+            "PlayStation-VR"
+        ],
+        "CapabilityKeywords": [
+            "console-VR",
+            "PlayStation-accessory",
+            "tethered"
+        ],
+        "AudienceKeywords": [
+            "console-VR-pioneers",
+            "PlayStation-VR-adopters",
+            "accessible-VR-users"
+        ],
+        "MoodKeywords": [
+            "console-VR",
+            "accessible",
+            "motion-controlled"
+        ]
+    },
+    "Legacy Mobile Device": {
+        "PlatformType": [
+            "mobile-device",
+            "obsolete-mobile",
+            "vintage-phone"
+        ],
+        "EraKeywords": [
+            "vintage",
+            "obsolete",
+            "early-mobile"
+        ],
+        "CapabilityKeywords": [
+            "obsolete-mobile",
+            "primitive",
+            "early-mobile-gaming"
+        ],
+        "AudienceKeywords": [
+            "retro-mobile-collectors",
+            "vintage-phone-gamers",
+            "early-mobile-gaming-historians"
+        ],
+        "MoodKeywords": [
+            "obsolete",
+            "vintage-mobile",
+            "primitive"
+        ]
+    },
+    "Odyssey": {
+        "PlatformType": [
+            "console",
+            "first-home-console",
+            "overlay-based"
+        ],
+        "EraKeywords": [
+            "vintage",
+            "early-70s",
+            "first-home-console"
+        ],
+        "CapabilityKeywords": [
+            "first-home-console",
+            "overlay-based",
+            "analog"
+        ],
+        "AudienceKeywords": [
+            "gaming-history-purists",
+            "Magnavox-collectors",
+            "home-console-pioneers"
+        ],
+        "MoodKeywords": [
+            "pioneering",
+            "first-home-console",
+            "primitive"
+        ]
+    },
+    "ColecoVision": {
+        "PlatformType": [
+            "console",
+            "8-bit",
+            "arcade-ports"
+        ],
+        "EraKeywords": [
+            "retro",
+            "early-80s",
+            "arcade-port-era"
+        ],
+        "CapabilityKeywords": [
+            "arcade-ports",
+            "expandable",
+            "8-bit"
+        ],
+        "AudienceKeywords": [
+            "Coleco-fans",
+            "arcade-port-enthusiasts",
+            "expansion-module-collectors"
+        ],
+        "MoodKeywords": [
+            "arcade-accurate",
+            "expandable",
+            "Coleco-quality"
+        ]
+    },
+    "Sega Pico": {
+        "PlatformType": [
+            "educational-console",
+            "children-focused",
+            "stylus-based"
+        ],
+        "EraKeywords": [
+            "retro",
+            "90s-era",
+            "educational-gaming"
+        ],
+        "CapabilityKeywords": [
+            "educational",
+            "stylus-based",
+            "interactive-books"
+        ],
+        "AudienceKeywords": [
+            "educational-Sega-fans",
+            "children-gaming-collectors",
+            "stylus-based-learning-enthusiasts"
+        ],
+        "MoodKeywords": [
+            "educational",
+            "child-focused",
+            "stylus-based"
+        ]
+    },
+    "NEC PC-6000 Series": {
+        "PlatformType": [
+            "home-computer",
+            "8-bit",
+            "Japanese"
+        ],
+        "EraKeywords": [
+            "vintage",
+            "80s-era",
+            "Japanese-home-computer"
+        ],
+        "CapabilityKeywords": [
+            "8-bit",
+            "Japanese-design",
+            "family-computer"
+        ],
+        "AudienceKeywords": [
+            "NEC-computer-collectors",
+            "Japanese-home-computer-fans",
+            "6000-series-enthusiasts"
+        ],
+        "MoodKeywords": [
+            "Japanese",
+            "NEC-quality",
+            "home-computer"
+        ]
+    },
+    "Evercade": {
+        "PlatformType": [
+            "retro-handheld",
+            "cartridge-revival",
+            "licensed-retro"
+        ],
+        "EraKeywords": [
+            "modern",
+            "retro-revival",
+            "cartridge-revival"
+        ],
+        "CapabilityKeywords": [
+            "retro-revival",
+            "cartridge-based",
+            "licensed-classics"
+        ],
+        "AudienceKeywords": [
+            "retro-gaming-modernists",
+            "cartridge-collection-revivalists",
+            "handheld-retro-fans"
+        ],
+        "MoodKeywords": [
+            "retro-revival",
+            "cartridge-based",
+            "licensed-classics"
+        ]
+    },
+    "Sinclair QL": {
+        "PlatformType": [
+            "personal-computer",
+            "68000-based",
+            "business-computer"
+        ],
+        "EraKeywords": [
+            "vintage",
+            "mid-80s",
+            "68000-era"
+        ],
+        "CapabilityKeywords": [
+            "68000-processor",
+            "multitasking",
+            "business-oriented"
+        ],
+        "AudienceKeywords": [
+            "Sinclair-computer-fans",
+            "68000-enthusiasts",
+            "British-business-computer-users"
+        ],
+        "MoodKeywords": [
+            "68000-powered",
+            "multitasking",
+            "British"
+        ]
+    },
+    "Windows Mobile": {
+        "PlatformType": [
+            "mobile-OS",
+            "PDA-smartphone",
+            "stylus-based"
+        ],
+        "EraKeywords": [
+            "retro",
+            "2000s-era",
+            "PDA-smartphone"
+        ],
+        "CapabilityKeywords": [
+            "PDA-smartphone",
+            "stylus-based",
+            "business-focused"
+        ],
+        "AudienceKeywords": [
+            "PDA-smartphone-users",
+            "Microsoft-mobile-fans",
+            "stylus-based-mobile-gamers"
+        ],
+        "MoodKeywords": [
+            "business-focused",
+            "stylus-based",
+            "Microsoft-mobile"
+        ]
+    },
+    "Amazon Fire TV": {
+        "PlatformType": [
+            "streaming-device",
+            "Android-TV",
+            "living-room"
+        ],
+        "EraKeywords": [
+            "modern",
+            "streaming-era",
+            "Android-TV"
+        ],
+        "CapabilityKeywords": [
+            "streaming-device",
+            "Android-TV",
+            "casual-gaming"
+        ],
+        "AudienceKeywords": [
+            "streaming-device-gamers",
+            "Amazon-ecosystem-users",
+            "casual-TV-gamers"
+        ],
+        "MoodKeywords": [
+            "streaming-focused",
+            "casual",
+            "living-room"
+        ]
+    },
+    "Terebikko / See 'n Say Video Phone": {
+        "PlatformType": [
+            "interactive-toy",
+            "VHS-interactive",
+            "children-edutainment"
+        ],
+        "EraKeywords": [
+            "retro",
+            "90s-era",
+            "interactive-toy"
+        ],
+        "CapabilityKeywords": [
+            "VHS-interactive",
+            "voice-recognition",
+            "children-edutainment"
+        ],
+        "AudienceKeywords": [
+            "interactive-TV-toy-collectors",
+            "children-edutainment-fans",
+            "VHS-interactive-enthusiasts"
+        ],
+        "MoodKeywords": [
+            "interactive-TV",
+            "child-focused",
+            "VHS-based"
+        ]
+    },
+    "Commodore 16": {
+        "PlatformType": [
+            "home-computer",
+            "budget-computer",
+            "TED-series"
+        ],
+        "EraKeywords": [
+            "vintage",
+            "80s-era",
+            "budget-computer"
+        ],
+        "CapabilityKeywords": [
+            "budget-computer",
+            "TED-series",
+            "entry-level"
+        ],
+        "AudienceKeywords": [
+            "budget-Commodore-fans",
+            "TED-series-collectors",
+            "European-home-computer-users"
+        ],
+        "MoodKeywords": [
+            "budget-friendly",
+            "entry-level",
+            "European-focused"
+        ]
+    },
+    "Dragon 32/64": {
+        "PlatformType": [
+            "home-computer",
+            "6809-based",
+            "Welsh"
+        ],
+        "EraKeywords": [
+            "vintage",
+            "80s-era",
+            "Welsh-computer"
+        ],
+        "CapabilityKeywords": [
+            "6809-processor",
+            "Welsh-design",
+            "CoCo-compatible"
+        ],
+        "AudienceKeywords": [
+            "Welsh-computer-fans",
+            "6809-processor-enthusiasts",
+            "Dragon-Data-collectors"
+        ],
+        "MoodKeywords": [
+            "Welsh",
+            "6809-based",
+            "British"
+        ]
+    },
+    "Palm OS": {
+        "PlatformType": [
+            "mobile-OS",
+            "PDA-platform",
+            "stylus-interface"
+        ],
+        "EraKeywords": [
+            "retro",
+            "PDA-era",
+            "handheld-computing"
+        ],
+        "CapabilityKeywords": [
+            "PDA-platform",
+            "stylus-interface",
+            "handheld-computing"
+        ],
+        "AudienceKeywords": [
+            "PDA-gaming-pioneers",
+            "stylus-interface-fans",
+            "mobile-productivity-users"
+        ],
+        "MoodKeywords": [
+            "PDA-focused",
+            "stylus-based",
+            "productivity"
+        ]
+    },
+    "BlackBerry OS": {
+        "PlatformType": [
+            "mobile-OS",
+            "QWERTY-keyboard",
+            "business-mobile"
+        ],
+        "EraKeywords": [
+            "retro",
+            "smartphone-era",
+            "business-mobile"
+        ],
+        "CapabilityKeywords": [
+            "QWERTY-keyboard",
+            "business-mobile",
+            "email-focused"
+        ],
+        "AudienceKeywords": [
+            "business-mobile-users",
+            "QWERTY-keyboard-fans",
+            "email-focused-gamers"
+        ],
+        "MoodKeywords": [
+            "business-focused",
+            "keyboard-centric",
+            "email-optimized"
+        ]
+    },
+    "Nuon": {
+        "PlatformType": [
+            "DVD-enhancement",
+            "multimedia-processor",
+            "VM-Labs"
+        ],
+        "EraKeywords": [
+            "retro",
+            "early-2000s",
+            "DVD-enhancement"
+        ],
+        "CapabilityKeywords": [
+            "DVD-enhancement",
+            "multimedia-processor",
+            "VM-Labs-powered"
+        ],
+        "AudienceKeywords": [
+            "DVD-player-gaming-fans",
+            "VM-Labs-enthusiasts",
+            "enhanced-DVD-collectors"
+        ],
+        "MoodKeywords": [
+            "DVD-enhanced",
+            "multimedia",
+            "VM-Labs-powered"
+        ]
+    },
+    "FM Towns": {
+        "PlatformType": [
+            "personal-computer",
+            "multimedia-PC",
+            "CD-ROM-based"
+        ],
+        "EraKeywords": [
+            "vintage",
+            "late-80s-90s",
+            "multimedia-PC"
+        ],
+        "CapabilityKeywords": [
+            "multimedia-PC",
+            "CD-ROM-based",
+            "high-end"
+        ],
+        "AudienceKeywords": [
+            "Fujitsu-computer-fans",
+            "CD-ROM-pioneers",
+            "Japanese-multimedia-PC-users"
+        ],
+        "MoodKeywords": [
+            "multimedia-PC",
+            "CD-ROM-based",
+            "Japanese"
+        ]
+    },
+    "Amstrad CPC": {
+        "PlatformType": [
+            "home-computer",
+            "8-bit",
+            "all-in-one"
+        ],
+        "EraKeywords": [
+            "vintage",
+            "80s-era",
+            "8-bit-computer"
+        ],
+        "CapabilityKeywords": [
+            "8-bit",
+            "all-in-one",
+            "colorful"
+        ],
+        "AudienceKeywords": [
+            "Amstrad-fans",
+            "color-computer-enthusiasts",
+            "European-8-bit-lovers"
+        ],
+        "MoodKeywords": [
+            "colorful",
+            "all-in-one",
+            "European"
+        ]
+    },
+    "Neo Geo Pocket Color": {
+        "PlatformType": [
+            "handheld",
+            "color-portable",
+            "fighting-focused"
+        ],
+        "EraKeywords": [
+            "retro",
+            "late-90s",
+            "color-portable"
+        ],
+        "CapabilityKeywords": [
+            "color-portable",
+            "fighting-focused",
+            "clicky-stick"
+        ],
+        "AudienceKeywords": [
+            "SNK-handheld-fans",
+            "fighting-game-portable-lovers",
+            "clicky-stick-enthusiasts"
+        ],
+        "MoodKeywords": [
+            "arcade-quality-portable",
+            "fighting-focused",
+            "clicky-stick"
+        ]
+    },
+    "Arcade": {
+        "PlatformType": [
+            "coin-operated",
+            "arcade-cabinet",
+            "quarter-muncher"
+        ],
+        "EraKeywords": [
+            "timeless",
+            "arcade-era",
+            "coin-op"
+        ],
+        "CapabilityKeywords": [
+            "coin-operated",
+            "arcade-cabinet",
+            "social-gaming"
+        ],
+        "AudienceKeywords": [
+            "quarter-muncher-nostalgics",
+            "arcade-purists",
+            "coin-op-enthusiasts"
+        ],
+        "MoodKeywords": [
+            "authentic",
+            "quarter-operated",
+            "social"
+        ]
+    },
+    "AY-3-8603": {
+        "PlatformType": [
+            "chip",
+            "early-gaming-chip",
+            "electronics"
+        ],
+        "EraKeywords": [
+            "vintage",
+            "70s-era",
+            "early-chip"
+        ],
+        "CapabilityKeywords": [
+            "early-gaming-chip",
+            "primitive",
+            "electronic"
+        ],
+        "AudienceKeywords": [
+            "early-chip-collectors",
+            "electronics-hobbyists",
+            "retro-sound-enthusiasts"
+        ],
+        "MoodKeywords": [
+            "primitive",
+            "electronic",
+            "early-chip"
+        ]
+    },
+    "Sega Game Gear": {
+        "PlatformType": [
+            "handheld",
+            "color-portable",
+            "backlit"
+        ],
+        "EraKeywords": [
+            "retro",
+            "early-90s",
+            "color-portable"
+        ],
+        "CapabilityKeywords": [
+            "color-portable",
+            "backlit-screen",
+            "Sega-handheld"
+        ],
+        "AudienceKeywords": [
+            "Sega-handheld-fans",
+            "color-portable-pioneers",
+            "Master-System-portable-lovers"
+        ],
+        "MoodKeywords": [
+            "color-portable",
+            "backlit",
+            "Sega-handheld"
+        ]
+    },
+    "Windows Phone": {
+        "PlatformType": [
+            "mobile-OS",
+            "Live-Tiles",
+            "Microsoft-mobile"
+        ],
+        "EraKeywords": [
+            "modern",
+            "smartphone-era",
+            "Microsoft-mobile"
+        ],
+        "CapabilityKeywords": [
+            "Live-Tiles",
+            "Microsoft-mobile",
+            "Nokia-partnership"
+        ],
+        "AudienceKeywords": [
+            "Microsoft-mobile-loyalists",
+            "Live-Tiles-fans",
+            "Nokia-Windows-users"
+        ],
+        "MoodKeywords": [
+            "Live-Tiles",
+            "Microsoft-mobile",
+            "Nokia-partnership"
+        ]
+    },
+    "Nintendo 64": {
+        "PlatformType": [
+            "console",
+            "64-bit",
+            "analog-stick"
+        ],
+        "EraKeywords": [
+            "retro",
+            "mid-90s",
+            "64-bit-era"
+        ],
+        "CapabilityKeywords": [
+            "64-bit",
+            "analog-stick",
+            "3D-pioneer"
+        ],
+        "AudienceKeywords": [
+            "3D-gaming-pioneers",
+            "analog-stick-innovators",
+            "local-multiplayer-legends"
+        ],
+        "MoodKeywords": [
+            "3D-pioneering",
+            "analog-controlled",
+            "multiplayer-focused"
+        ]
+    },
+    "Apple II": {
+        "PlatformType": [
+            "personal-computer",
+            "home-computer",
+            "Apple"
+        ],
+        "EraKeywords": [
+            "vintage",
+            "late-70s-80s",
+            "personal-computer-pioneer"
+        ],
+        "CapabilityKeywords": [
+            "personal-computer-pioneer",
+            "expandable",
+            "educational"
+        ],
+        "AudienceKeywords": [
+            "personal-computer-pioneers",
+            "Apple-historians",
+            "educational-computer-fans"
+        ],
+        "MoodKeywords": [
+            "pioneering",
+            "educational",
+            "innovative"
+        ]
+    },
+    "iOS": {
+        "PlatformType": [
+            "mobile-OS",
+            "touchscreen",
+            "App-Store"
+        ],
+        "EraKeywords": [
+            "modern",
+            "smartphone-era",
+            "touchscreen-revolution"
+        ],
+        "CapabilityKeywords": [
+            "touchscreen-optimized",
+            "App-Store",
+            "premium-mobile"
+        ],
+        "AudienceKeywords": [
+            "mobile-gaming-masses",
+            "touchscreen-natives",
+            "App-Store-users"
+        ],
+        "MoodKeywords": [
+            "touchscreen-optimized",
+            "premium-mobile",
+            "App-Store-curated"
+        ]
+    },
+    "Arcadia 2001": {
+        "PlatformType": [
+            "console",
+            "budget-console",
+            "2600-competitor"
+        ],
+        "EraKeywords": [
+            "vintage",
+            "late-70s",
+            "budget-console"
+        ],
+        "CapabilityKeywords": [
+            "budget-console",
+            "2600-competitor",
+            "cartridge-based"
+        ],
+        "AudienceKeywords": [
+            "Emerson-console-collectors",
+            "budget-console-historians",
+            "2600-alternative-seekers"
+        ],
+        "MoodKeywords": [
+            "budget-alternative",
+            "2600-competitor",
+            "rare"
+        ]
+    },
+    "PlayStation 5": {
+        "PlatformType": [
+            "console",
+            "next-gen",
+            "SSD-powered"
+        ],
+        "EraKeywords": [
+            "cutting-edge",
+            "next-generation",
+            "current-gen"
+        ],
+        "CapabilityKeywords": [
+            "next-generation",
+            "SSD-speed",
+            "ray-tracing",
+            "Blu-ray-playback"
+        ],
+        "AudienceKeywords": [
+            "next-gen-console-gamers",
+            "SSD-speed-enthusiasts",
+            "ray-tracing-fans"
+        ],
+        "MoodKeywords": [
+            "next-generation",
+            "lightning-fast",
+            "ray-traced"
+        ]
+    },
+    "Atari 8-bit": {
+        "PlatformType": [
+            "home-computer",
+            "8-bit",
+            "Atari-family"
+        ],
+        "EraKeywords": [
+            "vintage",
+            "late-70s-80s",
+            "8-bit-computer"
+        ],
+        "CapabilityKeywords": [
+            "8-bit",
+            "color-graphics",
+            "sound-capable"
+        ],
+        "AudienceKeywords": [
+            "Atari-computer-fans",
+            "8-bit-home-computer-lovers",
+            "ANTIC-chip-enthusiasts"
+        ],
+        "MoodKeywords": [
+            "8-bit-power",
+            "Atari-family",
+            "colorful"
+        ]
+    },
+    "AY-3-8500": {
+        "PlatformType": [
+            "chip",
+            "Pong-chip",
+            "early-gaming"
+        ],
+        "EraKeywords": [
+            "vintage",
+            "70s-era",
+            "Pong-era"
+        ],
+        "CapabilityKeywords": [
+            "Pong-chip",
+            "early-gaming",
+            "primitive"
+        ],
+        "AudienceKeywords": [
+            "Pong-chip-collectors",
+            "early-gaming-historians",
+            "electronics-hobbyists"
+        ],
+        "MoodKeywords": [
+            "Pong-era",
+            "primitive",
+            "electronic"
+        ]
+    },
+    "Plug & Play": {
+        "PlatformType": [
+            "plug-and-play",
+            "TV-connected",
+            "simple-gaming"
+        ],
+        "EraKeywords": [
+            "modern",
+            "plug-and-play-era",
+            "TV-gaming"
+        ],
+        "CapabilityKeywords": [
+            "plug-and-play",
+            "TV-connected",
+            "simple-gaming"
+        ],
+        "AudienceKeywords": [
+            "casual-retro-gamers",
+            "TV-plug-in-fans",
+            "simple-gaming-seekers"
+        ],
+        "MoodKeywords": [
+            "plug-and-play",
+            "simple",
+            "casual"
+        ]
+    },
+    "Blu-ray Player": {
+        "PlatformType": [
+            "multimedia-device",
+            "disc-player",
+            "high-definition"
+        ],
+        "EraKeywords": [
+            "modern",
+            "high-definition-era",
+            "Blu-ray-era"
+        ],
+        "CapabilityKeywords": [
+            "high-definition",
+            "Blu-ray-playback",
+            "multimedia"
+        ],
+        "AudienceKeywords": [
+            "movie-watchers",
+            "multimedia-users",
+            "casual-entertainment-seekers"
+        ],
+        "MoodKeywords": [
+            "high-definition",
+            "movie-focused",
+            "multimedia"
+        ]
+    },
+    "PocketStation": {
+        "PlatformType": [
+            "accessory",
+            "mini-gaming",
+            "memory-card"
+        ],
+        "EraKeywords": [
+            "retro",
+            "late-90s",
+            "mini-gaming"
+        ],
+        "CapabilityKeywords": [
+            "mini-gaming",
+            "memory-card",
+            "PlayStation-connected"
+        ],
+        "AudienceKeywords": [
+            "PlayStation-accessory-fans",
+            "mini-gaming-device-lovers",
+            "Japanese-exclusive-collectors"
+        ],
+        "MoodKeywords": [
+            "mini-gaming",
+            "PlayStation-connected",
+            "Japanese-exclusive"
+        ]
+    },
+    "Family Computer Disk System": {
+        "PlatformType": [
+            "console-add-on",
+            "disk-based",
+            "Famicom-enhancement"
+        ],
+        "EraKeywords": [
+            "retro",
+            "mid-80s",
+            "disk-system"
+        ],
+        "CapabilityKeywords": [
+            "disk-based",
+            "Famicom-enhancement",
+            "Japanese-exclusive"
+        ],
+        "AudienceKeywords": [
+            "Nintendo-disk-system-fans",
+            "Famicom-expansion-collectors",
+            "Japanese-exclusive-enthusiasts"
+        ],
+        "MoodKeywords": [
+            "disk-based",
+            "Famicom-enhanced",
+            "Japanese-exclusive"
+        ]
+    },
+    "DEC GT40": {
+        "PlatformType": [
+            "graphics-terminal",
+            "vector-graphics",
+            "DEC-terminal"
+        ],
+        "EraKeywords": [
+            "vintage",
+            "70s-era",
+            "graphics-terminal"
+        ],
+        "CapabilityKeywords": [
+            "vector-graphics",
+            "graphics-terminal",
+            "DEC-quality"
+        ],
+        "AudienceKeywords": [
+            "DEC-terminal-collectors",
+            "vector-graphics-historians",
+            "early-computer-graphics-fans"
+        ],
+        "MoodKeywords": [
+            "vector-graphics",
+            "academic",
+            "DEC-quality"
+        ]
+    },
+    "Epoch Cassette Vision": {
+        "PlatformType": [
+            "console",
+            "cassette-based",
+            "Japanese"
+        ],
+        "EraKeywords": [
+            "vintage",
+            "early-80s",
+            "cassette-era"
+        ],
+        "CapabilityKeywords": [
+            "cassette-based",
+            "simple",
+            "Japanese-design"
+        ],
+        "AudienceKeywords": [
+            "Japanese-retro-collectors",
+            "early-console-historians",
+            "Epoch-fans"
+        ],
+        "MoodKeywords": [
+            "Japanese",
+            "cassette-based",
+            "early-console"
+        ]
+    },
+    "Sega Master System/Mark III": {
+        "PlatformType": [
+            "console",
+            "8-bit",
+            "cartridge-based"
+        ],
+        "EraKeywords": [
+            "retro",
+            "80s-era",
+            "8-bit-era"
+        ],
+        "CapabilityKeywords": [
+            "8-bit",
+            "cartridge-based",
+            "backwards-compatible"
+        ],
+        "AudienceKeywords": [
+            "Sega-fans",
+            "8-bit-console-lovers",
+            "Master-System-collectors"
+        ],
+        "MoodKeywords": [
+            "8-bit-quality",
+            "Sega-branded",
+            "underappreciated"
+        ]
+    },
+    "Game Boy Color": {
+        "PlatformType": [
+            "handheld",
+            "color-portable",
+            "backwards-compatible",
+            "Nintendo"
+        ],
+        "EraKeywords": [
+            "retro",
+            "late-90s",
+            "color-handheld"
+        ],
+        "CapabilityKeywords": [
+            "color-screen",
+            "backwards-compatible",
+            "enhanced"
+        ],
+        "AudienceKeywords": [
+            "portable-color-gaming-fans",
+            "Game-Boy-upgraders",
+            "Pokemon-generation-players"
+        ],
+        "MoodKeywords": [
+            "colorful",
+            "portable",
+            "Pokemon-era"
+        ]
+    },
+    "FM-7": {
+        "PlatformType": [
+            "home-computer",
+            "8-bit",
+            "Japanese"
+        ],
+        "EraKeywords": [
+            "vintage",
+            "80s-era",
+            "Japanese-computer"
+        ],
+        "CapabilityKeywords": [
+            "8-bit",
+            "color-capable",
+            "Japanese-design"
+        ],
+        "AudienceKeywords": [
+            "Fujitsu-computer-fans",
+            "Japanese-PC-collectors",
+            "retro-computer-enthusiasts"
+        ],
+        "MoodKeywords": [
+            "Japanese",
+            "Fujitsu-quality",
+            "home-computer"
+        ]
+    },
+    "Philips CD-i": {
+        "PlatformType": [
+            "multimedia-system",
+            "CD-based",
+            "interactive-media"
+        ],
+        "EraKeywords": [
+            "retro",
+            "early-90s",
+            "multimedia-era"
+        ],
+        "CapabilityKeywords": [
+            "CD-interactive",
+            "multimedia",
+            "educational"
+        ],
+        "AudienceKeywords": [
+            "multimedia-pioneers",
+            "interactive-media-fans",
+            "Philips-collectors"
+        ],
+        "MoodKeywords": [
+            "multimedia",
+            "interactive",
+            "educational"
+        ]
+    },
+    "Intellivision Amico": {
+        "PlatformType": [
+            "console",
+            "family-gaming",
+            "retro-revival"
+        ],
+        "EraKeywords": [
+            "modern",
+            "retro-revival",
+            "crowdfunded"
+        ],
+        "CapabilityKeywords": [
+            "family-gaming",
+            "simple-controls",
+            "retro-revival"
+        ],
+        "AudienceKeywords": [
+            "family-gaming-enthusiasts",
+            "retro-brand-revival-fans",
+            "crowdfunded-console-supporters"
+        ],
+        "MoodKeywords": [
+            "family-focused",
+            "simple",
+            "retro-revival"
+        ]
+    },
+    "EDSAC": {
+        "PlatformType": [
+            "early-computer",
+            "academic",
+            "stored-program"
+        ],
+        "EraKeywords": [
+            "vintage",
+            "40s-era",
+            "early-computing"
+        ],
+        "CapabilityKeywords": [
+            "stored-program",
+            "academic",
+            "pioneering"
+        ],
+        "AudienceKeywords": [
+            "computer-science-historians",
+            "academic-researchers",
+            "early-computing-enthusiasts"
+        ],
+        "MoodKeywords": [
+            "pioneering",
+            "academic",
+            "historical"
+        ]
+    },
+    "Sega Mega Drive/Genesis": {
+        "PlatformType": [
+            "console",
+            "16-bit",
+            "cartridge-based"
+        ],
+        "EraKeywords": [
+            "retro",
+            "late-80s-90s",
+            "16-bit-era"
+        ],
+        "CapabilityKeywords": [
+            "16-bit",
+            "fast-processor",
+            "cartridge-based"
+        ],
+        "AudienceKeywords": [
+            "Sega-fans",
+            "16-bit-era-lovers",
+            "Genesis-collectors"
+        ],
+        "MoodKeywords": [
+            "16-bit-power",
+            "Sega-attitude",
+            "iconic"
+        ]
+    },
+    "Atari Jaguar CD": {
+        "PlatformType": [
+            "console-add-on",
+            "CD-enhancement",
+            "rare"
+        ],
+        "EraKeywords": [
+            "retro",
+            "mid-90s",
+            "CD-add-on"
+        ],
+        "CapabilityKeywords": [
+            "CD-enhancement",
+            "rare",
+            "failed"
+        ],
+        "AudienceKeywords": [
+            "Atari-completionists",
+            "CD-add-on-collectors",
+            "rare-peripheral-hunters"
+        ],
+        "MoodKeywords": [
+            "rare",
+            "CD-enhanced",
+            "failed"
+        ]
+    },
+    "SG-1000": {
+        "PlatformType": [
+            "console",
+            "8-bit",
+            "Sega-origins"
+        ],
+        "EraKeywords": [
+            "vintage",
+            "early-80s",
+            "Sega-origins"
+        ],
+        "CapabilityKeywords": [
+            "8-bit",
+            "cartridge-based",
+            "Sega-origins"
+        ],
+        "AudienceKeywords": [
+            "Sega-historians",
+            "early-Sega-fans",
+            "Japanese-console-collectors"
+        ],
+        "MoodKeywords": [
+            "Sega-origins",
+            "Japanese",
+            "early-console"
+        ]
+    },
+    "Elektor TV Games Computer": {
+        "PlatformType": [
+            "DIY-computer",
+            "magazine-kit",
+            "hobbyist"
+        ],
+        "EraKeywords": [
+            "vintage",
+            "70s-era",
+            "DIY-era"
+        ],
+        "CapabilityKeywords": [
+            "DIY-kit",
+            "magazine-project",
+            "electronics-hobbyist"
+        ],
+        "AudienceKeywords": [
+            "electronics-magazine-fans",
+            "DIY-computer-builders",
+            "rare-system-collectors"
+        ],
+        "MoodKeywords": [
+            "DIY",
+            "electronics-magazine",
+            "rare"
+        ]
+    },
+    "Virtual Console": {
+        "PlatformType": [
+            "digital-platform",
+            "retro-revival",
+            "emulation-based"
+        ],
+        "EraKeywords": [
+            "modern",
+            "digital-retro",
+            "emulation-era"
+        ],
+        "CapabilityKeywords": [
+            "digital-retro",
+            "emulation-based",
+            "downloadable"
+        ],
+        "AudienceKeywords": [
+            "retro-gaming-revivalists",
+            "Nintendo-digital-fans",
+            "classic-game-collectors"
+        ],
+        "MoodKeywords": [
+            "nostalgic",
+            "convenient",
+            "digital-retro"
+        ]
+    },
+    "Thomson MO5": {
+        "PlatformType": [
+            "home-computer",
+            "8-bit",
+            "French"
+        ],
+        "EraKeywords": [
+            "vintage",
+            "80s-era",
+            "French-computer"
+        ],
+        "CapabilityKeywords": [
+            "8-bit",
+            "colorful",
+            "French-design"
+        ],
+        "AudienceKeywords": [
+            "French-computer-fans",
+            "educational-computer-enthusiasts",
+            "Thomson-collectors"
+        ],
+        "MoodKeywords": [
+            "French",
+            "educational",
+            "colorful"
+        ]
+    },
+    "Android": {
+        "PlatformType": [
+            "mobile-OS",
+            "smartphone",
+            "touchscreen"
+        ],
+        "EraKeywords": [
+            "modern",
+            "smartphone-era",
+            "mobile-gaming"
+        ],
+        "CapabilityKeywords": [
+            "touchscreen",
+            "mobile",
+            "portable"
+        ],
+        "AudienceKeywords": [
+            "mobile-gamers",
+            "smartphone-users",
+            "casual-players"
+        ],
+        "MoodKeywords": [
+            "mobile",
+            "accessible",
+            "casual"
+        ]
+    },
+    "AY-3-8605": {
+        "PlatformType": [
+            "chip",
+            "sound-chip",
+            "electronics"
+        ],
+        "EraKeywords": [
+            "vintage",
+            "70s-era",
+            "chip-era"
+        ],
+        "CapabilityKeywords": [
+            "sound-chip",
+            "primitive",
+            "electronic"
+        ],
+        "AudienceKeywords": [
+            "chip-collectors",
+            "electronics-hobbyists",
+            "retro-tech-historians"
+        ],
+        "MoodKeywords": [
+            "primitive",
+            "electronic",
+            "simple"
+        ]
+    },
+    "MSX": {
+        "PlatformType": [
+            "home-computer",
+            "standardized",
+            "8-bit"
+        ],
+        "EraKeywords": [
+            "vintage",
+            "80s-era",
+            "MSX-era"
+        ],
+        "CapabilityKeywords": [
+            "standardized",
+            "8-bit",
+            "Japanese-standard"
+        ],
+        "AudienceKeywords": [
+            "standardized-computer-fans",
+            "Japanese-home-computer-lovers",
+            "MSX-collectors"
+        ],
+        "MoodKeywords": [
+            "standardized",
+            "Japanese",
+            "home-computer"
+        ]
+    },
+    "Panasonic Jungle": {
+        "PlatformType": [
+            "handheld",
+            "online-focused",
+            "cancelled"
+        ],
+        "EraKeywords": [
+            "modern",
+            "cancelled",
+            "handheld-attempt"
+        ],
+        "CapabilityKeywords": [
+            "online-focused",
+            "cancelled",
+            "Panasonic-design"
+        ],
+        "AudienceKeywords": [
+            "cancelled-console-historians",
+            "Panasonic-fans",
+            "online-gaming-pioneers"
+        ],
+        "MoodKeywords": [
+            "cancelled",
+            "online-focused",
+            "what-could-have-been"
+        ]
+    },
+    "Oculus Rift": {
+        "PlatformType": [
+            "VR-headset",
+            "PC-VR",
+            "tethered"
+        ],
+        "EraKeywords": [
+            "modern",
+            "VR-pioneer",
+            "PC-VR-era"
+        ],
+        "CapabilityKeywords": [
+            "PC-VR",
+            "tethered",
+            "high-end"
+        ],
+        "AudienceKeywords": [
+            "VR-pioneers",
+            "PC-VR-enthusiasts",
+            "immersion-seekers"
+        ],
+        "MoodKeywords": [
+            "pioneering-VR",
+            "immersive",
+            "PC-powered"
+        ]
+    },
+    "PLATO": {
+        "PlatformType": [
+            "educational-system",
+            "networked",
+            "academic"
+        ],
+        "EraKeywords": [
+            "vintage",
+            "60s-70s",
+            "educational-computing"
+        ],
+        "CapabilityKeywords": [
+            "educational",
+            "networked",
+            "academic"
+        ],
+        "AudienceKeywords": [
+            "educational-computing-historians",
+            "online-gaming-pioneers",
+            "academic-researchers"
+        ],
+        "MoodKeywords": [
+            "educational",
+            "networked",
+            "academic"
+        ]
+    },
+    "Windows Mixed Reality": {
+        "PlatformType": [
+            "VR-headset",
+            "mixed-reality",
+            "Windows-integrated"
+        ],
+        "EraKeywords": [
+            "modern",
+            "mixed-reality-era",
+            "Windows-VR"
+        ],
+        "CapabilityKeywords": [
+            "mixed-reality",
+            "Windows-integrated",
+            "affordable"
+        ],
+        "AudienceKeywords": [
+            "Microsoft-VR-fans",
+            "mixed-reality-enthusiasts",
+            "Windows-ecosystem-users"
+        ],
+        "MoodKeywords": [
+            "mixed-reality",
+            "Windows-integrated",
+            "affordable"
+        ]
+    },
+    "Nintendo 3DS": {
+        "PlatformType": [
+            "handheld",
+            "stereoscopic-3D",
+            "dual-screen"
+        ],
+        "EraKeywords": [
+            "modern",
+            "early-2010s",
+            "3D-era"
+        ],
+        "CapabilityKeywords": [
+            "stereoscopic-3D",
+            "dual-screen",
+            "glasses-free-3D"
+        ],
+        "AudienceKeywords": [
+            "stereoscopic-3D-fans",
+            "Nintendo-handheld-lovers",
+            "portable-gamers"
+        ],
+        "MoodKeywords": [
+            "3D-enabled",
+            "portable",
+            "dual-screen"
+        ]
+    },
+    "Sinclair ZX81": {
+        "PlatformType": [
+            "home-computer",
+            "ultra-budget",
+            "British"
+        ],
+        "EraKeywords": [
+            "vintage",
+            "early-80s",
+            "budget-computer"
+        ],
+        "CapabilityKeywords": [
+            "ultra-budget",
+            "minimalist",
+            "entry-level"
+        ],
+        "AudienceKeywords": [
+            "ultra-budget-computer-fans",
+            "Sinclair-collectors",
+            "minimalist-computing-enthusiasts"
+        ],
+        "MoodKeywords": [
+            "ultra-budget",
+            "minimalist",
+            "British"
+        ]
+    },
+    "Visual Memory Unit / Visual Memory System": {
+        "PlatformType": [
+            "accessory",
+            "memory-card",
+            "mini-gaming"
+        ],
+        "EraKeywords": [
+            "retro",
+            "late-90s",
+            "innovative-accessory"
+        ],
+        "CapabilityKeywords": [
+            "dual-purpose",
+            "mini-gaming",
+            "memory-card"
+        ],
+        "AudienceKeywords": [
+            "Dreamcast-accessory-fans",
+            "portable-mini-game-lovers",
+            "VMU-collectors"
+        ],
+        "MoodKeywords": [
+            "innovative",
+            "dual-purpose",
+            "portable"
+        ]
+    },
+    "PDP-1": {
+        "PlatformType": [
+            "early-computer",
+            "interactive",
+            "academic"
+        ],
+        "EraKeywords": [
+            "vintage",
+            "60s-era",
+            "early-computing"
+        ],
+        "CapabilityKeywords": [
+            "interactive",
+            "revolutionary",
+            "expensive"
+        ],
+        "AudienceKeywords": [
+            "computer-history-purists",
+            "academic-researchers",
+            "early-computing-pioneers"
+        ],
+        "MoodKeywords": [
+            "pioneering",
+            "academic",
+            "expensive"
+        ]
+    },
+    "Neo Geo MVS": {
+        "PlatformType": [
+            "arcade-board",
+            "coin-operated",
+            "multi-game"
+        ],
+        "EraKeywords": [
+            "retro",
+            "90s-era",
+            "arcade-era"
+        ],
+        "CapabilityKeywords": [
+            "coin-operated",
+            "multi-game",
+            "arcade-quality"
+        ],
+        "AudienceKeywords": [
+            "arcade-operators",
+            "SNK-collectors",
+            "arcade-perfect-seekers"
+        ],
+        "MoodKeywords": [
+            "arcade-perfect",
+            "quarter-operated",
+            "SNK-quality"
+        ]
+    },
+    "PC-50X Family": {
+        "PlatformType": [
+            "personal-computer",
+            "NEC",
+            "Japanese"
+        ],
+        "EraKeywords": [
+            "vintage",
+            "80s-era",
+            "Japanese-PC"
+        ],
+        "CapabilityKeywords": [
+            "Japanese-PC",
+            "NEC-quality",
+            "business-oriented"
+        ],
+        "AudienceKeywords": [
+            "NEC-computer-collectors",
+            "Japanese-PC-historians",
+            "rare-system-enthusiasts"
+        ],
+        "MoodKeywords": [
+            "Japanese",
+            "NEC-branded",
+            "rare"
+        ]
+    },
+    "V.Smile": {
+        "PlatformType": [
+            "educational-console",
+            "children-focused",
+            "learning-system"
+        ],
+        "EraKeywords": [
+            "modern",
+            "educational-gaming",
+            "children-focused"
+        ],
+        "CapabilityKeywords": [
+            "educational",
+            "children-focused",
+            "learning-system"
+        ],
+        "AudienceKeywords": [
+            "educational-gaming-parents",
+            "preschool-children",
+            "VTech-fans"
+        ],
+        "MoodKeywords": [
+            "educational",
+            "child-friendly",
+            "safe"
+        ]
+    },
+    "Atari Lynx": {
+        "PlatformType": [
+            "handheld",
+            "color-portable",
+            "backlit"
+        ],
+        "EraKeywords": [
+            "retro",
+            "late-80s",
+            "advanced-handheld"
+        ],
+        "CapabilityKeywords": [
+            "color-portable",
+            "backlit-screen",
+            "advanced-handheld"
+        ],
+        "AudienceKeywords": [
+            "Atari-handheld-fans",
+            "color-portable-pioneers",
+            "backlit-screen-appreciators"
+        ],
+        "MoodKeywords": [
+            "color-portable",
+            "backlit",
+            "advanced-handheld"
+        ]
+    },
+    "Polymega": {
+        "PlatformType": [
+            "retro-console",
+            "multi-system",
+            "modern-retro"
+        ],
+        "EraKeywords": [
+            "modern",
+            "retro-revival",
+            "contemporary"
+        ],
+        "CapabilityKeywords": [
+            "multi-system",
+            "FPGA-based",
+            "modern-retro"
+        ],
+        "AudienceKeywords": [
+            "retro-gaming-modernists",
+            "multi-system-collectors",
+            "CD-based-retro-fans"
+        ],
+        "MoodKeywords": [
+            "modern-retro",
+            "multi-system",
+            "CD-focused"
+        ]
+    },
+    "Xbox 360": {
+        "PlatformType": [
+            "console",
+            "online-focused",
+            "achievement-based"
+        ],
+        "EraKeywords": [
+            "retro",
+            "mid-2000s",
+            "7th-generation"
+        ],
+        "CapabilityKeywords": [
+            "online-focused",
+            "achievement-system",
+            "multimedia"
+        ],
+        "AudienceKeywords": [
+            "Xbox-Live-pioneers",
+            "achievement-hunters",
+            "online-multiplayer-fans"
+        ],
+        "MoodKeywords": [
+            "online-focused",
+            "achievement-driven",
+            "social-gaming"
+        ]
+    },
+    "HP 2100": {
+        "PlatformType": [
+            "minicomputer",
+            "business-computer",
+            "real-time"
+        ],
+        "EraKeywords": [
+            "vintage",
+            "60s-70s",
+            "minicomputer-era"
+        ],
+        "CapabilityKeywords": [
+            "real-time",
+            "business-oriented",
+            "HP-engineering"
+        ],
+        "AudienceKeywords": [
+            "HP-minicomputer-fans",
+            "business-computer-historians",
+            "vintage-server-collectors"
+        ],
+        "MoodKeywords": [
+            "business-grade",
+            "reliable",
+            "HP-engineering"
+        ]
+    },
+    "Advanced Pico Beena": {
+        "PlatformType": [
+            "educational-console",
+            "children-focused",
+            "interactive-learning"
+        ],
+        "EraKeywords": [
+            "modern",
+            "educational-gaming",
+            "children-focused"
+        ],
+        "CapabilityKeywords": [
+            "educational",
+            "interactive-learning",
+            "children-focused"
+        ],
+        "AudienceKeywords": [
+            "Sega-educational-fans",
+            "Japanese-children-gaming",
+            "educational-toy-collectors"
+        ],
+        "MoodKeywords": [
+            "educational",
+            "child-focused",
+            "interactive-learning"
+        ]
+    },
+    "Commodore Plus/4": {
+        "PlatformType": [
+            "home-computer",
+            "business-computer",
+            "productivity"
+        ],
+        "EraKeywords": [
+            "vintage",
+            "80s-era",
+            "business-computer"
+        ],
+        "CapabilityKeywords": [
+            "business-oriented",
+            "productivity-software",
+            "built-in-software"
+        ],
+        "AudienceKeywords": [
+            "Commodore-completionists",
+            "business-home-computer-fans",
+            "Plus-4-collectors"
+        ],
+        "MoodKeywords": [
+            "business-oriented",
+            "productivity-focused",
+            "Commodore-alternative"
+        ]
+    },
+    "Casio Loopy": {
+        "PlatformType": [
+            "console",
+            "sticker-printer",
+            "girl-focused"
+        ],
+        "EraKeywords": [
+            "retro",
+            "mid-90s",
+            "girl-gaming"
+        ],
+        "CapabilityKeywords": [
+            "sticker-printing",
+            "girl-focused",
+            "unique-peripheral"
+        ],
+        "AudienceKeywords": [
+            "Japanese-girls-gaming-collectors",
+            "Casio-fans",
+            "rare-console-hunters"
+        ],
+        "MoodKeywords": [
+            "girl-focused",
+            "sticker-printing",
+            "Japanese"
+        ]
+    },
+    "Sharp MZ-2200": {
+        "PlatformType": [
+            "personal-computer",
+            "business-computer",
+            "Japanese"
+        ],
+        "EraKeywords": [
+            "vintage",
+            "80s-era",
+            "Japanese-business-computer"
+        ],
+        "CapabilityKeywords": [
+            "business-oriented",
+            "workstation-class",
+            "Japanese-professional"
+        ],
+        "AudienceKeywords": [
+            "Sharp-computer-fans",
+            "Japanese-business-computer-collectors",
+            "retro-workstation-enthusiasts"
+        ],
+        "MoodKeywords": [
+            "business-oriented",
+            "Japanese",
+            "professional"
+        ]
+    },
+    "LeapTV": {
+        "PlatformType": [
+            "educational-console",
+            "motion-controlled",
+            "children-focused"
+        ],
+        "EraKeywords": [
+            "modern",
+            "motion-gaming",
+            "educational"
+        ],
+        "CapabilityKeywords": [
+            "motion-controlled",
+            "educational",
+            "fitness-gaming"
+        ],
+        "AudienceKeywords": [
+            "educational-gaming-families",
+            "active-learning-parents",
+            "motion-controlled-education-fans"
+        ],
+        "MoodKeywords": [
+            "educational",
+            "motion-controlled",
+            "active-learning"
+        ]
+    },
+    "Amiga CD32": {
+        "PlatformType": [
+            "console",
+            "32-bit",
+            "CD-based"
+        ],
+        "EraKeywords": [
+            "retro",
+            "early-90s",
+            "32-bit-era"
+        ],
+        "CapabilityKeywords": [
+            "32-bit",
+            "CD-based",
+            "Amiga-powered"
+        ],
+        "AudienceKeywords": [
+            "Amiga-fans",
+            "32-bit-console-enthusiasts",
+            "CD-based-gaming-lovers"
+        ],
+        "MoodKeywords": [
+            "Amiga-powered",
+            "32-bit",
+            "CD-based"
+        ]
+    },
+    "Amstrad GX4000": {
+        "PlatformType": [
+            "console",
+            "cartridge-based",
+            "CPC-based"
+        ],
+        "EraKeywords": [
+            "retro",
+            "late-80s",
+            "failed-console"
+        ],
+        "CapabilityKeywords": [
+            "CPC-based",
+            "cartridge-based",
+            "European"
+        ],
+        "AudienceKeywords": [
+            "Amstrad-collectors",
+            "failed-console-historians",
+            "CPC-derivative-fans"
+        ],
+        "MoodKeywords": [
+            "failed",
+            "CPC-based",
+            "European"
+        ]
+    },
+    "Ouya": {
+        "PlatformType": [
+            "console",
+            "Android-based",
+            "crowdfunded"
+        ],
+        "EraKeywords": [
+            "modern",
+            "crowdfunded",
+            "Android-console"
+        ],
+        "CapabilityKeywords": [
+            "Android-based",
+            "crowdfunded",
+            "indie-focused"
+        ],
+        "AudienceKeywords": [
+            "Android-console-fans",
+            "crowdfunded-gaming-supporters",
+            "indie-gaming-enthusiasts"
+        ],
+        "MoodKeywords": [
+            "crowdfunded",
+            "Android-based",
+            "indie-focused"
+        ]
+    },
+    "OOParts": {
+        "PlatformType": [
+            "experimental",
+            "art-platform",
+            "avant-garde"
+        ],
+        "EraKeywords": [
+            "modern",
+            "experimental",
+            "art-gaming"
+        ],
+        "CapabilityKeywords": [
+            "experimental",
+            "art-focused",
+            "avant-garde"
+        ],
+        "AudienceKeywords": [
+            "experimental-gaming-fans",
+            "avant-garde-players",
+            "art-game-enthusiasts"
+        ],
+        "MoodKeywords": [
+            "experimental",
+            "avant-garde",
+            "artistic"
+        ]
+    },
+    "Super A'Can": {
+        "PlatformType": [
+            "console",
+            "16-bit",
+            "Taiwanese"
+        ],
+        "EraKeywords": [
+            "retro",
+            "mid-90s",
+            "Taiwanese-console"
+        ],
+        "CapabilityKeywords": [
+            "16-bit",
+            "Taiwanese-design",
+            "regional"
+        ],
+        "AudienceKeywords": [
+            "Taiwanese-console-collectors",
+            "rare-Asian-system-hunters",
+            "failed-console-enthusiasts"
+        ],
+        "MoodKeywords": [
+            "Taiwanese",
+            "rare",
+            "failed"
+        ]
+    },
+    "Google Stadia": {
+        "PlatformType": [
+            "cloud-gaming",
+            "streaming",
+            "Google-service"
+        ],
+        "EraKeywords": [
+            "modern",
+            "cloud-gaming",
+            "streaming-era"
+        ],
+        "CapabilityKeywords": [
+            "cloud-based",
+            "streaming",
+            "internet-dependent"
+        ],
+        "AudienceKeywords": [
+            "cloud-gaming-adopters",
+            "Google-service-users",
+            "streaming-game-fans"
+        ],
+        "MoodKeywords": [
+            "cloud-based",
+            "streaming"
+        ]
+    },
+    "Atari 5200": {
+        "PlatformType": [
+            "console",
+            "cartridge-based",
+            "analog-controllers"
+        ],
+        "EraKeywords": [
+            "retro",
+            "early-80s",
+            "advanced-console"
+        ],
+        "CapabilityKeywords": [
+            "analog-controllers",
+            "Atari-8-bit-compatible",
+            "advanced-graphics"
+        ],
+        "AudienceKeywords": [
+            "Atari-8-bit-fans",
+            "SuperSystem-enthusiasts",
+            "analog-joystick-pioneers"
+        ],
+        "MoodKeywords": [
+            "analog-controls",
+            "Atari-8-bit-compatible",
+            "advanced-joysticks"
+        ]
+    },
+    "CDC Cyber 70": {
+        "PlatformType": [
+            "mainframe",
+            "supercomputer",
+            "high-performance"
+        ],
+        "EraKeywords": [
+            "vintage",
+            "70s-era",
+            "supercomputer-era"
+        ],
+        "CapabilityKeywords": [
+            "supercomputer",
+            "high-performance",
+            "academic"
+        ],
+        "AudienceKeywords": [
+            "mainframe-historians",
+            "supercomputer-enthusiasts",
+            "academic-computing-fans"
+        ],
+        "MoodKeywords": [
+            "mainframe-power",
+            "academic",
+            "high-performance"
+        ]
+    },
+    "AY-3-8606": {
+        "PlatformType": [
+            "chip",
+            "electronics",
+            "primitive"
+        ],
+        "EraKeywords": [
+            "vintage",
+            "70s-era",
+            "historical"
+        ],
+        "CapabilityKeywords": [
+            "basic",
+            "simple",
+            "foundational"
+        ],
+        "AudienceKeywords": [
+            "retro-enthusiasts",
+            "collectors",
+            "electronics-hobbyists"
+        ],
+        "MoodKeywords": [
+            "nostalgic",
+            "primitive",
+            "historical"
+        ]
+    },
+    "Oculus Quest": {
+        "PlatformType": [
+            "VR-headset",
+            "standalone",
+            "wireless"
+        ],
+        "EraKeywords": [
+            "modern",
+            "current-gen",
+            "VR-era"
+        ],
+        "CapabilityKeywords": [
+            "wireless",
+            "standalone",
+            "immersive"
+        ],
+        "AudienceKeywords": [
+            "VR-enthusiasts",
+            "early-adopters",
+            "tech-lovers"
+        ],
+        "MoodKeywords": [
+            "immersive",
+            "futuristic",
+            "innovative"
+        ]
+    },
+    "PC-8800 Series": {
+        "PlatformType": [
+            "personal-computer",
+            "8-bit",
+            "Japanese"
+        ],
+        "EraKeywords": [
+            "vintage",
+            "80s-era",
+            "retro"
+        ],
+        "CapabilityKeywords": [
+            "programmable",
+            "expandable",
+            "color-graphics"
+        ],
+        "AudienceKeywords": [
+            "Japanese-retro-fans",
+            "computer-historians",
+            "collectors"
+        ],
+        "MoodKeywords": [
+            "nostalgic",
+            "specialized",
+            "Japanese"
+        ]
+    },
+    "Mac": {
+        "PlatformType": [
+            "personal-computer",
+            "desktop",
+            "creative",
+            "Apple"
+        ],
+        "EraKeywords": [
+            "modern",
+            "contemporary",
+            "premium"
+        ],
+        "CapabilityKeywords": [
+            "high-performance",
+            "creative-focused",
+            "user-friendly"
+        ],
+        "AudienceKeywords": [
+            "creative-professionals",
+            "Apple-ecosystem-users",
+            "designers"
+        ],
+        "MoodKeywords": [
+            "creative",
+            "sleek",
+            "premium"
+        ]
+    },
+    "PDP-8": {
+        "PlatformType": [
+            "minicomputer",
+            "academic",
+            "institutional"
+        ],
+        "EraKeywords": [
+            "vintage",
+            "60s-era",
+            "pioneering"
+        ],
+        "CapabilityKeywords": [
+            "basic",
+            "academic",
+            "expensive"
+        ],
+        "AudienceKeywords": [
+            "computer-historians",
+            "academics",
+            "vintage-computing-enthusiasts"
+        ],
+        "MoodKeywords": [
+            "historical",
+            "academic",
+            "primitive"
+        ]
+    },
+    "Uzebox": {
+        "PlatformType": [
+            "DIY-console",
+            "homebrew",
+            "open-source"
+        ],
+        "EraKeywords": [
+            "modern",
+            "DIY-era",
+            "contemporary"
+        ],
+        "CapabilityKeywords": [
+            "DIY",
+            "programmable",
+            "educational"
+        ],
+        "AudienceKeywords": [
+            "DIY-enthusiasts",
+            "homebrew-developers",
+            "makers"
+        ],
+        "MoodKeywords": [
+            "creative",
+            "DIY",
+            "experimental"
+        ]
+    },
+    "AY-3-8607": {
+        "PlatformType": [
+            "chip",
+            "electronics",
+            "primitive"
+        ],
+        "EraKeywords": [
+            "vintage",
+            "70s-era",
+            "historical"
+        ],
+        "CapabilityKeywords": [
+            "basic",
+            "simple",
+            "foundational"
+        ],
+        "AudienceKeywords": [
+            "retro-enthusiasts",
+            "collectors",
+            "electronics-hobbyists"
+        ],
+        "MoodKeywords": [
+            "nostalgic",
+            "primitive",
+            "historical"
+        ]
+    },
+    "Fairchild Channel F": {
+        "PlatformType": [
+            "console",
+            "cartridge-based",
+            "early-console"
+        ],
+        "EraKeywords": [
+            "vintage",
+            "70s-era",
+            "pioneering"
+        ],
+        "CapabilityKeywords": [
+            "cartridge-based",
+            "programmable",
+            "pioneering"
+        ],
+        "AudienceKeywords": [
+            "retro-collectors",
+            "gaming-historians",
+            "vintage-enthusiasts"
+        ],
+        "MoodKeywords": [
+            "pioneering",
+            "historical",
+            "groundbreaking"
+        ]
+    },
+    "Gear VR": {
+        "PlatformType": [
+            "mobile-VR",
+            "smartphone-accessory",
+            "phone-based"
+        ],
+        "EraKeywords": [
+            "modern",
+            "mobile-VR-era",
+            "transitional"
+        ],
+        "CapabilityKeywords": [
+            "mobile-powered",
+            "accessible",
+            "entry-level"
+        ],
+        "AudienceKeywords": [
+            "mobile-VR-users",
+            "Samsung-users",
+            "casual-VR-enthusiasts"
+        ],
+        "MoodKeywords": [
+            "accessible",
+            "mobile",
+            "convenient"
+        ]
+    },
+    "Sharp X1": {
+        "PlatformType": [
+            "personal-computer",
+            "8-bit",
+            "Japanese"
+        ],
+        "EraKeywords": [
+            "vintage",
+            "80s-era",
+            "retro"
+        ],
+        "CapabilityKeywords": [
+            "color-graphics",
+            "sound-capable",
+            "expandable"
+        ],
+        "AudienceKeywords": [
+            "Japanese-computer-fans",
+            "retro-collectors",
+            "vintage-enthusiasts"
+        ],
+        "MoodKeywords": [
+            "nostalgic",
+            "specialized",
+            "Japanese"
+        ]
+    },
+    "Xbox Series X|S": {
+        "PlatformType": [
+            "console",
+            "living-room",
+            "gaming-focused"
+        ],
+        "EraKeywords": [
+            "current-gen",
+            "modern",
+            "next-gen"
+        ],
+        "CapabilityKeywords": [
+            "high-performance",
+            "4K-capable",
+            "backwards-compatible"
+        ],
+        "AudienceKeywords": [
+            "console-gamers",
+            "Microsoft-fans",
+            "performance-enthusiasts"
+        ],
+        "MoodKeywords": [
+            "powerful",
+            "modern",
+            "competitive"
+        ]
+    },
+    "Sega 32X": {
+        "PlatformType": [
+            "console-add-on",
+            "enhancement",
+            "peripheral"
+        ],
+        "EraKeywords": [
+            "retro",
+            "90s-era",
+            "transitional"
+        ],
+        "CapabilityKeywords": [
+            "enhancement",
+            "32-bit",
+            "add-on"
+        ],
+        "AudienceKeywords": [
+            "Sega-fans",
+            "retro-collectors",
+            "add-on-enthusiasts"
+        ],
+        "MoodKeywords": [
+            "nostalgic",
+            "ambitious",
+            "experimental"
+        ]
+    },
+    "Game Boy Advance": {
+        "PlatformType": [
+            "handheld",
+            "portable",
+            "cartridge-based",
+            "Nintendo"
+        ],
+        "EraKeywords": [
+            "retro",
+            "early-2000s",
+            "classic-handheld"
+        ],
+        "CapabilityKeywords": [
+            "portable",
+            "color-screen",
+            "backwards-compatible"
+        ],
+        "AudienceKeywords": [
+            "portable-gamers",
+            "Nintendo-fans",
+            "retro-handheld-lovers"
+        ],
+        "MoodKeywords": [
+            "portable",
+            "colorful",
+            "accessible"
+        ]
+    },
+    "Commodore VIC-20": {
+        "PlatformType": [
+            "home-computer",
+            "8-bit",
+            "budget-computer"
+        ],
+        "EraKeywords": [
+            "vintage",
+            "80s-era",
+            "early-home-computer"
+        ],
+        "CapabilityKeywords": [
+            "budget-friendly",
+            "accessible",
+            "expandable"
+        ],
+        "AudienceKeywords": [
+            "retro-computer-fans",
+            "Commodore-enthusiasts",
+            "vintage-collectors"
+        ],
+        "MoodKeywords": [
+            "nostalgic",
+            "pioneering",
+            "accessible"
+        ]
+    },
+    "Nintendo GameCube": {
+        "PlatformType": [
+            "console",
+            "living-room",
+            "disc-based"
+        ],
+        "EraKeywords": [
+            "retro",
+            "early-2000s",
+            "6th-generation"
+        ],
+        "CapabilityKeywords": [
+            "compact",
+            "disc-based",
+            "local-multiplayer"
+        ],
+        "AudienceKeywords": [
+            "Nintendo-fans",
+            "retro-console-gamers",
+            "local-multiplayer-enthusiasts"
+        ],
+        "MoodKeywords": [
+            "colorful",
+            "fun",
+            "family-friendly"
+        ]
+    },
+    "SteamVR": {
+        "PlatformType": [
+            "VR-platform",
+            "PC-VR",
+            "high-end-VR"
+        ],
+        "EraKeywords": [
+            "modern",
+            "VR-era",
+            "cutting-edge"
+        ],
+        "CapabilityKeywords": [
+            "high-end",
+            "room-scale",
+            "PC-powered"
+        ],
+        "AudienceKeywords": [
+            "PC-VR-enthusiasts",
+            "Steam-users",
+            "hardcore-VR-gamers"
+        ],
+        "MoodKeywords": [
+            "immersive",
+            "high-end",
+            "cutting-edge"
+        ]
+    },
+    "AY-3-8610": {
+        "PlatformType": [
+            "chip",
+            "electronics",
+            "primitive"
+        ],
+        "EraKeywords": [
+            "vintage",
+            "70s-era",
+            "historical"
+        ],
+        "CapabilityKeywords": [
+            "basic",
+            "simple",
+            "foundational"
+        ],
+        "AudienceKeywords": [
+            "retro-enthusiasts",
+            "collectors",
+            "electronics-hobbyists"
+        ],
+        "MoodKeywords": [
+            "nostalgic",
+            "primitive",
+            "historical"
+        ]
+    },
+    "Super Nintendo Entertainment System": {
+        "PlatformType": [
+            "console",
+            "living-room",
+            "16-bit"
+        ],
+        "EraKeywords": [
+            "retro",
+            "90s-era",
+            "classic"
+        ],
+        "CapabilityKeywords": [
+            "16-bit",
+            "advanced-graphics",
+            "cartridge-based"
+        ],
+        "AudienceKeywords": [
+            "retro-gamers",
+            "Nintendo-fans",
+            "classic-console-enthusiasts"
+        ],
+        "MoodKeywords": [
+            "iconic",
+            "nostalgic",
+            "beloved"
+        ]
+    },
+    "PDP-7": {
+        "PlatformType": [
+            "minicomputer",
+            "academic",
+            "institutional"
+        ],
+        "EraKeywords": [
+            "vintage",
+            "60s-era",
+            "pioneering"
+        ],
+        "CapabilityKeywords": [
+            "basic",
+            "academic",
+            "expensive"
+        ],
+        "AudienceKeywords": [
+            "computer-historians",
+            "academics",
+            "vintage-computing-enthusiasts"
+        ],
+        "MoodKeywords": [
+            "historical",
+            "academic",
+            "primitive"
+        ]
+    },
+    "Game Boy": {
+        "PlatformType": [
+            "handheld",
+            "portable",
+            "monochrome",
+            "Nintendo"
+        ],
+        "EraKeywords": [
+            "retro",
+            "late-80s",
+            "classic-handheld"
+        ],
+        "CapabilityKeywords": [
+            "portable",
+            "long-battery-life",
+            "durable"
+        ],
+        "AudienceKeywords": [
+            "portable-gaming-pioneers",
+            "Nintendo-fans",
+            "retro-handheld-lovers"
+        ],
+        "MoodKeywords": [
+            "iconic",
+            "portable",
+            "enduring"
+        ]
+    },
+    "Gizmondo": {
+        "PlatformType": [
+            "handheld",
+            "portable",
+            "multimedia"
+        ],
+        "EraKeywords": [
+            "mid-2000s",
+            "failed",
+            "short-lived"
+        ],
+        "CapabilityKeywords": [
+            "multimedia",
+            "GPS-enabled",
+            "ambitious"
+        ],
+        "AudienceKeywords": [
+            "rare-console-collectors",
+            "handheld-enthusiasts",
+            "curiosity-seekers"
+        ],
+        "MoodKeywords": [
+            "obscure",
+            "failed",
+            "ambitious"
+        ]
+    },
+    "PlayStation 2": {
+        "PlatformType": [
+            "console",
+            "living-room",
+            "DVD-player"
+        ],
+        "EraKeywords": [
+            "retro",
+            "early-2000s",
+            "6th-generation"
+        ],
+        "CapabilityKeywords": [
+            "DVD-playback",
+            "backwards-compatible",
+            "affordable"
+        ],
+        "AudienceKeywords": [
+            "mainstream-gamers",
+            "retro-console-fans",
+            "DVD-movie-watchers"
+        ],
+        "MoodKeywords": [
+            "iconic",
+            "mainstream",
+            "beloved"
+        ]
+    },
+    "TurboGrafx-16/PC Engine": {
+        "PlatformType": [
+            "console",
+            "living-room",
+            "16-bit"
+        ],
+        "EraKeywords": [
+            "retro",
+            "late-80s",
+            "16-bit-era"
+        ],
+        "CapabilityKeywords": [
+            "16-bit",
+            "compact",
+            "innovative"
+        ],
+        "AudienceKeywords": [
+            "retro-collectors",
+            "Japanese-gaming-fans",
+            "niche-console-enthusiasts"
+        ],
+        "MoodKeywords": [
+            "underrated",
+            "Japanese",
+            "innovative"
+        ]
+    },
+    "Watara/QuickShot Supervision": {
+        "PlatformType": [
+            "handheld",
+            "portable",
+            "budget"
+        ],
+        "EraKeywords": [
+            "retro",
+            "early-90s",
+            "Game-Boy-era"
+        ],
+        "CapabilityKeywords": [
+            "budget",
+            "basic",
+            "Game-Boy-alternative"
+        ],
+        "AudienceKeywords": [
+            "obscure-handheld-collectors",
+            "budget-gaming-historians",
+            "rare-console-enthusiasts"
+        ],
+        "MoodKeywords": [
+            "obscure",
+            "budget",
+            "primitive"
+        ]
+    },
+    "PDP-11": {
+        "PlatformType": [
+            "minicomputer",
+            "workstation",
+            "multi-user"
+        ],
+        "EraKeywords": [
+            "vintage",
+            "70s-era",
+            "influential"
+        ],
+        "CapabilityKeywords": [
+            "multi-user",
+            "reliable",
+            "expandable"
+        ],
+        "AudienceKeywords": [
+            "computer-historians",
+            "academics",
+            "vintage-computing-enthusiasts"
+        ],
+        "MoodKeywords": [
+            "historical",
+            "influential",
+            "academic"
+        ]
+    },
+    "PlayStation": {
+        "PlatformType": [
+            "console",
+            "living-room",
+            "CD-based"
+        ],
+        "EraKeywords": [
+            "retro",
+            "90s-era",
+            "classic"
+        ],
+        "CapabilityKeywords": [
+            "CD-based",
+            "3D-graphics",
+            "affordable"
+        ],
+        "AudienceKeywords": [
+            "retro-gamers",
+            "PlayStation-fans",
+            "90s-nostalgia-seekers"
+        ],
+        "MoodKeywords": [
+            "revolutionary",
+            "iconic",
+            "nostalgic"
+        ]
+    },
+    "BBC Microcomputer System": {
+        "PlatformType": [
+            "home-computer",
+            "educational-computer",
+            "British"
+        ],
+        "EraKeywords": [
+            "vintage",
+            "80s-era",
+            "educational-era"
+        ],
+        "CapabilityKeywords": [
+            "educational",
+            "expandable",
+            "quality-build"
+        ],
+        "AudienceKeywords": [
+            "British-computer-fans",
+            "educational-enthusiasts",
+            "retro-collectors"
+        ],
+        "MoodKeywords": [
+            "educational",
+            "British",
+            "pioneering"
+        ]
+    },
+    "Atari 7800": {
+        "PlatformType": [
+            "console",
+            "living-room",
+            "cartridge-based"
+        ],
+        "EraKeywords": [
+            "retro",
+            "80s-era",
+            "classic"
+        ],
+        "CapabilityKeywords": [
+            "backwards-compatible",
+            "improved-graphics",
+            "cartridge-based"
+        ],
+        "AudienceKeywords": [
+            "Atari-fans",
+            "retro-console-collectors",
+            "80s-gamers"
+        ],
+        "MoodKeywords": [
+            "nostalgic",
+            "underrated",
+            "backwards-compatible"
+        ]
+    },
+    "Acorn Electron": {
+        "PlatformType": [
+            "home-computer",
+            "budget-computer",
+            "British"
+        ],
+        "EraKeywords": [
+            "vintage",
+            "80s-era",
+            "budget-era"
+        ],
+        "CapabilityKeywords": [
+            "budget-friendly",
+            "BBC-compatible",
+            "educational"
+        ],
+        "AudienceKeywords": [
+            "British-computer-fans",
+            "budget-retro-enthusiasts",
+            "Acorn-collectors"
+        ],
+        "MoodKeywords": [
+            "budget-friendly",
+            "British",
+            "educational"
+        ]
+    },
+    "Vectrex": {
+        "PlatformType": [
+            "console",
+            "vector-graphics",
+            "unique-display"
+        ],
+        "EraKeywords": [
+            "retro",
+            "early-80s",
+            "unique"
+        ],
+        "CapabilityKeywords": [
+            "vector-graphics",
+            "built-in-screen",
+            "unique"
+        ],
+        "AudienceKeywords": [
+            "unique-console-collectors",
+            "vector-graphics-fans",
+            "retro-enthusiasts"
+        ],
+        "MoodKeywords": [
+            "unique",
+            "vector-based",
+            "cult-classic"
+        ]
+    },
+    "PC-9800 Series": {
+        "PlatformType": [
+            "personal-computer",
+            "business-computer",
+            "Japanese"
+        ],
+        "EraKeywords": [
+            "vintage",
+            "80s-90s",
+            "business-era"
+        ],
+        "CapabilityKeywords": [
+            "business-oriented",
+            "high-resolution",
+            "Japanese-standard"
+        ],
+        "AudienceKeywords": [
+            "Japanese-PC-fans",
+            "retro-computer-enthusiasts",
+            "collectors"
+        ],
+        "MoodKeywords": [
+            "Japanese",
+            "business-oriented",
+            "specialized"
+        ]
+    },
+    "Dreamcast": {
+        "PlatformType": [
+            "console",
+            "living-room",
+            "online-capable"
+        ],
+        "EraKeywords": [
+            "retro",
+            "late-90s",
+            "last-Sega"
+        ],
+        "CapabilityKeywords": [
+            "online-capable",
+            "innovative",
+            "quality-graphics"
+        ],
+        "AudienceKeywords": [
+            "Sega-fans",
+            "cult-console-lovers",
+            "innovative-gaming-enthusiasts"
+        ],
+        "MoodKeywords": [
+            "innovative",
+            "ahead-of-time",
+            "cult-favorite"
+        ]
+    },
+    "Sharp X68000": {
+        "PlatformType": [
+            "personal-computer",
+            "workstation",
+            "Japanese"
+        ],
+        "EraKeywords": [
+            "vintage",
+            "late-80s",
+            "high-end-era"
+        ],
+        "CapabilityKeywords": [
+            "high-end",
+            "arcade-perfect",
+            "expensive"
+        ],
+        "AudienceKeywords": [
+            "Japanese-computer-enthusiasts",
+            "arcade-perfect-seekers",
+            "high-end-retro-fans"
+        ],
+        "MoodKeywords": [
+            "premium",
+            "Japanese",
+            "arcade-quality"
+        ]
+    },
+    "Odyssey 2 / Videopac G7000": {
+        "PlatformType": [
+            "console",
+            "living-room",
+            "cartridge-based"
+        ],
+        "EraKeywords": [
+            "vintage",
+            "70s-era",
+            "early-console"
+        ],
+        "CapabilityKeywords": [
+            "educational",
+            "family-oriented",
+            "simple"
+        ],
+        "AudienceKeywords": [
+            "early-console-collectors",
+            "Philips-fans",
+            "retro-enthusiasts"
+        ],
+        "MoodKeywords": [
+            "pioneering",
+            "simple",
+            "educational"
+        ]
+    },
+    "PC-FX": {
+        "PlatformType": [
+            "console",
+            "living-room",
+            "CD-based"
+        ],
+        "EraKeywords": [
+            "retro",
+            "mid-90s",
+            "failed"
+        ],
+        "CapabilityKeywords": [
+            "CD-based",
+            "anime-focused",
+            "multimedia"
+        ],
+        "AudienceKeywords": [
+            "NEC-fans",
+            "rare-console-collectors",
+            "Japanese-gaming-enthusiasts"
+        ],
+        "MoodKeywords": [
+            "rare",
+            "Japanese",
+            "anime-focused"
+        ]
+    },
+    "Family Computer": {
+        "PlatformType": [
+            "console",
+            "living-room",
+            "cartridge-based"
+        ],
+        "EraKeywords": [
+            "retro",
+            "80s-era",
+            "classic"
+        ],
+        "CapabilityKeywords": [
+            "8-bit",
+            "cartridge-based",
+            "family-oriented"
+        ],
+        "AudienceKeywords": [
+            "Japanese-Nintendo-fans",
+            "Famicom-collectors",
+            "retro-gamers"
+        ],
+        "MoodKeywords": [
+            "iconic",
+            "Japanese",
+            "family-oriented"
+        ]
+    },
+    "WonderSwan Color": {
+        "PlatformType": [
+            "handheld",
+            "portable",
+            "color-screen"
+        ],
+        "EraKeywords": [
+            "retro",
+            "late-90s",
+            "handheld-era"
+        ],
+        "CapabilityKeywords": [
+            "color-screen",
+            "battery-efficient",
+            "vertical-horizontal"
+        ],
+        "AudienceKeywords": [
+            "Bandai-fans",
+            "Japanese-handheld-collectors",
+            "portable-RPG-lovers"
+        ],
+        "MoodKeywords": [
+            "colorful",
+            "Japanese",
+            "RPG-focused"
+        ]
+    },
+    "DOS": {
+        "PlatformType": [
+            "operating-system",
+            "PC-platform",
+            "command-line"
+        ],
+        "EraKeywords": [
+            "vintage",
+            "80s-90s",
+            "PC-era"
+        ],
+        "CapabilityKeywords": [
+            "command-line",
+            "text-based",
+            "expandable"
+        ],
+        "AudienceKeywords": [
+            "PC-gaming-veterans",
+            "retro-computer-enthusiasts",
+            "command-line-users"
+        ],
+        "MoodKeywords": [
+            "technical",
+            "nostalgic",
+            "text-based"
+        ]
+    },
+    "Sol-20": {
+        "PlatformType": [
+            "personal-computer",
+            "kit-computer",
+            "early-PC"
+        ],
+        "EraKeywords": [
+            "vintage",
+            "70s-era",
+            "kit-era"
+        ],
+        "CapabilityKeywords": [
+            "kit-based",
+            "S-100-bus",
+            "expandable"
+        ],
+        "AudienceKeywords": [
+            "vintage-computer-collectors",
+            "electronics-hobbyists",
+            "computer-historians"
+        ],
+        "MoodKeywords": [
+            "pioneering",
+            "DIY",
+            "technical"
+        ]
+    },
+    "AirConsole": {
+        "PlatformType": [
+            "browser-platform",
+            "smartphone-controller",
+            "party-gaming"
+        ],
+        "EraKeywords": [
+            "modern",
+            "smartphone-era",
+            "web-gaming"
+        ],
+        "CapabilityKeywords": [
+            "smartphone-controllers",
+            "web-based",
+            "party-focused"
+        ],
+        "AudienceKeywords": [
+            "party-gamers",
+            "smartphone-users",
+            "social-players"
+        ],
+        "MoodKeywords": [
+            "social",
+            "party-focused",
+            "accessible"
+        ]
+    },
+    "Playdia": {
+        "PlatformType": [
+            "console",
+            "CD-based",
+            "educational"
+        ],
+        "EraKeywords": [
+            "retro",
+            "mid-90s",
+            "educational-era"
+        ],
+        "CapabilityKeywords": [
+            "CD-based",
+            "educational",
+            "family-oriented"
+        ],
+        "AudienceKeywords": [
+            "Bandai-fans",
+            "educational-gaming-enthusiasts",
+            "Japanese-console-collectors"
+        ],
+        "MoodKeywords": [
+            "educational",
+            "family-friendly",
+            "Japanese"
+        ]
+    },
+    "New Nintendo 3DS": {
+        "PlatformType": [
+            "handheld",
+            "portable",
+            "dual-screen"
+        ],
+        "EraKeywords": [
+            "modern",
+            "mid-2010s",
+            "enhanced"
+        ],
+        "CapabilityKeywords": [
+            "stereoscopic-3D",
+            "dual-screen",
+            "enhanced-processing"
+        ],
+        "AudienceKeywords": [
+            "Nintendo-fans",
+            "portable-gamers",
+            "3D-enthusiasts"
+        ],
+        "MoodKeywords": [
+            "portable",
+            "3D-enabled",
+            "upgraded"
+        ]
+    },
+    "Meta Quest 2": {
+        "PlatformType": [
+            "VR-headset",
+            "standalone",
+            "wireless"
+        ],
+        "EraKeywords": [
+            "modern",
+            "VR-mainstream",
+            "current-gen"
+        ],
+        "CapabilityKeywords": [
+            "standalone",
+            "wireless",
+            "mainstream"
+        ],
+        "AudienceKeywords": [
+            "VR-enthusiasts",
+            "mainstream-VR-adopters",
+            "fitness-gamers"
+        ],
+        "MoodKeywords": [
+            "immersive",
+            "accessible",
+            "wireless"
+        ]
+    },
+    "Commodore CDTV": {
+        "PlatformType": [
+            "multimedia-system",
+            "CD-based",
+            "Amiga-based"
+        ],
+        "EraKeywords": [
+            "retro",
+            "early-90s",
+            "multimedia-era"
+        ],
+        "CapabilityKeywords": [
+            "multimedia",
+            "CD-based",
+            "Amiga-powered"
+        ],
+        "AudienceKeywords": [
+            "Amiga-fans",
+            "multimedia-enthusiasts",
+            "Commodore-collectors"
+        ],
+        "MoodKeywords": [
+            "multimedia-focused",
+            "ambitious",
+            "Amiga-based"
+        ]
+    },
+    "Handheld Electronic LCD": {
+        "PlatformType": [
+            "handheld-toy",
+            "LCD-based",
+            "simple-gaming"
+        ],
+        "EraKeywords": [
+            "vintage",
+            "80s-era",
+            "toy-era"
+        ],
+        "CapabilityKeywords": [
+            "LCD-screen",
+            "simple",
+            "battery-powered"
+        ],
+        "AudienceKeywords": [
+            "retro-toy-collectors",
+            "simple-gaming-fans",
+            "nostalgic-players"
+        ],
+        "MoodKeywords": [
+            "simple",
+            "portable",
+            "nostalgic"
+        ]
+    },
+    "SDS Sigma 7": {
+        "PlatformType": [
+            "mainframe",
+            "time-sharing",
+            "multi-user"
+        ],
+        "EraKeywords": [
+            "vintage",
+            "60s-era",
+            "mainframe-era"
+        ],
+        "CapabilityKeywords": [
+            "time-sharing",
+            "multi-user",
+            "expensive"
+        ],
+        "AudienceKeywords": [
+            "computer-historians",
+            "mainframe-enthusiasts",
+            "academic-researchers"
+        ],
+        "MoodKeywords": [
+            "academic",
+            "mainframe-era",
+            "technical"
+        ]
+    },
+    "Amstrad PCW": {
+        "PlatformType": [
+            "word-processor",
+            "dedicated-computer",
+            "British"
+        ],
+        "EraKeywords": [
+            "vintage",
+            "80s-era",
+            "productivity-era"
+        ],
+        "CapabilityKeywords": [
+            "word-processing",
+            "productivity-focused",
+            "dedicated"
+        ],
+        "AudienceKeywords": [
+            "word-processing-enthusiasts",
+            "Amstrad-fans",
+            "budget-computer-users"
+        ],
+        "MoodKeywords": [
+            "productivity-focused",
+            "budget-friendly",
+            "British"
+        ]
+    },
+    "Game.com": {
+        "PlatformType": [
+            "handheld",
+            "PDA-gaming",
+            "internet-capable"
+        ],
+        "EraKeywords": [
+            "retro",
+            "late-90s",
+            "PDA-era"
+        ],
+        "CapabilityKeywords": [
+            "internet-capable",
+            "touch-screen",
+            "PDA-features"
+        ],
+        "AudienceKeywords": [
+            "Tiger-Electronics-fans",
+            "PDA-gaming-enthusiasts",
+            "handheld-collectors"
+        ],
+        "MoodKeywords": [
+            "ambitious",
+            "PDA-like",
+            "failed"
+        ]
+    },
+    "Commodore C64/128/MAX": {
+        "PlatformType": [
+            "home-computer",
+            "8-bit",
+            "programmable"
+        ],
+        "EraKeywords": [
+            "vintage",
+            "80s-era",
+            "home-computer-era"
+        ],
+        "CapabilityKeywords": [
+            "programmable",
+            "sound-synthesis",
+            "color-graphics"
+        ],
+        "AudienceKeywords": [
+            "home-computer-fans",
+            "Commodore-enthusiasts",
+            "retro-programmers"
+        ],
+        "MoodKeywords": [
+            "iconic",
+            "programmable",
+            "creative"
+        ]
+    },
+    "Xbox": {
+        "PlatformType": [
+            "console",
+            "living-room",
+            "hard-drive"
+        ],
+        "EraKeywords": [
+            "retro",
+            "early-2000s",
+            "original-Xbox"
+        ],
+        "CapabilityKeywords": [
+            "hard-drive",
+            "DVD-playback",
+            "online-capable"
+        ],
+        "AudienceKeywords": [
+            "Microsoft-fans",
+            "Halo-enthusiasts",
+            "Xbox-Live-pioneers"
+        ],
+        "MoodKeywords": [
+            "powerful",
+            "online-focused",
+            "competitive"
+        ]
+    },
+    "Arduboy": {
+        "PlatformType": [
+            "DIY-handheld",
+            "open-source",
+            "Arduino-based"
+        ],
+        "EraKeywords": [
+            "modern",
+            "maker-era",
+            "open-source"
+        ],
+        "CapabilityKeywords": [
+            "open-source",
+            "Arduino-based",
+            "programmable"
+        ],
+        "AudienceKeywords": [
+            "DIY-enthusiasts",
+            "makers",
+            "indie-developers"
+        ],
+        "MoodKeywords": [
+            "minimalist",
+            "DIY",
+            "creative"
+        ]
+    },
+    "Apple Pippin": {
+        "PlatformType": [
+            "console",
+            "multimedia-system",
+            "Apple-designed"
+        ],
+        "EraKeywords": [
+            "retro",
+            "mid-90s",
+            "failed"
+        ],
+        "CapabilityKeywords": [
+            "multimedia",
+            "CD-based",
+            "Apple-designed"
+        ],
+        "AudienceKeywords": [
+            "Apple-collectors",
+            "failed-console-enthusiasts",
+            "multimedia-fans"
+        ],
+        "MoodKeywords": [
+            "failed",
+            "multimedia-focused",
+            "Apple-designed"
+        ]
+    },
+    "Apple IIGS": {
+        "PlatformType": [
+            "home-computer",
+            "16-bit",
+            "Apple-II-family"
+        ],
+        "EraKeywords": [
+            "vintage",
+            "late-80s",
+            "16-bit-era"
+        ],
+        "CapabilityKeywords": [
+            "16-bit",
+            "enhanced-graphics",
+            "sound-synthesis"
+        ],
+        "AudienceKeywords": [
+            "Apple-II-fans",
+            "retro-computer-enthusiasts",
+            "educational-gamers"
+        ],
+        "MoodKeywords": [
+            "advanced",
+            "colorful",
+            "Apple-quality"
+        ]
+    },
+    "LaserActive": {
+        "PlatformType": [
+            "multimedia-system",
+            "LaserDisc-based",
+            "premium"
+        ],
+        "EraKeywords": [
+            "retro",
+            "early-90s",
+            "LaserDisc-era"
+        ],
+        "CapabilityKeywords": [
+            "LaserDisc-based",
+            "premium",
+            "add-on-capable"
+        ],
+        "AudienceKeywords": [
+            "Pioneer-fans",
+            "LaserDisc-enthusiasts",
+            "high-end-retro-collectors"
+        ],
+        "MoodKeywords": [
+            "premium",
+            "LaserDisc-based",
+            "high-quality"
+        ]
+    },
+    "visionOS": {
+        "PlatformType": [
+            "mixed-reality",
+            "spatial-computing",
+            "Apple-ecosystem"
+        ],
+        "EraKeywords": [
+            "cutting-edge",
+            "future",
+            "spatial-computing-era"
+        ],
+        "CapabilityKeywords": [
+            "spatial-computing",
+            "mixed-reality",
+            "eye-tracking"
+        ],
+        "AudienceKeywords": [
+            "Apple-enthusiasts",
+            "AR-VR-early-adopters",
+            "premium-tech-users"
+        ],
+        "MoodKeywords": [
+            "cutting-edge",
+            "premium",
+            "spatial"
+        ]
+    },
+    "Nintendo e-Reader": {
+        "PlatformType": [
+            "accessory",
+            "card-scanner",
+            "GBA-peripheral"
+        ],
+        "EraKeywords": [
+            "retro",
+            "early-2000s",
+            "accessory-era"
+        ],
+        "CapabilityKeywords": [
+            "card-scanning",
+            "innovative",
+            "peripheral"
+        ],
+        "AudienceKeywords": [
+            "Nintendo-accessory-fans",
+            "card-gaming-enthusiasts",
+            "GBA-collectors"
+        ],
+        "MoodKeywords": [
+            "innovative",
+            "card-based",
+            "unique"
+        ]
+    },
+    "Epoch Super Cassette Vision": {
+        "PlatformType": [
+            "console",
+            "cartridge-based",
+            "Japanese"
+        ],
+        "EraKeywords": [
+            "vintage",
+            "early-80s",
+            "Japanese-console"
+        ],
+        "CapabilityKeywords": [
+            "cartridge-based",
+            "simple",
+            "Japanese-design"
+        ],
+        "AudienceKeywords": [
+            "Japanese-console-collectors",
+            "Epoch-fans",
+            "early-console-enthusiasts"
+        ],
+        "MoodKeywords": [
+            "Japanese",
+            "early-console-era",
+            "simple"
+        ]
+    },
+    "N-Gage": {
+        "PlatformType": [
+            "handheld",
+            "phone-gaming",
+            "Nokia"
+        ],
+        "EraKeywords": [
+            "retro",
+            "early-2000s",
+            "mobile-gaming-pioneer"
+        ],
+        "CapabilityKeywords": [
+            "phone-gaming",
+            "dual-purpose",
+            "mobile"
+        ],
+        "AudienceKeywords": [
+            "Nokia-fans",
+            "mobile-gaming-pioneers",
+            "failed-console-collectors"
+        ],
+        "MoodKeywords": [
+            "mobile-gaming",
+            "failed",
+            "ambitious"
+        ]
+    },
+    "Neo Geo Pocket": {
+        "PlatformType": [
+            "handheld",
+            "portable",
+            "fighting-focused"
+        ],
+        "EraKeywords": [
+            "retro",
+            "late-90s",
+            "handheld-era"
+        ],
+        "CapabilityKeywords": [
+            "arcade-quality",
+            "fighting-focused",
+            "clicky-stick"
+        ],
+        "AudienceKeywords": [
+            "SNK-fans",
+            "portable-fighting-game-lovers",
+            "handheld-collectors"
+        ],
+        "MoodKeywords": [
+            "arcade-quality",
+            "fighting-focused",
+            "premium-portable"
+        ]
+    },
+    "Commodore PET": {
+        "PlatformType": [
+            "personal-computer",
+            "all-in-one",
+            "business-computer"
+        ],
+        "EraKeywords": [
+            "vintage",
+            "late-70s",
+            "early-PC-era"
+        ],
+        "CapabilityKeywords": [
+            "all-in-one",
+            "business-oriented",
+            "pioneering"
+        ],
+        "AudienceKeywords": [
+            "early-computer-enthusiasts",
+            "Commodore-historians",
+            "vintage-collectors"
+        ],
+        "MoodKeywords": [
+            "pioneering",
+            "educational",
+            "all-in-one"
+        ]
+    },
+    "Meta Quest 3": {
+        "PlatformType": [
+            "VR-headset",
+            "mixed-reality",
+            "standalone"
+        ],
+        "EraKeywords": [
+            "cutting-edge",
+            "current-gen",
+            "next-gen-VR"
+        ],
+        "CapabilityKeywords": [
+            "mixed-reality",
+            "standalone",
+            "advanced"
+        ],
+        "AudienceKeywords": [
+            "VR-enthusiasts",
+            "mixed-reality-users",
+            "tech-early-adopters"
+        ],
+        "MoodKeywords": [
+            "cutting-edge",
+            "mixed-reality",
+            "immersive"
+        ]
+    },
+    "Tatung Einstein": {
+        "PlatformType": [
+            "home-computer",
+            "CPC-compatible",
+            "British"
+        ],
+        "EraKeywords": [
+            "vintage",
+            "80s-era",
+            "rare"
+        ],
+        "CapabilityKeywords": [
+            "CPC-compatible",
+            "rare",
+            "British-design"
+        ],
+        "AudienceKeywords": [
+            "British-computer-collectors",
+            "CPC-compatible-fans",
+            "rare-system-enthusiasts"
+        ],
+        "MoodKeywords": [
+            "rare",
+            "British",
+            "CPC-compatible"
+        ]
+    },
+    "Oculus Go": {
+        "PlatformType": [
+            "VR-headset",
+            "standalone",
+            "media-focused"
+        ],
+        "EraKeywords": [
+            "recent",
+            "entry-level-VR",
+            "discontinued"
+        ],
+        "CapabilityKeywords": [
+            "standalone",
+            "media-focused",
+            "entry-level"
+        ],
+        "AudienceKeywords": [
+            "entry-level-VR-users",
+            "media-consumption-focused",
+            "casual-VR-enthusiasts"
+        ],
+        "MoodKeywords": [
+            "accessible",
+            "media-focused",
+            "standalone"
+        ]
+    },
+    "Nintendo Switch": {
+        "PlatformType": [
+            "hybrid-console",
+            "portable-console",
+            "dockable"
+        ],
+        "EraKeywords": [
+            "current-gen",
+            "modern",
+            "hybrid-era"
+        ],
+        "CapabilityKeywords": [
+            "hybrid",
+            "portable-console",
+            "dockable"
+        ],
+        "AudienceKeywords": [
+            "hybrid-gaming-fans",
+            "Nintendo-enthusiasts",
+            "portable-console-lovers"
+        ],
+        "MoodKeywords": [
+            "versatile",
+            "portable",
+            "family-friendly"
+        ]
+    },
+    "PDP-10": {
+        "PlatformType": [
+            "mainframe",
+            "time-sharing",
+            "academic"
+        ],
+        "EraKeywords": [
+            "vintage",
+            "60s-70s",
+            "mainframe-era"
+        ],
+        "CapabilityKeywords": [
+            "time-sharing",
+            "academic",
+            "powerful"
+        ],
+        "AudienceKeywords": [
+            "computer-historians",
+            "mainframe-enthusiasts",
+            "academic-researchers"
+        ],
+        "MoodKeywords": [
+            "mainframe-era",
+            "academic",
+            "powerful"
+        ]
+    },
+    "Sega Saturn": {
+        "PlatformType": [
+            "console",
+            "32-bit",
+            "2D-powerhouse"
+        ],
+        "EraKeywords": [
+            "retro",
+            "mid-90s",
+            "32-bit-era"
+        ],
+        "CapabilityKeywords": [
+            "2D-powerhouse",
+            "dual-CPU",
+            "complex"
+        ],
+        "AudienceKeywords": [
+            "Sega-fans",
+            "2D-gaming-enthusiasts",
+            "import-gamers"
+        ],
+        "MoodKeywords": [
+            "2D-powerhouse",
+            "underappreciated",
+            "complex"
+        ]
+    },
+    "3DO Interactive Multiplayer": {
+        "PlatformType": [
+            "console",
+            "32-bit",
+            "premium"
+        ],
+        "EraKeywords": [
+            "retro",
+            "early-90s",
+            "32-bit-era"
+        ],
+        "CapabilityKeywords": [
+            "32-bit",
+            "CD-based",
+            "premium"
+        ],
+        "AudienceKeywords": [
+            "3DO-fans",
+            "premium-console-enthusiasts",
+            "multimedia-gamers"
+        ],
+        "MoodKeywords": [
+            "premium",
+            "multimedia",
+            "expensive"
+        ]
+    },
+    "PC Engine SuperGrafx": {
+        "PlatformType": [
+            "console",
+            "enhanced",
+            "Japanese"
+        ],
+        "EraKeywords": [
+            "retro",
+            "late-80s",
+            "enhanced"
+        ],
+        "CapabilityKeywords": [
+            "enhanced",
+            "16-bit",
+            "rare"
+        ],
+        "AudienceKeywords": [
+            "NEC-fans",
+            "enhanced-console-collectors",
+            "Japanese-gaming-enthusiasts"
+        ],
+        "MoodKeywords": [
+            "enhanced",
+            "rare",
+            "Japanese"
+        ]
+    },
+    "Leapster Explorer/LeadPad Explorer": {
+        "PlatformType": [
+            "educational-handheld",
+            "children-focused",
+            "learning-device"
+        ],
+        "EraKeywords": [
+            "modern",
+            "educational-gaming",
+            "children-focused"
+        ],
+        "CapabilityKeywords": [
+            "educational",
+            "touch-screen",
+            "child-safe"
+        ],
+        "AudienceKeywords": [
+            "educational-gaming-parents",
+            "children",
+            "learning-focused-families"
+        ],
+        "MoodKeywords": [
+            "educational",
+            "child-friendly",
+            "learning-focused"
+        ]
+    },
+    "1292 Advanced Programmable Video System": {
+        "PlatformType": [
+            "console",
+            "programmable",
+            "rare"
+        ],
+        "EraKeywords": [
+            "vintage",
+            "70s-era",
+            "rare"
+        ],
+        "CapabilityKeywords": [
+            "programmable",
+            "cartridge-based",
+            "rare"
+        ],
+        "AudienceKeywords": [
+            "obscure-console-collectors",
+            "Philips-system-fans",
+            "early-programmable-enthusiasts"
+        ],
+        "MoodKeywords": [
+            "obscure",
+            "programmable",
+            "rare"
+        ]
+    },
+    "PC (Microsoft Windows)": {
+        "PlatformType": [
+            "personal-computer",
+            "desktop",
+            "versatile"
+        ],
+        "EraKeywords": [
+            "modern",
+            "contemporary",
+            "evolving"
+        ],
+        "CapabilityKeywords": [
+            "versatile",
+            "modular",
+            "high-performance"
+        ],
+        "AudienceKeywords": [
+            "PC-gamers",
+            "modding-enthusiasts",
+            "performance-seekers"
+        ],
+        "MoodKeywords": [
+            "versatile",
+            "powerful",
+            "modifiable"
+        ]
+    },
+    "Gamate": {
+        "PlatformType": [
+            "handheld",
+            "Game-Boy-clone",
+            "budget"
+        ],
+        "EraKeywords": [
+            "retro",
+            "early-90s",
+            "Game-Boy-era"
+        ],
+        "CapabilityKeywords": [
+            "Game-Boy-clone",
+            "budget",
+            "basic"
+        ],
+        "AudienceKeywords": [
+            "rare-handheld-collectors",
+            "budget-gaming-historians",
+            "obscure-system-enthusiasts"
+        ],
+        "MoodKeywords": [
+            "obscure",
+            "budget",
+            "Game-Boy-clone"
+        ]
+    },
+    "Satellaview": {
+        "PlatformType": [
+            "accessory",
+            "satellite-gaming",
+            "Japanese-exclusive"
+        ],
+        "EraKeywords": [
+            "retro",
+            "mid-90s",
+            "satellite-era"
+        ],
+        "CapabilityKeywords": [
+            "satellite-based",
+            "broadcast-gaming",
+            "innovative"
+        ],
+        "AudienceKeywords": [
+            "Nintendo-accessory-fans",
+            "satellite-gaming-enthusiasts",
+            "Japanese-exclusive-collectors"
+        ],
+        "MoodKeywords": [
+            "innovative",
+            "satellite-based",
+            "Japanese-exclusive"
+        ]
+    },
+    "Imlac PDS-1": {
+        "PlatformType": [
+            "graphics-workstation",
+            "vector-graphics",
+            "expensive"
+        ],
+        "EraKeywords": [
+            "vintage",
+            "70s-era",
+            "early-graphics"
+        ],
+        "CapabilityKeywords": [
+            "vector-graphics",
+            "graphics-workstation",
+            "expensive"
+        ],
+        "AudienceKeywords": [
+            "computer-graphics-historians",
+            "early-vector-enthusiasts",
+            "academic-researchers"
+        ],
+        "MoodKeywords": [
+            "pioneering",
+            "vector-graphics",
+            "academic"
+        ]
+    },
+    "Super Famicom": {
+        "PlatformType": [
+            "console",
+            "16-bit",
+            "Japanese"
+        ],
+        "EraKeywords": [
+            "retro",
+            "90s-era",
+            "16-bit-era"
+        ],
+        "CapabilityKeywords": [
+            "16-bit",
+            "colorful-design",
+            "cartridge-based"
+        ],
+        "AudienceKeywords": [
+            "Japanese-Nintendo-fans",
+            "import-gamers",
+            "SNES-collectors"
+        ],
+        "MoodKeywords": [
+            "Japanese",
+            "iconic",
+            "colorful-design"
+        ]
+    },
+    "Sega CD 32X": {
+        "PlatformType": [
+            "add-on-combination",
+            "complex-setup",
+            "ambitious"
+        ],
+        "EraKeywords": [
+            "retro",
+            "mid-90s",
+            "add-on-era"
+        ],
+        "CapabilityKeywords": [
+            "multi-add-on",
+            "complex",
+            "ambitious"
+        ],
+        "AudienceKeywords": [
+            "Sega-completionists",
+            "add-on-collectors",
+            "ambitious-gaming-fans"
+        ],
+        "MoodKeywords": [
+            "complex",
+            "add-on-heavy",
+            "ambitious"
+        ]
+    },
+    "Texas Instruments TI-99": {
+        "PlatformType": [
+            "home-computer",
+            "16-bit",
+            "TI-branded"
+        ],
+        "EraKeywords": [
+            "vintage",
+            "early-80s",
+            "home-computer-era"
+        ],
+        "CapabilityKeywords": [
+            "16-bit",
+            "educational",
+            "speech-synthesis"
+        ],
+        "AudienceKeywords": [
+            "TI-computer-fans",
+            "educational-computing-enthusiasts",
+            "retro-collectors"
+        ],
+        "MoodKeywords": [
+            "educational",
+            "home-computer-era",
+            "TI-quality"
+        ]
+    },
+    "DVD Player": {
+        "PlatformType": [
+            "multimedia-device",
+            "disc-player",
+            "entertainment-system"
+        ],
+        "EraKeywords": [
+            "modern",
+            "DVD-era",
+            "multimedia"
+        ],
+        "CapabilityKeywords": [
+            "DVD-playback",
+            "multimedia",
+            "entertainment-focused"
+        ],
+        "AudienceKeywords": [
+            "movie-watchers",
+            "multimedia-users",
+            "casual-entertainment-seekers"
+        ],
+        "MoodKeywords": [
+            "multimedia",
+            "movie-focused",
+            "mainstream"
+        ]
+    },
+    "HyperScan": {
+        "PlatformType": [
+            "console",
+            "card-based",
+            "failed"
+        ],
+        "EraKeywords": [
+            "retro",
+            "mid-2000s",
+            "failed"
+        ],
+        "CapabilityKeywords": [
+            "card-based",
+            "RFID",
+            "innovative"
+        ],
+        "AudienceKeywords": [
+            "failed-console-collectors",
+            "Mattel-fans",
+            "card-based-gaming-enthusiasts"
+        ],
+        "MoodKeywords": [
+            "failed",
+            "card-based",
+            "ambitious"
+        ]
+    },
+    "ZX Spectrum": {
+        "PlatformType": [
+            "home-computer",
+            "8-bit",
+            "British"
+        ],
+        "EraKeywords": [
+            "vintage",
+            "80s-era",
+            "home-computer-era"
+        ],
+        "CapabilityKeywords": [
+            "8-bit",
+            "colorful",
+            "budget-friendly"
+        ],
+        "AudienceKeywords": [
+            "British-computer-fans",
+            "bedroom-programmer-nostalgics",
+            "retro-enthusiasts"
+        ],
+        "MoodKeywords": [
+            "British",
+            "colorful",
+            "creative"
+        ]
+    },
+    "PlayStation 3": {
+        "PlatformType": [
+            "console",
+            "Blu-ray-player",
+            "powerful"
+        ],
+        "EraKeywords": [
+            "retro",
+            "late-2000s",
+            "7th-generation"
+        ],
+        "CapabilityKeywords": [
+            "Blu-ray-playback",
+            "powerful",
+            "multimedia"
+        ],
+        "AudienceKeywords": [
+            "PlayStation-fans",
+            "Blu-ray-enthusiasts",
+            "exclusive-game-lovers"
+        ],
+        "MoodKeywords": [
+            "powerful",
+            "multimedia-rich",
+            "Blu-ray-enabled"
+        ]
+    },
+    "Zeebo": {
+        "PlatformType": [
+            "console",
+            "3G-based",
+            "emerging-market"
+        ],
+        "EraKeywords": [
+            "modern",
+            "emerging-market",
+            "3G-era"
+        ],
+        "CapabilityKeywords": [
+            "3G-based",
+            "emerging-market",
+            "budget-friendly"
+        ],
+        "AudienceKeywords": [
+            "emerging-market-gamers",
+            "budget-console-enthusiasts",
+            "Brazilian-gaming-fans"
+        ],
+        "MoodKeywords": [
+            "emerging-market",
+            "3G-based",
+            "budget-friendly"
+        ]
+    },
+    "Call-A-Computer time-shared mainframe computer system": {
+        "PlatformType": [
+            "time-sharing",
+            "mainframe",
+            "dial-up"
+        ],
+        "EraKeywords": [
+            "vintage",
+            "70s-era",
+            "time-sharing-era"
+        ],
+        "CapabilityKeywords": [
+            "time-sharing",
+            "dial-up",
+            "expensive"
+        ],
+        "AudienceKeywords": [
+            "computer-historians",
+            "time-sharing-enthusiasts",
+            "academic-researchers"
+        ],
+        "MoodKeywords": [
+            "pioneering",
+            "time-shared",
+            "academic"
+        ]
+    },
+    "Turbografx-16/PC Engine CD": {
+        "PlatformType": [
+            "console-add-on",
+            "CD-enhanced",
+            "16-bit"
+        ],
+        "EraKeywords": [
+            "retro",
+            "early-90s",
+            "CD-era"
+        ],
+        "CapabilityKeywords": [
+            "CD-enhanced",
+            "16-bit",
+            "audio-rich"
+        ],
+        "AudienceKeywords": [
+            "CD-gaming-pioneers",
+            "NEC-fans",
+            "Japanese-import-lovers"
+        ],
+        "MoodKeywords": [
+            "CD-enhanced",
+            "Japanese",
+            "innovative"
+        ]
+    },
+    "Super NES CD-ROM System": {
+        "PlatformType": [
+            "unreleased-console",
+            "prototype",
+            "CD-based"
+        ],
+        "EraKeywords": [
+            "unreleased",
+            "prototype",
+            "early-90s"
+        ],
+        "CapabilityKeywords": [
+            "CD-based",
+            "unreleased",
+            "prototype"
+        ],
+        "AudienceKeywords": [
+            "Nintendo-prototype-collectors",
+            "unreleased-system-fans",
+            "gaming-historians"
+        ],
+        "MoodKeywords": [
+            "unreleased",
+            "prototype",
+            "what-could-have-been"
+        ]
+    },
+    "Sega CD": {
+        "PlatformType": [
+            "console-add-on",
+            "CD-based",
+            "multimedia"
+        ],
+        "EraKeywords": [
+            "retro",
+            "early-90s",
+            "CD-era"
+        ],
+        "CapabilityKeywords": [
+            "CD-based",
+            "FMV-capable",
+            "multimedia"
+        ],
+        "AudienceKeywords": [
+            "Sega-fans",
+            "CD-gaming-enthusiasts",
+            "FMV-game-lovers"
+        ],
+        "MoodKeywords": [
+            "CD-enhanced",
+            "FMV-rich",
+            "ambitious"
+        ]
+    },
+    "Wii U": {
+        "PlatformType": [
+            "console",
+            "dual-screen",
+            "tablet-controller"
+        ],
+        "EraKeywords": [
+            "modern",
+            "early-2010s",
+            "dual-screen-era"
+        ],
+        "CapabilityKeywords": [
+            "dual-screen",
+            "tablet-controller",
+            "innovative"
+        ],
+        "AudienceKeywords": [
+            "Nintendo-fans",
+            "dual-screen-enthusiasts",
+            "asymmetric-gaming-lovers"
+        ],
+        "MoodKeywords": [
+            "innovative",
+            "misunderstood",
+            "dual-screen"
+        ]
+    },
+    "Nintendo DSi": {
+        "PlatformType": [
+            "handheld",
+            "enhanced",
+            "camera-equipped"
+        ],
+        "EraKeywords": [
+            "retro",
+            "late-2000s",
+            "enhanced-DS"
+        ],
+        "CapabilityKeywords": [
+            "camera-equipped",
+            "downloadable-games",
+            "enhanced"
+        ],
+        "AudienceKeywords": [
+            "DS-upgrade-seekers",
+            "camera-gaming-fans",
+            "download-game-enthusiasts"
+        ],
+        "MoodKeywords": [
+            "enhanced",
+            "camera-enabled",
+            "downloadable-content"
+        ]
+    },
+    "Neo Geo CD": {
+        "PlatformType": [
+            "console",
+            "CD-based",
+            "arcade-quality"
+        ],
+        "EraKeywords": [
+            "retro",
+            "mid-90s",
+            "CD-era"
+        ],
+        "CapabilityKeywords": [
+            "CD-based",
+            "arcade-quality",
+            "budget-friendly"
+        ],
+        "AudienceKeywords": [
+            "SNK-fans",
+            "arcade-perfect-seekers",
+            "CD-based-fighting-fans"
+        ],
+        "MoodKeywords": [
+            "arcade-perfect",
+            "CD-based",
+            "budget-Neo-Geo"
+        ]
+    },
+    "Hyper Neo Geo 64": {
+        "PlatformType": [
+            "arcade-board",
+            "3D-capable",
+            "SNK"
+        ],
+        "EraKeywords": [
+            "retro",
+            "mid-90s",
+            "3D-arcade"
+        ],
+        "CapabilityKeywords": [
+            "3D-capable",
+            "arcade-board",
+            "SNK-quality"
+        ],
+        "AudienceKeywords": [
+            "SNK-collectors",
+            "arcade-board-enthusiasts",
+            "3D-Neo-Geo-fans"
+        ],
+        "MoodKeywords": [
+            "arcade-board",
+            "3D-capable",
+            "SNK-branded"
+        ]
+    },
+    "64DD": {
+        "PlatformType": [
+            "console-add-on",
+            "disk-drive",
+            "Japanese-exclusive"
+        ],
+        "EraKeywords": [
+            "retro",
+            "late-90s",
+            "disk-era"
+        ],
+        "CapabilityKeywords": [
+            "disk-based",
+            "expandable",
+            "Japanese-exclusive"
+        ],
+        "AudienceKeywords": [
+            "Nintendo-64-completionists",
+            "disk-drive-enthusiasts",
+            "Japanese-exclusive-collectors"
+        ],
+        "MoodKeywords": [
+            "disk-based",
+            "Japanese-exclusive",
+            "expandable"
+        ]
+    },
+    "TRS-80 Color Computer": {
+        "PlatformType": [
+            "home-computer",
+            "color-computer",
+            "Radio-Shack"
+        ],
+        "EraKeywords": [
+            "vintage",
+            "80s-era",
+            "home-computer-era"
+        ],
+        "CapabilityKeywords": [
+            "color-graphics",
+            "6809-processor",
+            "family-oriented"
+        ],
+        "AudienceKeywords": [
+            "Radio-Shack-fans",
+            "CoCo-enthusiasts",
+            "home-computer-nostalgics"
+        ],
+        "MoodKeywords": [
+            "colorful",
+            "home-computer",
+            "Radio-Shack-branded"
+        ]
+    },
+    "HP 3000": {
+        "PlatformType": [
+            "minicomputer",
+            "business-server",
+            "enterprise"
+        ],
+        "EraKeywords": [
+            "vintage",
+            "70s-90s",
+            "minicomputer-era"
+        ],
+        "CapabilityKeywords": [
+            "multi-user",
+            "business-oriented",
+            "reliable"
+        ],
+        "AudienceKeywords": [
+            "business-computer-historians",
+            "HP-minicomputer-fans",
+            "enterprise-system-collectors"
+        ],
+        "MoodKeywords": [
+            "business-oriented",
+            "reliable",
+            "enterprise-grade"
+        ]
+    },
+    "Atari 2600": {
+        "PlatformType": [
+            "console",
+            "cartridge-based",
+            "iconic"
+        ],
+        "EraKeywords": [
+            "vintage",
+            "70s-era",
+            "pioneering"
+        ],
+        "CapabilityKeywords": [
+            "cartridge-based",
+            "simple",
+            "wood-grain-design"
+        ],
+        "AudienceKeywords": [
+            "retro-gaming-icons",
+            "Atari-fans",
+            "classic-console-lovers"
+        ],
+        "MoodKeywords": [
+            "iconic",
+            "pioneering",
+            "simple"
+        ]
+    },
+    "MSX2": {
+        "PlatformType": [
+            "home-computer",
+            "standardized",
+            "Japanese"
+        ],
+        "EraKeywords": [
+            "vintage",
+            "80s-era",
+            "MSX-era"
+        ],
+        "CapabilityKeywords": [
+            "standardized",
+            "enhanced-8-bit",
+            "Japanese-standard"
+        ],
+        "AudienceKeywords": [
+            "MSX-enthusiasts",
+            "Japanese-computer-fans",
+            "standard-system-supporters"
+        ],
+        "MoodKeywords": [
+            "standardized",
+            "Japanese",
+            "enhanced"
+        ]
+    },
+    "Atari Jaguar": {
+        "PlatformType": [
+            "console",
+            "64-bit",
+            "failed"
+        ],
+        "EraKeywords": [
+            "retro",
+            "mid-90s",
+            "64-bit-era"
+        ],
+        "CapabilityKeywords": [
+            "64-bit",
+            "powerful",
+            "ambitious"
+        ],
+        "AudienceKeywords": [
+            "Atari-fans",
+            "64-bit-pioneers",
+            "underdog-console-supporters"
+        ],
+        "MoodKeywords": [
+            "ambitious",
+            "64-bit",
+            "failed"
+        ]
+    },
+    "Linux": {
+        "PlatformType": [
+            "open-source",
+            "customizable"
+        ],
+        "EraKeywords": [
+            "modern",
+            "open-source-era",
+            "contemporary"
+        ],
+        "CapabilityKeywords": [
+            "open-source",
+            "customizable",
+            "free"
+        ],
+        "AudienceKeywords": [
+            "open-source-enthusiasts",
+            "technical-users",
+            "customization-lovers"
+        ],
+        "MoodKeywords": [
+            "open-source",
+            "customizable",
+            "technical"
+        ]
+    },
+    "Game & Watch": {
+        "PlatformType": [
+            "handheld-toy",
+            "LCD-gaming",
+            "Nintendo"
+        ],
+        "EraKeywords": [
+            "vintage",
+            "80s-era",
+            "handheld-pioneer"
+        ],
+        "CapabilityKeywords": [
+            "LCD-gaming",
+            "simple",
+            "dual-purpose"
+        ],
+        "AudienceKeywords": [
+            "Nintendo-collectors",
+            "handheld-pioneers",
+            "simple-gaming-fans"
+        ],
+        "MoodKeywords": [
+            "simple",
+            "portable",
+            "iconic"
+        ]
+    },
+    "Web browser": {
+        "PlatformType": [
+            "web-platform",
+            "browser-based",
+            "universal"
+        ],
+        "EraKeywords": [
+            "modern",
+            "web-era",
+            "universal"
+        ],
+        "CapabilityKeywords": [
+            "browser-based",
+            "universal",
+            "instant-access"
+        ],
+        "AudienceKeywords": [
+            "casual-gamers",
+            "accessible-gaming-seekers",
+            "no-download-users"
+        ],
+        "MoodKeywords": [
+            "accessible",
+            "instant",
+            "cross-platform"
+        ]
+    },
+    "Analogue electronics": {
+        "PlatformType": [
+            "analog-system",
+            "electronic",
+            "vintage"
+        ],
+        "EraKeywords": [
+            "vintage",
+            "analog-era",
+            "pre-digital"
+        ],
+        "CapabilityKeywords": [
+            "pure-analog",
+            "electronic",
+            "authentic"
+        ],
+        "AudienceKeywords": [
+            "electronics-purists",
+            "analog-enthusiasts",
+            "retro-tech-lovers"
+        ],
+        "MoodKeywords": [
+            "pure-analog",
+            "authentic",
+            "electronic"
+        ]
+    },
+    "OnLive Game System": {
+        "PlatformType": [
+            "cloud-gaming",
+            "streaming",
+            "pioneering"
+        ],
+        "EraKeywords": [
+            "modern",
+            "cloud-era",
+            "streaming-pioneer"
+        ],
+        "CapabilityKeywords": [
+            "cloud-based",
+            "streaming",
+            "internet-dependent"
+        ],
+        "AudienceKeywords": [
+            "cloud-gaming-pioneers",
+            "streaming-enthusiasts",
+            "bandwidth-rich-users"
+        ],
+        "MoodKeywords": [
+            "cloud-based",
+            "streaming",
+            "innovative"
+        ]
+    },
+    "PlayStation Portable": {
+        "PlatformType": [
+            "handheld",
+            "multimedia-portable",
+            "Sony"
+        ],
+        "EraKeywords": [
+            "retro",
+            "mid-2000s",
+            "PSP-era"
+        ],
+        "CapabilityKeywords": [
+            "multimedia",
+            "UMD-based",
+            "powerful-portable"
+        ],
+        "AudienceKeywords": [
+            "Sony-handheld-fans",
+            "multimedia-portable-users",
+            "PSP-collectors"
+        ],
+        "MoodKeywords": [
+            "powerful-portable",
+            "multimedia-rich",
+            "sleek"
+        ]
+    },
+    "Intellivision": {
+        "PlatformType": [
+            "console",
+            "cartridge-based",
+            "sophisticated"
+        ],
+        "EraKeywords": [
+            "vintage",
+            "late-70s",
+            "early-console"
+        ],
+        "CapabilityKeywords": [
+            "voice-synthesis",
+            "sophisticated",
+            "intelligent"
+        ],
+        "AudienceKeywords": [
+            "Mattel-fans",
+            "early-console-enthusiasts",
+            "voice-synthesis-pioneers"
+        ],
+        "MoodKeywords": [
+            "intelligent",
+            "voice-enabled",
+            "sophisticated"
+        ]
+    }
+}

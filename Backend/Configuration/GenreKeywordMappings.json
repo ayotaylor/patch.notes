@@ -1,0 +1,1014 @@
+{
+    "Indie": {
+      "GenreKeywords": [
+        "experimental",
+        "creative",
+        "innovative",
+        "artistic",
+        "unique"
+      ],
+      "MechanicKeywords": [
+        "unconventional",
+        "narrative-driven",
+        "minimalist",
+        "atmospheric",
+        "emergent"
+      ],
+      "ThemeKeywords": [
+        "personal",
+        "experimental",
+        "social-commentary",
+        "introspective",
+        "avant-garde"
+      ],
+      "MoodKeywords": [
+        "intimate",
+        "contemplative",
+        "quirky",
+        "emotional",
+        "authentic"
+      ],
+      "ArtStyleKeywords": [
+        "hand-drawn",
+        "pixel-art",
+        "minimalist",
+        "stylized",
+        "abstract"
+      ],
+      "AudienceKeywords": [
+        "niche",
+        "art-lovers",
+        "creative-minds",
+        "experimental-gamers",
+        "indie-enthusiasts"
+      ]
+    },
+    "Role-playing (RPG)": {
+      "GenreKeywords": [
+        "character-progression",
+        "story-driven",
+        "exploration",
+        "customization",
+        "immersive"
+      ],
+      "MechanicKeywords": [
+        "leveling",
+        "skill-trees",
+        "inventory-management",
+        "dialogue-choices",
+        "combat-systems"
+      ],
+      "ThemeKeywords": [
+        "fantasy",
+        "adventure",
+        "heroic-journey",
+        "character-development",
+        "epic-quests"
+      ],
+      "MoodKeywords": [
+        "epic",
+        "immersive",
+        "adventurous",
+        "dramatic",
+        "engaging"
+      ],
+      "ArtStyleKeywords": [
+        "detailed",
+        "fantasy-art",
+        "character-portraits",
+        "environmental-design",
+        "cinematic"
+      ],
+      "AudienceKeywords": [
+        "story-lovers",
+        "character-builders",
+        "completionists",
+        "fantasy-fans",
+        "hardcore-gamers"
+      ]
+    },
+    "Strategy": {
+      "GenreKeywords": [
+        "tactical",
+        "resource-management",
+        "planning",
+        "decision-making",
+        "competitive"
+      ],
+      "MechanicKeywords": [
+        "resource-allocation",
+        "unit-management",
+        "base-building",
+        "tech-trees",
+        "strategic-thinking"
+      ],
+      "ThemeKeywords": [
+        "warfare",
+        "empire-building",
+        "economic",
+        "political",
+        "conquest"
+      ],
+      "MoodKeywords": [
+        "cerebral",
+        "challenging",
+        "competitive",
+        "methodical",
+        "intense"
+      ],
+      "ArtStyleKeywords": [
+        "top-down",
+        "detailed-maps",
+        "unit-sprites",
+        "interface-heavy",
+        "tactical-overlays"
+      ],
+      "AudienceKeywords": [
+        "strategists",
+        "planners",
+        "competitive-players",
+        "thinkers",
+        "hardcore-gamers"
+      ]
+    },
+    "Music": {
+      "GenreKeywords": [
+        "rhythm-based",
+        "audio-visual",
+        "performance",
+        "creative",
+        "synchronized"
+      ],
+      "MechanicKeywords": [
+        "timing",
+        "rhythm-matching",
+        "beat-detection",
+        "audio-cues",
+        "musical-input"
+      ],
+      "ThemeKeywords": [
+        "musical",
+        "artistic",
+        "performance",
+        "creative-expression",
+        "audio-visual"
+      ],
+      "MoodKeywords": [
+        "energetic",
+        "rhythmic",
+        "expressive",
+        "uplifting",
+        "engaging"
+      ],
+      "ArtStyleKeywords": [
+        "vibrant",
+        "synchronized-visuals",
+        "audio-reactive",
+        "colorful",
+        "dynamic"
+      ],
+      "AudienceKeywords": [
+        "music-lovers",
+        "rhythm-gamers",
+        "performers",
+        "creative-types",
+        "casual-players"
+      ]
+    },
+    "Arcade": {
+      "GenreKeywords": [
+        "fast-paced",
+        "high-score",
+        "reflex-based",
+        "immediate",
+        "accessible"
+      ],
+      "MechanicKeywords": [
+        "simple-controls",
+        "quick-reactions",
+        "score-chasing",
+        "power-ups",
+        "time-pressure"
+      ],
+      "ThemeKeywords": [
+        "retro",
+        "classic",
+        "competition",
+        "skill-based",
+        "nostalgic"
+      ],
+      "MoodKeywords": [
+        "energetic",
+        "exciting",
+        "competitive",
+        "nostalgic",
+        "adrenaline-fueled"
+      ],
+      "ArtStyleKeywords": [
+        "bright-colors",
+        "simple-graphics",
+        "retro-style",
+        "neon",
+        "pixel-perfect"
+      ],
+      "AudienceKeywords": [
+        "casual-gamers",
+        "score-chasers",
+        "retro-fans",
+        "quick-session-players",
+        "competitive-players"
+      ]
+    },
+    "Shooter": {
+      "GenreKeywords": [
+        "combat-focused",
+        "weapon-based",
+        "action-packed",
+        "competitive",
+        "skill-based"
+      ],
+      "MechanicKeywords": [
+        "aiming",
+        "shooting",
+        "cover-systems",
+        "weapon-variety",
+        "reaction-time"
+      ],
+      "ThemeKeywords": [
+        "military",
+        "sci-fi",
+        "action",
+        "warfare",
+        "survival"
+      ],
+      "MoodKeywords": [
+        "intense",
+        "adrenaline-pumping",
+        "competitive",
+        "action-packed",
+        "thrilling"
+      ],
+      "ArtStyleKeywords": [
+        "realistic",
+        "detailed-weapons",
+        "explosive-effects",
+        "first-person-view",
+        "cinematic"
+      ],
+      "AudienceKeywords": [
+        "action-fans",
+        "competitive-players",
+        "adrenaline-seekers",
+        "shooter-veterans",
+        "hardcore-gamers"
+      ]
+    },
+    "Pinball": {
+      "GenreKeywords": [
+        "physics-based",
+        "skill-timing",
+        "score-focused",
+        "reflex-driven",
+        "mechanical"
+      ],
+      "MechanicKeywords": [
+        "flipper-control",
+        "ball-physics",
+        "timing",
+        "multiball",
+        "table-objectives"
+      ],
+      "ThemeKeywords": [
+        "arcade",
+        "mechanical",
+        "themed-tables",
+        "retro",
+        "skill-based"
+      ],
+      "MoodKeywords": [
+        "nostalgic",
+        "focused",
+        "skillful",
+        "engaging",
+        "satisfying"
+      ],
+      "ArtStyleKeywords": [
+        "detailed-tables",
+        "realistic-physics",
+        "themed-artwork",
+        "bright-lighting",
+        "3D-models"
+      ],
+      "AudienceKeywords": [
+        "arcade-enthusiasts",
+        "skill-gamers",
+        "nostalgic-players",
+        "casual-gamers",
+        "precision-lovers"
+      ]
+    },
+    "Card & Board Game": {
+      "GenreKeywords": [
+        "turn-based",
+        "strategic-thinking",
+        "rule-based",
+        "social",
+        "tactical"
+      ],
+      "MechanicKeywords": [
+        "card-play",
+        "deck-building",
+        "board-movement",
+        "resource-management",
+        "turn-order"
+      ],
+      "ThemeKeywords": [
+        "strategic",
+        "competitive",
+        "social",
+        "traditional",
+        "mind-games"
+      ],
+      "MoodKeywords": [
+        "thoughtful",
+        "strategic",
+        "social",
+        "competitive",
+        "methodical"
+      ],
+      "ArtStyleKeywords": [
+        "clean-interface",
+        "card-art",
+        "board-layouts",
+        "traditional-design",
+        "clear-iconography"
+      ],
+      "AudienceKeywords": [
+        "strategy-lovers",
+        "social-gamers",
+        "card-game-fans",
+        "tactical-thinkers",
+        "casual-strategists"
+      ]
+    },
+    "MOBA": {
+      "GenreKeywords": [
+        "team-based",
+        "competitive",
+        "skill-intensive",
+        "strategic",
+        "online-multiplayer"
+      ],
+      "MechanicKeywords": [
+        "hero-selection",
+        "team-coordination",
+        "lane-pushing",
+        "item-builds",
+        "ability-combos"
+      ],
+      "ThemeKeywords": [
+        "fantasy",
+        "competitive",
+        "team-warfare",
+        "hero-based",
+        "strategic-combat"
+      ],
+      "MoodKeywords": [
+        "competitive",
+        "intense",
+        "team-focused",
+        "strategic",
+        "high-stakes"
+      ],
+      "ArtStyleKeywords": [
+        "isometric",
+        "detailed-characters",
+        "ability-effects",
+        "battlefield-view",
+        "fantasy-art"
+      ],
+      "AudienceKeywords": [
+        "competitive-gamers",
+        "team-players",
+        "esports-fans",
+        "hardcore-strategists",
+        "online-competitors"
+      ]
+    },
+    "Simulator": {
+      "GenreKeywords": [
+        "realistic",
+        "educational",
+        "immersive",
+        "detailed",
+        "authentic"
+      ],
+      "MechanicKeywords": [
+        "realistic-physics",
+        "detailed-systems",
+        "authentic-controls",
+        "learning-curves",
+        "precision"
+      ],
+      "ThemeKeywords": [
+        "real-world",
+        "educational",
+        "professional",
+        "authentic",
+        "detailed"
+      ],
+      "MoodKeywords": [
+        "realistic",
+        "educational",
+        "immersive",
+        "methodical",
+        "engaging"
+      ],
+      "ArtStyleKeywords": [
+        "realistic-graphics",
+        "detailed-environments",
+        "authentic-interfaces",
+        "simulation-quality",
+        "technical"
+      ],
+      "AudienceKeywords": [
+        "simulation-fans",
+        "educators",
+        "professionals",
+        "detail-oriented",
+        "learning-focused"
+      ]
+    },
+    "Tactical": {
+      "GenreKeywords": [
+        "grid-based",
+        "strategic-combat",
+        "positioning",
+        "methodical",
+        "chess-like"
+      ],
+      "MechanicKeywords": [
+        "turn-based-combat",
+        "positioning",
+        "unit-abilities",
+        "terrain-advantage",
+        "strategic-planning"
+      ],
+      "ThemeKeywords": [
+        "military",
+        "strategic-warfare",
+        "chess-like",
+        "combat-focused",
+        "tactical-operations"
+      ],
+      "MoodKeywords": [
+        "cerebral",
+        "methodical",
+        "strategic",
+        "challenging",
+        "thoughtful"
+      ],
+      "ArtStyleKeywords": [
+        "grid-overlays",
+        "unit-sprites",
+        "tactical-maps",
+        "clear-interfaces",
+        "strategic-view"
+      ],
+      "AudienceKeywords": [
+        "strategy-gamers",
+        "tactical-thinkers",
+        "chess-players",
+        "methodical-planners",
+        "hardcore-strategists"
+      ]
+    },
+    "Quiz/Trivia": {
+      "GenreKeywords": [
+        "knowledge-based",
+        "educational",
+        "question-answer",
+        "learning",
+        "competitive"
+      ],
+      "MechanicKeywords": [
+        "multiple-choice",
+        "time-limits",
+        "scoring-systems",
+        "category-selection",
+        "difficulty-scaling"
+      ],
+      "ThemeKeywords": [
+        "educational",
+        "knowledge",
+        "competition",
+        "learning",
+        "intellectual"
+      ],
+      "MoodKeywords": [
+        "educational",
+        "competitive",
+        "intellectual",
+        "engaging",
+        "social"
+      ],
+      "ArtStyleKeywords": [
+        "clean-interface",
+        "text-focused",
+        "colorful-categories",
+        "simple-graphics",
+        "clear-typography"
+      ],
+      "AudienceKeywords": [
+        "knowledge-seekers",
+        "trivia-lovers",
+        "educators",
+        "social-players",
+        "learners"
+      ]
+    },
+    "Point-and-click": {
+      "GenreKeywords": [
+        "narrative-driven",
+        "puzzle-solving",
+        "exploration",
+        "story-focused",
+        "investigation"
+      ],
+      "MechanicKeywords": [
+        "object-interaction",
+        "inventory-puzzles",
+        "dialogue-trees",
+        "environmental-puzzles",
+        "clicking-interface"
+      ],
+      "ThemeKeywords": [
+        "mystery",
+        "adventure",
+        "narrative",
+        "investigation",
+        "puzzle-solving"
+      ],
+      "MoodKeywords": [
+        "contemplative",
+        "mysterious",
+        "narrative-focused",
+        "engaging",
+        "thoughtful"
+      ],
+      "ArtStyleKeywords": [
+        "detailed-scenes",
+        "hand-drawn",
+        "artistic-backgrounds",
+        "character-art",
+        "cinematic"
+      ],
+      "AudienceKeywords": [
+        "story-lovers",
+        "puzzle-solvers",
+        "adventure-fans",
+        "narrative-gamers",
+        "mystery-enthusiasts"
+      ]
+    },
+    "Adventure": {
+      "GenreKeywords": [
+        "exploration",
+        "story-driven",
+        "discovery",
+        "journey",
+        "narrative"
+      ],
+      "MechanicKeywords": [
+        "exploration",
+        "inventory-management",
+        "character-interaction",
+        "environmental-puzzles",
+        "story-progression"
+      ],
+      "ThemeKeywords": [
+        "heroic-journey",
+        "exploration",
+        "discovery",
+        "adventure",
+        "epic-quests"
+      ],
+      "MoodKeywords": [
+        "adventurous",
+        "engaging",
+        "immersive",
+        "epic",
+        "exploratory"
+      ],
+      "ArtStyleKeywords": [
+        "detailed-environments",
+        "character-art",
+        "atmospheric",
+        "cinematic",
+        "varied-locations"
+      ],
+      "AudienceKeywords": [
+        "adventure-seekers",
+        "story-lovers",
+        "explorers",
+        "narrative-gamers",
+        "journey-enthusiasts"
+      ]
+    },
+    "Turn-based strategy (TBS)": {
+      "GenreKeywords": [
+        "methodical-planning",
+        "strategic-thinking",
+        "turn-order",
+        "tactical-decisions",
+        "resource-management"
+      ],
+      "MechanicKeywords": [
+        "turn-phases",
+        "unit-movement",
+        "resource-allocation",
+        "strategic-planning",
+        "tactical-positioning"
+      ],
+      "ThemeKeywords": [
+        "strategic-warfare",
+        "empire-building",
+        "tactical-combat",
+        "civilization",
+        "conquest"
+      ],
+      "MoodKeywords": [
+        "methodical",
+        "strategic",
+        "cerebral",
+        "patient",
+        "thoughtful"
+      ],
+      "ArtStyleKeywords": [
+        "hex-grids",
+        "detailed-maps",
+        "unit-models",
+        "strategic-overlays",
+        "tactical-interface"
+      ],
+      "AudienceKeywords": [
+        "strategy-enthusiasts",
+        "tactical-planners",
+        "patient-gamers",
+        "chess-lovers",
+        "strategic-thinkers"
+      ]
+    },
+    "Real Time Strategy (RTS)": {
+      "GenreKeywords": [
+        "real-time-action",
+        "base-building",
+        "resource-gathering",
+        "unit-command",
+        "fast-paced-strategy"
+      ],
+      "MechanicKeywords": [
+        "real-time-control",
+        "base-construction",
+        "resource-management",
+        "unit-production",
+        "multi-tasking"
+      ],
+      "ThemeKeywords": [
+        "military-command",
+        "base-building",
+        "resource-wars",
+        "strategic-warfare",
+        "empire-management"
+      ],
+      "MoodKeywords": [
+        "fast-paced",
+        "strategic",
+        "intense",
+        "commanding",
+        "competitive"
+      ],
+      "ArtStyleKeywords": [
+        "isometric-view",
+        "detailed-units",
+        "base-structures",
+        "real-time-interface",
+        "battlefield-overview"
+      ],
+      "AudienceKeywords": [
+        "strategy-gamers",
+        "multi-taskers",
+        "competitive-players",
+        "command-enthusiasts",
+        "fast-thinkers"
+      ]
+    },
+    "Hack and slash/Beat 'em up": {
+      "GenreKeywords": [
+        "combat-focused",
+        "action-packed",
+        "enemy-hordes",
+        "weapon-based",
+        "fast-combat"
+      ],
+      "MechanicKeywords": [
+        "combo-attacks",
+        "weapon-variety",
+        "enemy-swarms",
+        "power-progression",
+        "melee-combat"
+      ],
+      "ThemeKeywords": [
+        "action",
+        "combat",
+        "heroic",
+        "warrior",
+        "battle-focused"
+      ],
+      "MoodKeywords": [
+        "adrenaline-fueled",
+        "action-packed",
+        "empowering",
+        "intense",
+        "satisfying"
+      ],
+      "ArtStyleKeywords": [
+        "dynamic-combat",
+        "weapon-effects",
+        "character-animations",
+        "action-sequences",
+        "detailed-fighters"
+      ],
+      "AudienceKeywords": [
+        "action-lovers",
+        "combat-enthusiasts",
+        "arcade-fans",
+        "adrenaline-seekers",
+        "button-mashers"
+      ]
+    },
+    "Fighting": {
+      "GenreKeywords": [
+        "one-on-one-combat",
+        "competitive",
+        "skill-based",
+        "precise-timing",
+        "martial-arts"
+      ],
+      "MechanicKeywords": [
+        "combo-systems",
+        "special-moves",
+        "frame-data",
+        "blocking-mechanics",
+        "character-matchups"
+      ],
+      "ThemeKeywords": [
+        "martial-arts",
+        "competition",
+        "tournament",
+        "warrior",
+        "combat-mastery"
+      ],
+      "MoodKeywords": [
+        "competitive",
+        "intense",
+        "skillful",
+        "precise",
+        "adrenaline-pumping"
+      ],
+      "ArtStyleKeywords": [
+        "detailed-fighters",
+        "animation-frames",
+        "special-effects",
+        "arena-backgrounds",
+        "character-design"
+      ],
+      "AudienceKeywords": [
+        "competitive-players",
+        "fighting-game-community",
+        "skill-focused",
+        "tournament-players",
+        "combo-enthusiasts"
+      ]
+    },
+    "Sport": {
+      "GenreKeywords": [
+        "athletic-simulation",
+        "competitive-sports",
+        "team-based",
+        "realistic-rules",
+        "seasonal-play"
+      ],
+      "MechanicKeywords": [
+        "player-control",
+        "team-management",
+        "skill-timing",
+        "sports-physics",
+        "strategic-plays"
+      ],
+      "ThemeKeywords": [
+        "athletic",
+        "competitive-sports",
+        "team-spirit",
+        "professional-sports",
+        "championship"
+      ],
+      "MoodKeywords": [
+        "competitive",
+        "athletic",
+        "team-focused",
+        "exciting",
+        "realistic"
+      ],
+      "ArtStyleKeywords": [
+        "realistic-athletes",
+        "stadium-environments",
+        "broadcast-style",
+        "detailed-animations",
+        "sports-interface"
+      ],
+      "AudienceKeywords": [
+        "sports-fans",
+        "competitive-players",
+        "simulation-lovers",
+        "team-strategists",
+        "athletic-enthusiasts"
+      ]
+    },
+    "Visual Novel": {
+      "GenreKeywords": [
+        "story-driven",
+        "narrative-focused",
+        "character-development",
+        "choice-based",
+        "reading-heavy"
+      ],
+      "MechanicKeywords": [
+        "dialogue-choices",
+        "branching-narratives",
+        "character-routes",
+        "story-progression",
+        "decision-consequences"
+      ],
+      "ThemeKeywords": [
+        "romance",
+        "drama",
+        "storytelling",
+        "character-relationships",
+        "narrative-exploration"
+      ],
+      "MoodKeywords": [
+        "narrative-focused",
+        "emotional",
+        "dramatic",
+        "immersive",
+        "character-driven"
+      ],
+      "ArtStyleKeywords": [
+        "character-portraits",
+        "background-art",
+        "anime-style",
+        "detailed-illustrations",
+        "visual-storytelling"
+      ],
+      "AudienceKeywords": [
+        "story-enthusiasts",
+        "narrative-gamers",
+        "character-focused",
+        "drama-lovers",
+        "reading-fans"
+      ]
+    },
+    "Puzzle": {
+      "GenreKeywords": [
+        "problem-solving",
+        "logic-based",
+        "brain-teasing",
+        "pattern-recognition",
+        "solution-finding"
+      ],
+      "MechanicKeywords": [
+        "logical-thinking",
+        "pattern-matching",
+        "spatial-reasoning",
+        "problem-solving",
+        "incremental-difficulty"
+      ],
+      "ThemeKeywords": [
+        "intellectual-challenge",
+        "brain-training",
+        "logical-problems",
+        "mental-exercise",
+        "clever-solutions"
+      ],
+      "MoodKeywords": [
+        "contemplative",
+        "challenging",
+        "satisfying",
+        "intellectual",
+        "focused"
+      ],
+      "ArtStyleKeywords": [
+        "clean-interface",
+        "geometric-shapes",
+        "minimalist-design",
+        "clear-visuals",
+        "abstract-elements"
+      ],
+      "AudienceKeywords": [
+        "puzzle-lovers",
+        "logical-thinkers",
+        "brain-training-enthusiasts",
+        "problem-solvers",
+        "mental-challenge-seekers"
+      ]
+    },
+    "Platform": {
+      "GenreKeywords": [
+        "jumping-mechanics",
+        "level-traversal",
+        "precise-movement",
+        "obstacle-navigation",
+        "collectible-gathering"
+      ],
+      "MechanicKeywords": [
+        "jump-controls",
+        "platform-navigation",
+        "precise-timing",
+        "movement-skills",
+        "level-progression"
+      ],
+      "ThemeKeywords": [
+        "adventure",
+        "exploration",
+        "heroic-journey",
+        "obstacle-courses",
+        "skill-challenges"
+      ],
+      "MoodKeywords": [
+        "adventurous",
+        "skillful",
+        "challenging",
+        "satisfying",
+        "nostalgic"
+      ],
+      "ArtStyleKeywords": [
+        "side-scrolling",
+        "detailed-environments",
+        "character-animations",
+        "colorful-worlds",
+        "level-design"
+      ],
+      "AudienceKeywords": [
+        "platform-enthusiasts",
+        "skill-gamers",
+        "nostalgic-players",
+        "precision-lovers",
+        "adventure-seekers"
+      ]
+    },
+    "Racing": {
+      "GenreKeywords": [
+        "speed-focused",
+        "vehicle-control",
+        "competition",
+        "track-based",
+        "time-trials"
+      ],
+      "MechanicKeywords": [
+        "vehicle-handling",
+        "racing-lines",
+        "speed-management",
+        "track-mastery",
+        "competitive-timing"
+      ],
+      "ThemeKeywords": [
+        "automotive",
+        "speed",
+        "competition",
+        "racing-circuits",
+        "vehicle-mastery"
+      ],
+      "MoodKeywords": [
+        "adrenaline-pumping",
+        "competitive",
+        "fast-paced",
+        "exciting",
+        "thrilling"
+      ],
+      "ArtStyleKeywords": [
+        "detailed-vehicles",
+        "track-environments",
+        "speed-effects",
+        "realistic-physics",
+        "racing-interface"
+      ],
+      "AudienceKeywords": [
+        "racing-enthusiasts",
+        "speed-lovers",
+        "competitive-racers",
+        "automotive-fans",
+        "adrenaline-seekers"
+      ]
+    }
+}

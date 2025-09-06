@@ -69,10 +69,55 @@ namespace Backend.Services.Recommendation
 
         public async Task<List<string>> GenerateFollowUpQuestionsAsync(string query, List<GameRecommendation> recommendations)
         {
-            var prompt = $@"Based on the user query: '{query}' and the recommended games: {string.Join(", ", recommendations.Take(3).Select(g => g.Name))},
-generate 2-3 follow-up questions to better understand the user's preferences.
-Format as a JSON array of strings. Keep questions concise and relevant.
-Examples: [""Do you prefer single-player or multiplayer games?"", ""Are you interested in newer releases or classic games?""]";
+            var gameDetails = recommendations.Take(3).Select(g => 
+                $"{g.Name} ({string.Join(", ", g.Genres.Take(2))}) - {g.ConfidenceScore:F2}").ToList();
+            
+            var prompt = $@"You are generating intelligent follow-up questions for a game recommendation system to refine future searches and improve recommendation accuracy.
+
+CONTEXT:
+- Original Query: '{query}'
+- Top Recommendations: {string.Join(" | ", gameDetails)}
+
+GENERATE 2-3 STRATEGIC FOLLOW-UP QUESTIONS that will:
+
+🎯 REFINEMENT GOALS:
+1. Clarify ambiguous aspects of the original query
+2. Gather missing semantic dimensions (genre, platform, mood, game mode preferences)
+3. Understand user's depth vs breadth preferences
+4. Identify what made the recommendations appealing or not
+
+🧠 QUESTION TYPES TO PRIORITIZE:
+
+SEMANTIC CLARIFICATION:
+- If query was genre-vague: Ask about specific genre preferences or mechanics
+- If platform-unclear: Ask about preferred gaming platforms or contexts
+- If mood-ambiguous: Ask about desired emotional experience or session length
+
+PREFERENCE REFINEMENT:
+- Difficulty preferences: challenging vs casual, complex vs accessible
+- Social aspects: solo vs multiplayer, competitive vs cooperative
+- Narrative importance: story-driven vs gameplay-focused
+- Time investment: quick sessions vs long campaigns
+
+CONTEXTUAL UNDERSTANDING:
+- Gaming experience level: newcomer vs veteran preferences
+- Similar games enjoyed: ""games like X you've loved""
+- Deal-breakers: elements to avoid or must-have features
+
+🎨 QUESTION CRAFTING RULES:
+- Make questions specific and actionable (avoid ""Do you like X?"" - use ""Would you prefer X or Y?"")
+- Reference the recommended games when helpful for context
+- Focus on aspects that will significantly impact future recommendations
+- Use natural, conversational language
+- Avoid overwhelming technical jargon
+
+EXAMPLE QUALITY QUESTIONS:
+- ""Would you prefer games like *insert relevant game here* that focus on exploration, or more action-oriented experiences?""
+- ""Are you looking for games you can play in short 30-minute sessions, or longer immersive experiences?""
+- ""Do you enjoy games with complex storylines and character development, or prefer gameplay-focused experiences?""
+
+RETURN ONLY a JSON array of 2-3 strategic questions:
+[""question 1"", ""question 2"", ""question 3""]";
 
             var response = await GenerateResponseAsync(prompt);
 
@@ -109,28 +154,68 @@ Provide a brief, friendly explanation focusing on how they match the user's requ
 
         public async Task<QueryAnalysis> AnalyzeQueryAsync(string query)
         {
-            var prompt = $@"Analyze this game recommendation query and extract structured information: '{query}'
+            var prompt = $@"You are analyzing game recommendation queries for a semantic vector database search system. The games are indexed with rich semantic metadata including genres, mechanics, themes, moods, platforms, game modes, and player perspectives.
 
-This structured information should include information that is assessed from the query.
-This assessment should be based on the  
-and should be categorized by the fields described in the JSON object described below:
-Return ONLY a JSON object (no additional text, explanations, or markdown formatting) with:
-- genres: array of detected game genres
-- platforms: array of detected platforms
-- gameModes: array of detected game modes
-- moods: array of detected moods/feelings
-- releaseDateRange: object with 'from' and 'to' dates if mentioned
-- processedQuery: cleaned version of the query
-- isAmbiguous: boolean if query needs clarification
-- confidenceScore: float 0-1 for analysis confidence
+ANALYZE THIS QUERY: '{query}'
 
-Include alternate names or pseunodyms for any of the values of either of the array above.
-Except processedQuery and confidenceScore
+Your analysis will drive semantic keyword enhancement that boosts vector search relevance. Focus on extracting ALL possible semantic dimensions that could match game embeddings.
 
-Example: {{""genres"":[""RPG""], ""platforms"":[""Playstation 5, PS5, Xbox Series X, XSX""],
-            ""gameModes"":[""Single player, Multiplayer""], ""releaseDateRange"":[""happy""],
-            ""processedQuery"":[""Here is a processed query""], ""isAmbiguous"":false,
-            ""confidenceScore"":0.8}}";
+DETECTION GUIDELINES:
+
+🎮 GENRES: Look for explicit/implicit game genres:
+- Direct mentions: ""RPG"", ""strategy"", ""platformer"", ""shooter""
+- Descriptive clues: ""character progression"" → RPG, ""resource management"" → Strategy, ""jumping"" → Platform
+- Mood-based: ""relaxing"" → Puzzle/Simulation, ""intense"" → Action/Shooter
+
+🖥️ PLATFORMS: Detect platforms via exact names, abbreviations, or contextual clues:
+- Console generations: ""next-gen"" → PS5/Xbox Series X, ""retro"" → older consoles
+- Portability hints: ""on the go"" → Switch/handheld, ""big screen"" → console
+- Include ALL aliases: ""PS5, PlayStation 5, Sony PS5""
+
+👥 GAME MODES: Extract multiplayer preferences and social aspects:
+- Social indicators: ""with friends"" → Multiplayer, ""solo experience"" → Single-player
+- Cooperation clues: ""team up"" → Co-op, ""compete"" → Competitive multiplayer
+- Local vs online: ""couch gaming"" → Split-screen, ""online"" → Online multiplayer
+
+😊 MOODS: Identify emotional goals and desired feelings:
+- Energy levels: ""relaxing"", ""chill"", ""intense"", ""adrenaline-pumping""  
+- Emotional states: ""nostalgic"", ""immersive"", ""challenging"", ""uplifting""
+- Time context: ""after work"" → relaxing, ""weekend"" → engaging
+
+📅 RELEASE DATES: Parse temporal references:
+- Specific years/ranges: ""2023"", ""last 5 years"", ""recent releases""
+- Era descriptions: ""retro"", ""classic"", ""modern"", ""cutting-edge""
+- Convert to actual date ranges when possible
+
+🎯 PROCESSED QUERY: Create search-optimized text by:
+- Expanding abbreviations: ""RPGs"" → ""role-playing games RPG""
+- Adding semantic keywords: ""horror"" → ""horror scary atmospheric dark survival""
+- Including synonyms: ""multiplayer"" → ""multiplayer co-op online social""
+- Preserving key descriptive phrases
+
+⚠️ AMBIGUITY DETECTION: Mark as ambiguous if:
+- Multiple conflicting preferences: ""casual but challenging""
+- Vague descriptors without context: ""good games""  
+- Missing critical info: genre/platform preferences unclear
+- Contradictory requirements: ""single-player multiplayer""
+
+🎯 CONFIDENCE SCORING: Base on clarity and specificity:
+- 0.9+: Very specific (""Dark fantasy RPG like Dark Souls for PS5"")
+- 0.7-0.8: Clear intent with some details (""Fun multiplayer games for Switch"")
+- 0.5-0.6: General but understandable (""Something relaxing"")
+- <0.5: Very vague or contradictory
+
+RETURN ONLY JSON (no markdown, explanations, or additional text):
+{{
+    ""genres"": [""detected genres with alternatives""],
+    ""platforms"": [""platform names and all aliases""],
+    ""gameModes"": [""game modes and social aspects""],
+    ""moods"": [""emotional keywords and descriptors""],
+    ""releaseDateRange"": {{""from"": ""YYYY-MM-DD"", ""to"": ""YYYY-MM-DD""}},
+    ""processedQuery"": ""semantically enhanced search text with synonyms and keywords"",
+    ""isAmbiguous"": false,
+    ""confidenceScore"": 0.85
+}}";
 
             var response = await GenerateResponseAsync(prompt);
 
@@ -204,6 +289,15 @@ Example: {{""genres"":[""RPG""], ""platforms"":[""Playstation 5, PS5, Xbox Serie
         {
             [JsonPropertyName("content")]
             public string? Content { get; set; }
+        }
+
+        public async Task<string> ExplainGameRecommendationAsync(GameRecommendation game, string originalQuery)
+        {
+            var prompt = $@"Why is '{game.Name}' a good match for: '{originalQuery}'?
+Game: {game.Summary.Substring(0, Math.Min(150, game.Summary.Length))} | Genres: {string.Join(", ", game.Genres)} | Rating: {game.Rating ?? 0}/100
+Keep explanation concise (2-3 sentences) and personal.";
+
+            return await GenerateResponseAsync(prompt);
         }
     }
 }

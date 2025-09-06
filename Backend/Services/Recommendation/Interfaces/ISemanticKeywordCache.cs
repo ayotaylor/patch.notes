@@ -10,6 +10,11 @@ namespace Backend.Services.Recommendation.Interfaces
         Task<bool> InitializeCacheAsync();
 
         /// <summary>
+        /// Ensures cache is initialized - uses lazy initialization if not already done
+        /// </summary>
+        Task<bool> EnsureInitializedAsync();
+
+        /// <summary>
         /// Get precomputed semantic keywords for a genre
         /// </summary>
         SemanticCategoryMapping? GetGenreKeywords(string genre);

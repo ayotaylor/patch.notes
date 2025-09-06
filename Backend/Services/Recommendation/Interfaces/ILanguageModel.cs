@@ -9,6 +9,7 @@ namespace Backend.Services.Recommendation.Interfaces
         Task<List<string>> GenerateFollowUpQuestionsAsync(string query, List<GameRecommendation> recommendations);
         Task<string> ExplainRecommendationsAsync(List<GameRecommendation> recommendations, string originalQuery);
         Task<QueryAnalysis> AnalyzeQueryAsync(string query);
+        Task<string> ExplainGameRecommendationAsync(GameRecommendation game, string originalQuery);
     }
 
     public class QueryAnalysis

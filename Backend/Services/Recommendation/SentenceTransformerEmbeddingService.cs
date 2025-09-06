@@ -3,7 +3,6 @@ using Backend.Services.Recommendation.Tokenization;
 using Microsoft.ML.OnnxRuntime;
 using Microsoft.ML.OnnxRuntime.Tensors;
 using Backend.Configuration;
-using System.Text.Json;
 using System.Buffers;
 using System.Text;
 
@@ -14,6 +13,8 @@ namespace Backend.Services.Recommendation
         private readonly InferenceSession? _session;
         private readonly ILogger<SentenceTransformerEmbeddingService> _logger;
         private readonly IConfiguration _configuration;
+        private readonly ISemanticConfigurationService _configService;
+        private readonly PlatformAliasService _platformAliasService;
         private readonly bool _useOnnxModel;
         private readonly EmbeddingDimensions _dimensions;
         private readonly EmbeddingCacheManager _cacheManager;
@@ -23,17 +24,18 @@ namespace Backend.Services.Recommendation
         private const int MaxBatchSize = 50;
         private ITokenizationStrategy? _cachedWorkingStrategy;
 
-        private static readonly JsonSerializerOptions JsonOptions = new()
-        {
-            PropertyNameCaseInsensitive = true
-        };
-
         public int EmbeddingDimensions => _dimensions.TotalDimensions;
 
-        public SentenceTransformerEmbeddingService(IConfiguration configuration, ILogger<SentenceTransformerEmbeddingService> logger)
+        public SentenceTransformerEmbeddingService(
+            IConfiguration configuration, 
+            ILogger<SentenceTransformerEmbeddingService> logger,
+            ISemanticConfigurationService configService,
+            PlatformAliasService platformAliasService)
         {
             _logger = logger;
             _configuration = configuration;
+            _configService = configService;
+            _platformAliasService = platformAliasService;
 
             // Optimize cache sizes for high-throughput indexing
             var cacheConfig = configuration.GetSection("EmbeddingCache");
@@ -93,34 +95,28 @@ namespace Backend.Services.Recommendation
         {
             try
             {
-                var configPath = Path.Combine(AppContext.BaseDirectory, "Configuration", "DefaultSemanticKeywordMappings.json");
-                if (File.Exists(configPath))
+                var config = _configService.SemanticConfig;
+                if (config?.Dimensions != null)
                 {
-                    var jsonContent = File.ReadAllText(configPath);
-                    var config = JsonSerializer.Deserialize<SemanticKeywordConfig>(jsonContent, JsonOptions);
-
-                    if (config?.Dimensions != null)
+                    // Validate loaded dimensions match our constants
+                    if (!EmbeddingConstants.ValidateDimensions(config.Dimensions.TotalDimensions))
                     {
-                        // Validate loaded dimensions match our constants
-                        if (!EmbeddingConstants.ValidateDimensions(config.Dimensions.TotalDimensions))
+                        _logger.LogError("Configuration dimensions mismatch! Config has {ConfigDimensions}, but constants expect {ExpectedMessage}",
+                            config.Dimensions.TotalDimensions, EmbeddingConstants.GetExpectedDimensionsMessage());
+                        _logger.LogWarning("Using EmbeddingConstants dimensions for consistency");
+
+                        return new EmbeddingDimensions
                         {
-                            _logger.LogError("Configuration dimensions mismatch! Config has {ConfigDimensions}, but constants expect {ExpectedMessage}",
-                                config.Dimensions.TotalDimensions, EmbeddingConstants.GetExpectedDimensionsMessage());
-                            _logger.LogWarning("Using EmbeddingConstants dimensions for consistency");
-
-                            return new EmbeddingDimensions
-                            {
-                                BaseTextEmbedding = EmbeddingConstants.BASE_TEXT_EMBEDDING_DIMENSIONS
-                            };
-                        }
-
-                        _logger.LogInformation("Loaded embedding dimensions from configuration: {TotalDimensions} dimensions (ONNX-only)",
-                            config.Dimensions.TotalDimensions);
-                        return config.Dimensions;
+                            BaseTextEmbedding = EmbeddingConstants.BASE_TEXT_EMBEDDING_DIMENSIONS
+                        };
                     }
+
+                    _logger.LogInformation("Loaded embedding dimensions from configuration service: {TotalDimensions} dimensions (ONNX-only)",
+                        config.Dimensions.TotalDimensions);
+                    return config.Dimensions;
                 }
 
-                _logger.LogWarning("Could not load embedding dimensions from configuration, using EmbeddingConstants defaults");
+                _logger.LogWarning("Could not load embedding dimensions from configuration service, using EmbeddingConstants defaults");
                 return new EmbeddingDimensions
                 {
                     BaseTextEmbedding = EmbeddingConstants.BASE_TEXT_EMBEDDING_DIMENSIONS
@@ -128,7 +124,7 @@ namespace Backend.Services.Recommendation
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error loading embedding dimensions configuration, using EmbeddingConstants defaults");
+                _logger.LogError(ex, "Error loading embedding dimensions from configuration service, using EmbeddingConstants defaults");
                 return new EmbeddingDimensions
                 {
                     BaseTextEmbedding = EmbeddingConstants.BASE_TEXT_EMBEDDING_DIMENSIONS
@@ -637,7 +633,7 @@ namespace Backend.Services.Recommendation
             return AverageEmbeddings(allEmbeddings);
         }
 
-        private static string BuildGameText(GameEmbeddingInput gameInput)
+        private string BuildGameText(GameEmbeddingInput gameInput)
         {
             // Estimate capacity to reduce StringBuilder reallocations
             var estimatedLength = gameInput.Name.Length + 100 +
@@ -664,10 +660,26 @@ namespace Backend.Services.Recommendation
             if (gameInput.Platforms.Count > 0)
             {
                 sb.Append(". Platforms: ");
-                for (int i = 0; i < gameInput.Platforms.Count; i++)
+                var expandedPlatforms = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                
+                // Add original platforms and their aliases for richer embedding
+                foreach (var platform in gameInput.Platforms)
                 {
-                    if (i > 0) sb.Append(", ");
-                    sb.Append(gameInput.Platforms[i]);
+                    expandedPlatforms.Add(platform);
+                    var aliases = _platformAliasService.GetAllPlatformAliases(platform);
+                    // Add up to 2 most common aliases to avoid text bloat
+                    foreach (var alias in aliases.Take(2))
+                    {
+                        expandedPlatforms.Add(alias);
+                    }
+                }
+
+                bool first = true;
+                foreach (var platform in expandedPlatforms)
+                {
+                    if (!first) sb.Append(", ");
+                    sb.Append(platform);
+                    first = false;
                 }
             }
 
@@ -735,8 +747,8 @@ namespace Backend.Services.Recommendation
         private static void AddSemanticKeywordsToText(StringBuilder sb, GameEmbeddingInput gameInput)
         {
             // Add semantic keywords if they were extracted by the GameIndexingService
-            if (gameInput.ExtractedGenreKeywords.Count > 0 || gameInput.ExtractedMechanicKeywords.Count > 0 ||
-                gameInput.ExtractedThemeKeywords.Count > 0 || gameInput.ExtractedMoodKeywords.Count > 0)
+            // Check if we have any extracted semantic keywords to add
+            if (HasAnyExtractedKeywords(gameInput))
             {
                 // Add genre-specific descriptors
                 if (gameInput.ExtractedGenreKeywords.Count > 0)
@@ -803,7 +815,122 @@ namespace Backend.Services.Recommendation
                         sb.Append(gameInput.ExtractedAudienceKeywords[i]);
                     }
                 }
+
+                // Add platform-specific keywords
+                if (gameInput.ExtractedPlatformTypeKeywords.Count > 0)
+                {
+                    sb.Append(". Platform Features: ");
+                    for (int i = 0; i < Math.Min(3, gameInput.ExtractedPlatformTypeKeywords.Count); i++)
+                    {
+                        if (i > 0) sb.Append(", ");
+                        sb.Append(gameInput.ExtractedPlatformTypeKeywords[i]);
+                    }
+                }
+
+                if (gameInput.ExtractedEraKeywords.Count > 0)
+                {
+                    sb.Append(". Era: ");
+                    for (int i = 0; i < Math.Min(2, gameInput.ExtractedEraKeywords.Count); i++)
+                    {
+                        if (i > 0) sb.Append(", ");
+                        sb.Append(gameInput.ExtractedEraKeywords[i]);
+                    }
+                }
+
+                if (gameInput.ExtractedCapabilityKeywords.Count > 0)
+                {
+                    sb.Append(". Capabilities: ");
+                    for (int i = 0; i < Math.Min(3, gameInput.ExtractedCapabilityKeywords.Count); i++)
+                    {
+                        if (i > 0) sb.Append(", ");
+                        sb.Append(gameInput.ExtractedCapabilityKeywords[i]);
+                    }
+                }
+
+                // Add game mode-specific keywords
+                if (gameInput.ExtractedPlayerInteractionKeywords.Count > 0)
+                {
+                    sb.Append(". Player Interaction: ");
+                    for (int i = 0; i < Math.Min(3, gameInput.ExtractedPlayerInteractionKeywords.Count); i++)
+                    {
+                        if (i > 0) sb.Append(", ");
+                        sb.Append(gameInput.ExtractedPlayerInteractionKeywords[i]);
+                    }
+                }
+
+                if (gameInput.ExtractedScaleKeywords.Count > 0)
+                {
+                    sb.Append(". Scale: ");
+                    for (int i = 0; i < Math.Min(2, gameInput.ExtractedScaleKeywords.Count); i++)
+                    {
+                        if (i > 0) sb.Append(", ");
+                        sb.Append(gameInput.ExtractedScaleKeywords[i]);
+                    }
+                }
+
+                if (gameInput.ExtractedCommunicationKeywords.Count > 0)
+                {
+                    sb.Append(". Communication: ");
+                    for (int i = 0; i < Math.Min(2, gameInput.ExtractedCommunicationKeywords.Count); i++)
+                    {
+                        if (i > 0) sb.Append(", ");
+                        sb.Append(gameInput.ExtractedCommunicationKeywords[i]);
+                    }
+                }
+
+                // Add perspective-specific keywords
+                if (gameInput.ExtractedViewpointKeywords.Count > 0)
+                {
+                    sb.Append(". Viewpoint: ");
+                    for (int i = 0; i < Math.Min(2, gameInput.ExtractedViewpointKeywords.Count); i++)
+                    {
+                        if (i > 0) sb.Append(", ");
+                        sb.Append(gameInput.ExtractedViewpointKeywords[i]);
+                    }
+                }
+
+                if (gameInput.ExtractedImmersionKeywords.Count > 0)
+                {
+                    sb.Append(". Immersion: ");
+                    for (int i = 0; i < Math.Min(2, gameInput.ExtractedImmersionKeywords.Count); i++)
+                    {
+                        if (i > 0) sb.Append(", ");
+                        sb.Append(gameInput.ExtractedImmersionKeywords[i]);
+                    }
+                }
+
+                if (gameInput.ExtractedInterfaceKeywords.Count > 0)
+                {
+                    sb.Append(". Interface: ");
+                    for (int i = 0; i < Math.Min(2, gameInput.ExtractedInterfaceKeywords.Count); i++)
+                    {
+                        if (i > 0) sb.Append(", ");
+                        sb.Append(gameInput.ExtractedInterfaceKeywords[i]);
+                    }
+                }
             }
+        }
+
+        /// <summary>
+        /// Checks if the game input has any extracted semantic keywords
+        /// </summary>
+        private static bool HasAnyExtractedKeywords(GameEmbeddingInput gameInput)
+        {
+            return gameInput.ExtractedGenreKeywords.Count > 0 ||
+                   gameInput.ExtractedMechanicKeywords.Count > 0 ||
+                   gameInput.ExtractedThemeKeywords.Count > 0 ||
+                   gameInput.ExtractedMoodKeywords.Count > 0 ||
+                   gameInput.ExtractedArtStyleKeywords.Count > 0 ||
+                   gameInput.ExtractedAudienceKeywords.Count > 0 ||
+                   gameInput.ExtractedPlatformTypeKeywords.Count > 0 ||
+                   gameInput.ExtractedEraKeywords.Count > 0 ||
+                   gameInput.ExtractedCapabilityKeywords.Count > 0 ||
+                   gameInput.ExtractedPlayerInteractionKeywords.Count > 0 ||
+                   gameInput.ExtractedScaleKeywords.Count > 0 ||
+                   gameInput.ExtractedCommunicationKeywords.Count > 0 ||
+                   gameInput.ExtractedViewpointKeywords.Count > 0 ||
+                   gameInput.ExtractedImmersionKeywords.Count > 0 ||
+                   gameInput.ExtractedInterfaceKeywords.Count > 0;
         }
 
         private float[] AverageEmbeddings(List<float[]> embeddings)

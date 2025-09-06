@@ -9,11 +9,13 @@ namespace Backend.Services.Recommendation
     {
         private readonly QdrantClient _client;
         private readonly ILogger<QdrantVectorDatabase> _logger;
+        private readonly PlatformAliasService _platformAliasService;
 
-        public QdrantVectorDatabase(QdrantClient client, ILogger<QdrantVectorDatabase> logger)
+        public QdrantVectorDatabase(QdrantClient client, ILogger<QdrantVectorDatabase> logger, PlatformAliasService platformAliasService)
         {
             _client = client;
             _logger = logger;
+            _platformAliasService = platformAliasService;
         }
 
         public async Task<bool> CreateCollectionAsync(string collectionName, int vectorSize)
@@ -267,15 +269,15 @@ namespace Backend.Services.Recommendation
 
         private static bool IsExactPlatformFilter(object value)
         {
-            // Check if this is a specific platform requirement (not a general preference)
+            // If 1-2 specific platforms are mentioned, treat as exact requirement
+            // If 3+ platforms, treat as general preference
             if (value is string strValue)
             {
-                var platforms = strValue.Split(',', StringSplitOptions.RemoveEmptyEntries);
-                // If only 1-2 specific platforms are specified, treat as exact requirement
-                return platforms.Length <= 2 && platforms.Any(p => 
-                    PlatformAliasService.AreSamePlatform(p.Trim(), "Nintendo Switch") ||
-                    PlatformAliasService.AreSamePlatform(p.Trim(), "PlayStation 5") ||
-                    PlatformAliasService.AreSamePlatform(p.Trim(), "Xbox Series X/S"));
+                var platforms = strValue.Split(',', StringSplitOptions.RemoveEmptyEntries)
+                    .Where(p => !string.IsNullOrWhiteSpace(p))
+                    .ToList();
+                    
+                return platforms.Count > 0 && platforms.Count <= 2;
             }
             return false;
         }

@@ -89,17 +89,40 @@ namespace Backend.Services.Recommendation
             HashSet<string> allExtractedKeywords)
         {
             // Add keywords to respective categories
+            // Core game properties
             gameInput.ExtractedGenreKeywords.AddRange(mapping.GenreKeywords);
             gameInput.ExtractedMechanicKeywords.AddRange(mapping.MechanicKeywords);
             gameInput.ExtractedThemeKeywords.AddRange(mapping.ThemeKeywords);
             gameInput.ExtractedMoodKeywords.AddRange(mapping.MoodKeywords);
             gameInput.ExtractedArtStyleKeywords.AddRange(mapping.ArtStyleKeywords);
             gameInput.ExtractedAudienceKeywords.AddRange(mapping.AudienceKeywords);
+            
+            // Platform-specific properties
+            gameInput.ExtractedPlatformTypeKeywords.AddRange(mapping.PlatformType);
+            gameInput.ExtractedEraKeywords.AddRange(mapping.EraKeywords);
+            gameInput.ExtractedCapabilityKeywords.AddRange(mapping.CapabilityKeywords);
+            
+            // Game mode-specific properties
+            gameInput.ExtractedPlayerInteractionKeywords.AddRange(mapping.PlayerInteractionKeywords);
+            gameInput.ExtractedScaleKeywords.AddRange(mapping.ScaleKeywords);
+            gameInput.ExtractedCommunicationKeywords.AddRange(mapping.CommunicationKeywords);
+            
+            // Perspective-specific properties
+            gameInput.ExtractedViewpointKeywords.AddRange(mapping.ViewpointKeywords);
+            gameInput.ExtractedImmersionKeywords.AddRange(mapping.ImmersionKeywords);
+            gameInput.ExtractedInterfaceKeywords.AddRange(mapping.InterfaceKeywords);
 
-            // Add to global set for cross-category analysis
-            foreach (var keyword in mapping.GenreKeywords.Concat(mapping.MechanicKeywords)
+            // Add to global set for cross-category analysis (all keyword lists)
+            var allKeywords = mapping.GenreKeywords.Concat(mapping.MechanicKeywords)
                 .Concat(mapping.ThemeKeywords).Concat(mapping.MoodKeywords)
-                .Concat(mapping.ArtStyleKeywords).Concat(mapping.AudienceKeywords))
+                .Concat(mapping.ArtStyleKeywords).Concat(mapping.AudienceKeywords)
+                .Concat(mapping.PlatformType).Concat(mapping.EraKeywords)
+                .Concat(mapping.CapabilityKeywords).Concat(mapping.PlayerInteractionKeywords)
+                .Concat(mapping.ScaleKeywords).Concat(mapping.CommunicationKeywords)
+                .Concat(mapping.ViewpointKeywords).Concat(mapping.ImmersionKeywords)
+                .Concat(mapping.InterfaceKeywords);
+                
+            foreach (var keyword in allKeywords)
             {
                 allExtractedKeywords.Add(keyword.ToLowerInvariant());
             }

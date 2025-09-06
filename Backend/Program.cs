@@ -30,6 +30,12 @@ builder.Services.AddScoped<ICommentService, CommentService>();
 // Add memory caching for semantic keyword cache
 builder.Services.AddMemoryCache();
 
+// Add semantic configuration service as singleton (loaded once at startup)
+builder.Services.AddSingleton<ISemanticConfigurationService, SemanticConfigurationService>();
+
+// Add platform alias service
+builder.Services.AddScoped<PlatformAliasService>();
+
 // Add recommendation services
 builder.Services.AddHttpClient<GroqLanguageModel>();
 builder.Services.AddSingleton<QdrantClient>(provider =>
@@ -67,10 +73,12 @@ builder.Services.AddScoped<UserPreferenceService>();
 builder.Services.AddSingleton<ISemanticKeywordCache, SemanticKeywordCache>();
 builder.Services.AddScoped<GameIndexingService>();
 builder.Services.AddScoped<GameRecommendationService>();
+builder.Services.AddScoped<QueryEnhancementService>();
 builder.Services.AddScoped<EmbeddingDimensionValidator>();
 builder.Services.AddSingleton<ConversationStateService>();
 // Add game change tracking service and initial indexing service
 builder.Services.AddHostedService<GameIndexingBackgroundService>();
+builder.Services.AddHostedService<SemanticCacheWarmupService>();
 builder.Services.AddScoped<GameChangeTrackingService>();
 
 // add igdb import service -- TODO: to be removed later

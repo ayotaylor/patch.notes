@@ -1,0 +1,224 @@
+{
+    "Split screen": {
+        "PlayerInteractionKeywords": [
+            "local-multiplayer",
+            "shared-screen",
+            "side-by-side",
+            "couch-gaming",
+            "in-person"
+        ],
+        "ScaleKeywords": [
+            "small-group",
+            "2-4-players",
+            "intimate",
+            "local",
+            "limited-players"
+        ],
+        "CommunicationKeywords": [
+            "face-to-face",
+            "verbal",
+            "in-room",
+            "direct",
+            "immediate"
+        ],
+        "AudienceKeywords": [
+            "couch-co-op-fans",
+            "local-multiplayer-lovers",
+            "family-gamers",
+            "friends-gaming-together",
+            "shared-screen-enthusiasts"
+        ],
+        "MoodKeywords": [
+            "social",
+            "intimate",
+            "competitive-friendly",
+            "shared-experience",
+            "couch-party"
+        ]
+    },
+    "Massively Multiplayer Online (MMO)": {
+        "PlayerInteractionKeywords": [
+            "massive-scale",
+            "persistent-world",
+            "guild-based",
+            "server-wide",
+            "community-driven"
+        ],
+        "ScaleKeywords": [
+            "hundreds-of-players",
+            "massive",
+            "server-population",
+            "large-scale",
+            "world-spanning"
+        ],
+        "CommunicationKeywords": [
+            "text-chat",
+            "voice-chat",
+            "guild-communication",
+            "global-chat",
+            "community-forums"
+        ],
+        "AudienceKeywords": [
+            "MMO-veterans",
+            "persistent-world-lovers",
+            "guild-members",
+            "time-investment-players",
+            "social-gamers"
+        ],
+        "MoodKeywords": [
+            "persistent",
+            "community-focused",
+            "time-consuming",
+            "social",
+            "immersive-world"
+        ]
+    },
+    "Single player": {
+        "PlayerInteractionKeywords": [
+            "solo",
+            "isolated",
+            "self-paced",
+            "individual",
+            "personal"
+        ],
+        "ScaleKeywords": [
+            "one-player",
+            "individual",
+            "personal-scale",
+            "solo-experience",
+            "intimate"
+        ],
+        "CommunicationKeywords": [
+            "no-communication",
+            "silent",
+            "self-directed",
+            "internal",
+            "narrative-focused"
+        ],
+        "AudienceKeywords": [
+            "solo-gamers",
+            "story-focused-players",
+            "introverted-gamers",
+            "self-paced-learners",
+            "narrative-lovers"
+        ],
+        "MoodKeywords": [
+            "contemplative",
+            "personal",
+            "immersive",
+            "focused",
+            "introspective"
+        ]
+    },
+    "Battle Royale": {
+        "PlayerInteractionKeywords": [
+            "elimination-based",
+            "last-person-standing",
+            "competitive",
+            "survival",
+            "PvP-focused"
+        ],
+        "ScaleKeywords": [
+            "large-lobby",
+            "50-100-players",
+            "shrinking-play-area",
+            "mass-elimination",
+            "final-few"
+        ],
+        "CommunicationKeywords": [
+            "team-voice-chat",
+            "squad-coordination",
+            "tactical-communication",
+            "quick-callouts",
+            "strategic-planning"
+        ],
+        "AudienceKeywords": [
+            "competitive-gamers",
+            "survival-enthusiasts",
+            "adrenaline-seekers",
+            "elimination-game-fans",
+            "last-standing-competitors"
+        ],
+        "MoodKeywords": [
+            "intense",
+            "competitive",
+            "high-stakes",
+            "adrenaline-pumping",
+            "survival-focused"
+        ]
+    },
+    "Co-operative": {
+        "PlayerInteractionKeywords": [
+            "teamwork",
+            "collaborative",
+            "shared-goals",
+            "supportive",
+            "coordinated"
+        ],
+        "ScaleKeywords": [
+            "small-team",
+            "2-8-players",
+            "group-focused",
+            "team-sized",
+            "manageable-group"
+        ],
+        "CommunicationKeywords": [
+            "team-coordination",
+            "supportive-chat",
+            "strategy-discussion",
+            "helpful-communication",
+            "collaborative-planning"
+        ],
+        "AudienceKeywords": [
+            "team-players",
+            "cooperative-gamers",
+            "friendship-builders",
+            "supportive-players",
+            "collaboration-lovers"
+        ],
+        "MoodKeywords": [
+            "collaborative",
+            "supportive",
+            "teamwork-focused",
+            "friendly",
+            "achievement-sharing"
+        ]
+    },
+    "Multiplayer": {
+        "PlayerInteractionKeywords": [
+            "multi-person",
+            "competitive",
+            "social",
+            "interactive",
+            "player-vs-player"
+        ],
+        "ScaleKeywords": [
+            "2-16-players",
+            "varied-group-size",
+            "flexible-scale",
+            "multiple-participants",
+            "group-play"
+        ],
+        "CommunicationKeywords": [
+            "player-chat",
+            "competitive-banter",
+            "social-interaction",
+            "voice-communication",
+            "text-messaging"
+        ],
+        "AudienceKeywords": [
+            "social-gamers",
+            "competitive-players",
+            "online-community-members",
+            "multiplayer-enthusiasts",
+            "interactive-game-lovers"
+        ],
+        "MoodKeywords": [
+            "social",
+            "competitive",
+            "interactive",
+            "dynamic",
+            "unpredictable"
+        ]
+    }
+}

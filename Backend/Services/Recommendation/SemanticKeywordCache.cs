@@ -3,9 +3,6 @@ using Backend.Data;
 using Backend.Services.Recommendation.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
-using System.Text.Json;
 
 namespace Backend.Services.Recommendation
 {
@@ -14,7 +11,7 @@ namespace Backend.Services.Recommendation
         private readonly IServiceScopeFactory _scopeFactory;
         private readonly IMemoryCache _cache;
         private readonly ILogger<SemanticKeywordCache> _logger;
-        private SemanticKeywordConfig? _semanticConfig;
+        private readonly ISemanticConfigurationService _configService;
 
         private const string CACHE_KEY_PREFIX = "precomputed_semantic_";
         private const string INIT_STATUS_KEY = "semantic_cache_initialized";
@@ -24,15 +21,28 @@ namespace Backend.Services.Recommendation
         public SemanticKeywordCache(
             IServiceScopeFactory scopeFactory,
             IMemoryCache cache,
-            ILogger<SemanticKeywordCache> logger)
+            ILogger<SemanticKeywordCache> logger,
+            ISemanticConfigurationService configService)
         {
             _scopeFactory = scopeFactory;
             _cache = cache;
             _logger = logger;
-            LoadSemanticConfiguration();
+            _configService = configService;
         }
 
         public bool IsInitialized => _cache.TryGetValue(INIT_STATUS_KEY, out var initialized) && (bool)initialized!;
+
+        /// <summary>
+        /// Ensures cache is initialized - uses lazy initialization if not already done
+        /// </summary>
+        public async Task<bool> EnsureInitializedAsync()
+        {
+            if (IsInitialized)
+                return true;
+
+            _logger.LogInformation("Cache not initialized, performing lazy initialization...");
+            return await InitializeCacheAsync();
+        }
 
         public async Task<bool> InitializeCacheAsync()
         {
@@ -53,12 +63,13 @@ namespace Backend.Services.Recommendation
                     _logger.LogWarning("All database queries returned empty results. This may indicate a database connection issue. Cache will be initialized with fallback data from configuration.");
 
                     // Use fallback data from semantic configuration
-                    if (_semanticConfig != null)
+                    var semanticConfig = _configService.SemanticConfig;
+                    if (semanticConfig != null)
                     {
-                        genres = _semanticConfig.GenreMappings.Keys.ToList();
-                        platforms = _semanticConfig.PlatformMappings.Keys.ToList();
-                        gameModes = _semanticConfig.GameModeMappings.Keys.ToList();
-                        perspectives = _semanticConfig.PerspectiveMappings.Keys.ToList();
+                        genres = semanticConfig.GenreMappings.Keys.ToList();
+                        platforms = semanticConfig.PlatformMappings.Keys.ToList();
+                        gameModes = semanticConfig.GameModeMappings.Keys.ToList();
+                        perspectives = semanticConfig.PerspectiveMappings.Keys.ToList();
 
                         _logger.LogInformation("Using fallback data from configuration: {GenreCount} genres, {PlatformCount} platforms, {GameModeCount} game modes, {PerspectiveCount} perspectives",
                             genres.Count, platforms.Count, gameModes.Count, perspectives.Count);
@@ -77,13 +88,14 @@ namespace Backend.Services.Recommendation
                 var totalKeywords = 0L;
 
                 // Precompute semantic keywords for each category
-                totalKeywords += await PrecomputeCategoryKeywords("genre", genres, _semanticConfig?.GenreMappings);
-                totalKeywords += await PrecomputeCategoryKeywords("platform", platforms, _semanticConfig?.PlatformMappings);
-                totalKeywords += await PrecomputeCategoryKeywords("gamemode", gameModes, _semanticConfig?.GameModeMappings);
-                totalKeywords += await PrecomputeCategoryKeywords("perspective", perspectives, _semanticConfig?.PerspectiveMappings);
+                var config = _configService.SemanticConfig;
+                totalKeywords += await PrecomputeCategoryKeywords("genre", genres, config?.GenreMappings);
+                totalKeywords += await PrecomputeCategoryKeywords("platform", platforms, config?.PlatformMappings);
+                totalKeywords += await PrecomputeCategoryKeywords("gamemode", gameModes, config?.GameModeMappings);
+                totalKeywords += await PrecomputeCategoryKeywords("perspective", perspectives, config?.PerspectiveMappings);
 
-                // Precompute common combinations
-                var combinations = GenerateCommonCombinations(genres, platforms, gameModes);
+                // Precompute semantic combinations
+                var combinations = GenerateSemanticCombinations(genres, platforms, gameModes, perspectives);
                 totalKeywords += await PrecomputeCombinationKeywords(combinations);
 
                 stats.TotalCombinations = combinations.Count;
@@ -279,31 +291,48 @@ namespace Backend.Services.Recommendation
         private async Task<long> PrecomputeCombinationKeywords(List<string> combinations)
         {
             var totalKeywords = 0L;
+            var cachedCombinations = new List<string>();
 
             foreach (var combination in combinations)
             {
                 var mapping = ExtractSemanticMappingForCombination(combination);
-                if (mapping != null)
+                if (mapping != null && HasMeaningfulKeywords(mapping))
                 {
                     var cacheKey = $"{CACHE_KEY_PREFIX}combination_{combination.ToLowerInvariant()}";
                     _cache.Set(cacheKey, mapping, CACHE_DURATION);
+                    cachedCombinations.Add(combination);
 
-                    totalKeywords += mapping.GenreKeywords.Count + mapping.MechanicKeywords.Count +
-                                   mapping.ThemeKeywords.Count + mapping.MoodKeywords.Count +
-                                   mapping.ArtStyleKeywords.Count + mapping.AudienceKeywords.Count;
+                    totalKeywords += CountTotalKeywords(mapping);
                 }
             }
 
-            // Cache the list of combinations
-            _cache.Set($"{CACHE_KEY_PREFIX}combination_list", combinations, CACHE_DURATION);
-
-            _logger.LogDebug("Precomputed keywords for {Count} combinations", combinations.Count);
+            _cache.Set($"{CACHE_KEY_PREFIX}combination_list", cachedCombinations, CACHE_DURATION);
+            _logger.LogDebug("Precomputed keywords for {CachedCount}/{TotalCount} quality combinations", 
+                cachedCombinations.Count, combinations.Count);
+            
             return totalKeywords;
         }
 
-        private SemanticCategoryMapping? ExtractSemanticMappingForItem(
+        private static bool HasMeaningfulKeywords(SemanticCategoryMapping mapping)
+        {
+            return CountTotalKeywords(mapping) >= SemanticCombinationConfig.MinKeywordsForCaching;
+        }
+
+        private static long CountTotalKeywords(SemanticCategoryMapping mapping)
+        {
+            return mapping.GenreKeywords.Count + mapping.MechanicKeywords.Count +
+                   mapping.ThemeKeywords.Count + mapping.MoodKeywords.Count +
+                   mapping.ArtStyleKeywords.Count + mapping.AudienceKeywords.Count +
+                   mapping.PlatformType.Count + mapping.EraKeywords.Count +
+                   mapping.CapabilityKeywords.Count + mapping.PlayerInteractionKeywords.Count +
+                   mapping.ScaleKeywords.Count + mapping.CommunicationKeywords.Count +
+                   mapping.ViewpointKeywords.Count + mapping.ImmersionKeywords.Count +
+                   mapping.InterfaceKeywords.Count;
+        }
+
+        private T? ExtractSemanticMappingForItem<T>(
             string item,
-            Dictionary<string, SemanticCategoryMapping> categoryMappings)
+            Dictionary<string, T> categoryMappings)
         {
             // First try exact match
             if (categoryMappings.TryGetValue(item, out var exactMapping))
@@ -319,7 +348,7 @@ namespace Backend.Services.Recommendation
                 return fuzzyMapping;
             }
 
-            return null;
+            return default;
         }
 
         private SemanticCategoryMapping? ExtractSemanticMappingForCombination(string combination)
@@ -331,10 +360,11 @@ namespace Backend.Services.Recommendation
             foreach (var part in parts)
             {
                 // Try each category mapping
-                var genreMapping = ExtractSemanticMappingForItem(part, _semanticConfig?.GenreMappings);
-                var platformMapping = ExtractSemanticMappingForItem(part, _semanticConfig?.PlatformMappings);
-                var gameModeMapping = ExtractSemanticMappingForItem(part, _semanticConfig?.GameModeMappings);
-                var perspectiveMapping = ExtractSemanticMappingForItem(part, _semanticConfig?.PerspectiveMappings);
+                var config = _configService.SemanticConfig;
+                var genreMapping = ExtractSemanticMappingForItem(part, config?.GenreMappings);
+                var platformMapping = ExtractSemanticMappingForItem(part, config?.PlatformMappings);
+                var gameModeMapping = ExtractSemanticMappingForItem(part, config?.GameModeMappings);
+                var perspectiveMapping = ExtractSemanticMappingForItem(part, config?.PerspectiveMappings);
 
                 // Merge all found mappings
                 MergeMappings(combinedMapping, genreMapping);
@@ -363,40 +393,174 @@ namespace Backend.Services.Recommendation
         }
 
 
-        private List<string> GenerateCommonCombinations(List<string> genres, List<string> platforms, List<string> gameModes)
+        private List<string> GenerateSemanticCombinations(List<string> genres, List<string> platforms, List<string> gameModes, List<string> perspectives)
+        {
+            var combinations = new List<string>();
+            var config = _configService.SemanticConfig;
+            
+            if (config == null) return combinations;
+
+            combinations.AddRange(GenerateGenreCombinations(genres, config.GenreMappings));
+            combinations.AddRange(GeneratePlatformGenreCombinations(platforms, genres, config));
+            combinations.AddRange(GenerateGameModeGenreCombinations(gameModes, genres, config));
+            combinations.AddRange(GeneratePerspectiveGenreCombinations(perspectives, genres, config));
+
+            return combinations.Distinct().Take(SemanticCombinationConfig.MaxCombinations).ToList();
+        }
+
+        private List<string> GenerateGenreCombinations(List<string> genres, Dictionary<string, SemanticCategoryMapping> genreMappings)
         {
             var combinations = new List<string>();
 
-            // Genre + Genre combinations (e.g., "Action RPG", "Horror Adventure")
-            var commonGenreCombinations = new[]
-            {
-                "Action RPG", "Horror Action", "Fantasy RPG", "Sci-fi Shooter",
-                "Strategy Simulation", "Puzzle Adventure", "Horror Survival"
-            };
+            // Theme-based combinations
+            var genresByTheme = genres
+                .Where(g => genreMappings.ContainsKey(g))
+                .GroupBy(g => genreMappings[g].ThemeKeywords.FirstOrDefault() ?? string.Empty)
+                .Where(group => !string.IsNullOrEmpty(group.Key) && group.Count() > 1);
 
-            // Filter to only include combinations where both parts exist in database
-            foreach (var combo in commonGenreCombinations)
+            foreach (var themeGroup in genresByTheme)
             {
-                var parts = combo.Split(' ');
-                if (parts.All(part => genres.Any(g => g.Contains(part, StringComparison.OrdinalIgnoreCase))))
+                var genreList = themeGroup.Take(SemanticCombinationConfig.MaxGenresPerTheme).ToList();
+                for (int i = 0; i < genreList.Count - 1; i++)
                 {
-                    combinations.Add(combo);
+                    for (int j = i + 1; j < genreList.Count; j++)
+                    {
+                        combinations.Add($"{genreList[i]} {genreList[j]}");
+                    }
                 }
             }
 
-            // Platform + Genre combinations for major genres
-            var majorGenres = genres.Where(g => new[] { "Action", "RPG", "Strategy", "Shooter", "Horror" }
-                .Any(major => g.Contains(major, StringComparison.OrdinalIgnoreCase))).Take(5);
-
-            foreach (var genre in majorGenres)
+            // Popular proven combinations
+            foreach (var (primary, secondary) in SemanticCombinationConfig.PopularGenreCombinations)
             {
-                foreach (var platform in platforms.Take(3)) // Limit to top 3 platforms
+                var primaryGenre = genres.FirstOrDefault(g => g.Contains(primary, StringComparison.OrdinalIgnoreCase));
+                var secondaryGenre = genres.FirstOrDefault(g => g.Contains(secondary, StringComparison.OrdinalIgnoreCase));
+                
+                if (primaryGenre != null && secondaryGenre != null && primaryGenre != secondaryGenre)
                 {
-                    combinations.Add($"{platform} {genre}");
+                    combinations.Add($"{primaryGenre} {secondaryGenre}");
                 }
             }
 
-            return combinations.Distinct().ToList();
+            return combinations;
+        }
+
+        private List<string> GeneratePlatformGenreCombinations(List<string> platforms, List<string> genres, SemanticKeywordConfig config)
+        {
+            var combinations = new List<string>();
+
+            var platformsByEra = platforms
+                .Where(p => config.PlatformMappings.ContainsKey(p))
+                .GroupBy(p => ClassifyPlatformEra(config.PlatformMappings[p].EraKeywords))
+                .Where(group => !string.IsNullOrEmpty(group.Key));
+
+            foreach (var eraGroup in platformsByEra)
+            {
+                var eraPlatforms = eraGroup.Take(SemanticCombinationConfig.MaxPlatformsPerEra).ToList();
+                var compatibleGenres = GetEraCompatibleGenres(eraGroup.Key, genres, config.GenreMappings);
+
+                foreach (var platform in eraPlatforms)
+                {
+                    foreach (var genre in compatibleGenres.Take(SemanticCombinationConfig.MaxGenresPerPlatform))
+                    {
+                        combinations.Add($"{platform} {genre}");
+                    }
+                }
+            }
+
+            return combinations;
+        }
+
+        private List<string> GenerateGameModeGenreCombinations(List<string> gameModes, List<string> genres, SemanticKeywordConfig config)
+        {
+            var combinations = new List<string>();
+
+            foreach (var gameMode in gameModes.Take(SemanticCombinationConfig.MaxPlatformsPerEra))
+            {
+                if (!config.GameModeMappings.ContainsKey(gameMode)) continue;
+
+                var gameModeMapping = config.GameModeMappings[gameMode];
+                var compatibleGenres = genres
+                    .Where(g => config.GenreMappings.ContainsKey(g))
+                    .Where(g => IsGameModeGenreCompatible(gameModeMapping, config.GenreMappings[g]))
+                    .Take(SemanticCombinationConfig.MaxGenresPerGameMode);
+
+                foreach (var genre in compatibleGenres)
+                {
+                    combinations.Add($"{gameMode} {genre}");
+                }
+            }
+
+            return combinations;
+        }
+
+        private List<string> GeneratePerspectiveGenreCombinations(List<string> perspectives, List<string> genres, SemanticKeywordConfig config)
+        {
+            var combinations = new List<string>();
+
+            foreach (var perspective in perspectives.Take(SemanticCombinationConfig.MaxPlatformsPerEra))
+            {
+                if (!config.PerspectiveMappings.ContainsKey(perspective)) continue;
+
+                var perspectiveMapping = config.PerspectiveMappings[perspective];
+                var compatibleGenres = genres
+                    .Where(g => config.GenreMappings.ContainsKey(g))
+                    .Where(g => IsPerspectiveGenreCompatible(perspectiveMapping, config.GenreMappings[g]))
+                    .Take(SemanticCombinationConfig.MaxGenresPerPerspective);
+
+                foreach (var genre in compatibleGenres)
+                {
+                    combinations.Add($"{perspective} {genre}");
+                }
+            }
+
+            return combinations;
+        }
+
+        private static string ClassifyPlatformEra(List<string> eraKeywords)
+        {
+            if (eraKeywords.Any(k => SemanticCombinationConfig.ModernEraKeywords.Contains(k, StringComparer.OrdinalIgnoreCase)))
+                return "modern";
+            if (eraKeywords.Any(k => SemanticCombinationConfig.RetroEraKeywords.Contains(k, StringComparer.OrdinalIgnoreCase)))
+                return "retro";
+            return string.Empty;
+        }
+
+        private List<string> GetEraCompatibleGenres(string era, List<string> genres, Dictionary<string, SemanticCategoryMapping> genreMappings)
+        {
+            return genres
+                .Where(g => genreMappings.ContainsKey(g))
+                .Where(g => era == "modern" || HasClassicMechanics(genreMappings[g]))
+                .ToList();
+        }
+
+        private static bool HasClassicMechanics(SemanticCategoryMapping genreMapping)
+        {
+            return genreMapping.MechanicKeywords.Any(m => 
+                SemanticCombinationConfig.RetroEraKeywords.Any(retro => 
+                    m.Contains(retro, StringComparison.OrdinalIgnoreCase)));
+        }
+
+        private static bool IsGameModeGenreCompatible(SemanticCategoryMapping gameModeMapping, SemanticCategoryMapping genreMapping)
+        {
+            return gameModeMapping.AudienceKeywords.Intersect(genreMapping.AudienceKeywords, StringComparer.OrdinalIgnoreCase).Any() ||
+                   gameModeMapping.MoodKeywords.Intersect(genreMapping.MoodKeywords, StringComparer.OrdinalIgnoreCase).Any();
+        }
+
+        private static bool IsPerspectiveGenreCompatible(SemanticCategoryMapping perspectiveMapping, SemanticCategoryMapping genreMapping)
+        {
+            return perspectiveMapping.MoodKeywords.Intersect(genreMapping.MoodKeywords, StringComparer.OrdinalIgnoreCase).Any() ||
+                   HasCompatibleComplexity(perspectiveMapping, genreMapping);
+        }
+
+        private static bool HasCompatibleComplexity(SemanticCategoryMapping perspectiveMapping, SemanticCategoryMapping genreMapping)
+        {
+            var isImmersivePerspective = perspectiveMapping.ImmersionKeywords.Any(k => 
+                SemanticCombinationConfig.ImmersivePerspectiveKeywords.Contains(k, StringComparer.OrdinalIgnoreCase));
+            var isAccessibleGenre = genreMapping.AudienceKeywords.Any(k => 
+                SemanticCombinationConfig.AccessiblePerspectiveKeywords.Contains(k, StringComparer.OrdinalIgnoreCase));
+
+            return isImmersivePerspective == !isAccessibleGenre; // Opposite complexity levels are compatible
         }
 
         private SemanticCategoryMapping? GetCachedKeywords(string categoryType, string item)
@@ -440,29 +604,5 @@ namespace Backend.Services.Recommendation
             // or implementing a custom cache wrapper that tracks keys.
         }
 
-        private void LoadSemanticConfiguration()
-        {
-            try
-            {
-                var configPath = Path.Combine(AppContext.BaseDirectory, "Configuration", "DefaultSemanticKeywordMappings.json");
-                if (File.Exists(configPath))
-                {
-                    var jsonContent = File.ReadAllText(configPath);
-                    _semanticConfig = JsonSerializer.Deserialize<SemanticKeywordConfig>(jsonContent, new JsonSerializerOptions
-                    {
-                        PropertyNameCaseInsensitive = true
-                    });
-                    _logger.LogInformation("Loaded semantic keyword configuration from file");
-                }
-                else
-                {
-                    _logger.LogWarning("Configuration file not found, semantic cache will have limited functionality");
-                }
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error loading semantic configuration for cache");
-            }
-        }
     }
 }

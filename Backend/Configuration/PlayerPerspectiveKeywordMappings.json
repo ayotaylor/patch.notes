@@ -1,0 +1,191 @@
+{
+    "Side view": {
+        "ViewpointKeywords": [
+            "2D-plane",
+            "horizontal-scrolling",
+            "profile-view"
+        ],
+        "ImmersionKeywords": [
+            "observational",
+            "detached",
+            "cinematic"
+        ],
+        "InterfaceKeywords": [
+            "simple-navigation",
+            "clear-movement",
+            "platformer-style"
+        ],
+        "AudienceKeywords": [
+            "2D-gaming-fans",
+            "platformer-enthusiasts",
+            "retro-gamers"
+        ],
+        "MoodKeywords": [
+            "nostalgic",
+            "straightforward",
+            "classic"
+        ]
+    },
+    "Bird view / Isometric": {
+        "ViewpointKeywords": [
+            "top-down",
+            "angled-overhead",
+            "tactical-view"
+        ],
+        "ImmersionKeywords": [
+            "strategic",
+            "commanding",
+            "overview"
+        ],
+        "InterfaceKeywords": [
+            "strategic-control",
+            "area-visibility",
+            "tactical-interface"
+        ],
+        "AudienceKeywords": [
+            "strategy-gamers",
+            "tactical-thinkers",
+            "simulation-fans"
+        ],
+        "MoodKeywords": [
+            "strategic",
+            "commanding",
+            "methodical"
+        ]
+    },
+    "Text": {
+        "ViewpointKeywords": [
+            "text-based",
+            "narrative-focused",
+            "descriptive"
+        ],
+        "ImmersionKeywords": [
+            "imaginative",
+            "literary",
+            "mental-visualization"
+        ],
+        "InterfaceKeywords": [
+            "reading-based",
+            "text-commands",
+            "narrative-driven"
+        ],
+        "AudienceKeywords": [
+            "readers",
+            "text-adventure-fans",
+            "imagination-focused"
+        ],
+        "MoodKeywords": [
+            "literary",
+            "contemplative",
+            "imaginative"
+        ]
+    },
+    "Auditory": {
+        "ViewpointKeywords": [
+            "sound-based",
+            "audio-only",
+            "non-visual"
+        ],
+        "ImmersionKeywords": [
+            "audio-immersive",
+            "sound-focused",
+            "listening-based"
+        ],
+        "InterfaceKeywords": [
+            "audio-cues",
+            "sound-navigation",
+            "voice-commands"
+        ],
+        "AudienceKeywords": [
+            "audio-game-fans",
+            "accessibility-focused",
+            "sound-sensitive"
+        ],
+        "MoodKeywords": [
+            "atmospheric",
+            "focused",
+            "audio-rich"
+        ]
+    },
+    "First person": {
+        "ViewpointKeywords": [
+            "through-eyes",
+            "direct-viewpoint",
+            "character-perspective"
+        ],
+        "ImmersionKeywords": [
+            "highly-immersive",
+            "personal",
+            "embodied"
+        ],
+        "InterfaceKeywords": [
+            "direct-control",
+            "hand-interaction",
+            "eye-level-view"
+        ],
+        "AudienceKeywords": [
+            "immersion-seekers",
+            "FPS-fans",
+            "presence-focused"
+        ],
+        "MoodKeywords": [
+            "immersive",
+            "personal",
+            "intense"
+        ]
+    },
+    "Virtual Reality": {
+        "ViewpointKeywords": [
+            "360-degree",
+            "spatial",
+            "room-scale"
+        ],
+        "ImmersionKeywords": [
+            "fully-immersive",
+            "presence",
+            "reality-replacement"
+        ],
+        "InterfaceKeywords": [
+            "motion-controls",
+            "spatial-interaction",
+            "head-tracking"
+        ],
+        "AudienceKeywords": [
+            "VR-enthusiasts",
+            "early-adopters",
+            "immersion-maximalists"
+        ],
+        "MoodKeywords": [
+            "cutting-edge",
+            "immersive",
+            "futuristic"
+        ]
+    },
+    "Third person": {
+        "ViewpointKeywords": [
+            "over-shoulder",
+            "character-following",
+            "external-view"
+        ],
+        "ImmersionKeywords": [
+            "character-focused",
+            "observational",
+            "cinematic"
+        ],
+        "InterfaceKeywords": [
+            "character-control",
+            "camera-following",
+            "action-view"
+        ],
+        "AudienceKeywords": [
+            "action-gamers",
+            "character-viewers",
+            "cinematic-fans"
+        ],
+        "MoodKeywords": [
+            "cinematic",
+            "character-driven",
+            "action-oriented"
+        ]
+    }
+}
