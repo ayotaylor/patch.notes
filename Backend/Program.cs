@@ -36,6 +36,9 @@ builder.Services.AddSingleton<ISemanticConfigurationService, SemanticConfigurati
 // Add platform alias service
 builder.Services.AddScoped<PlatformAliasService>();
 
+// Add hybrid embedding enhancer
+builder.Services.AddScoped<HybridEmbeddingEnhancer>();
+
 // Add recommendation services
 builder.Services.AddHttpClient<GroqLanguageModel>();
 builder.Services.AddSingleton<QdrantClient>(provider =>

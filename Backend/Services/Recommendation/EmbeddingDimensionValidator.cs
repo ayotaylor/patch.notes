@@ -21,6 +21,24 @@ namespace Backend.Services.Recommendation
         }
 
         /// <summary>
+        /// Simple helper to validate embedding dimensions and return detailed error if invalid
+        /// Can be used by any service for consistent validation
+        /// </summary>
+        public static (bool IsValid, string? ErrorMessage) ValidateEmbeddingDimensions(int actualDimensions, string context = "")
+        {
+            if (EmbeddingConstants.ValidateDimensions(actualDimensions))
+            {
+                return (true, null);
+            }
+
+            var errorMessage = string.IsNullOrEmpty(context) 
+                ? $"Embedding dimension mismatch: got {actualDimensions}, {EmbeddingConstants.GetExpectedDimensionsMessage()}"
+                : $"Embedding dimension mismatch in {context}: got {actualDimensions}, {EmbeddingConstants.GetExpectedDimensionsMessage()}";
+            
+            return (false, errorMessage);
+        }
+
+        /// <summary>
         /// Performs comprehensive dimension validation across the entire embedding system
         /// This should be called at startup to prevent runtime dimension errors
         /// </summary>
@@ -59,7 +77,6 @@ namespace Backend.Services.Recommendation
                 _logger.LogInformation("✅ All embedding dimension validations passed successfully!");
                 _logger.LogInformation("System validated dimensions: Text={TextDims}, Total={TotalDims}",
                     EmbeddingConstants.BASE_TEXT_EMBEDDING_DIMENSIONS,
-                    //EmbeddingConstants.STRUCTURED_FEATURES_DIMENSIONS,
                     EmbeddingConstants.TOTAL_EMBEDDING_DIMENSIONS);
 
                 return true;

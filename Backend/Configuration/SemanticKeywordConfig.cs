@@ -45,71 +45,54 @@ namespace Backend.Configuration
     public class SemanticWeights
     {
         // Core game properties (highest priority - structured metadata)
-        public float GenreWeight { get; set; } = 0.4f;
-        public float MechanicsWeight { get; set; } = 0.3f;
-        public float ThemeWeight { get; set; } = 0.2f;
-        public float MoodWeight { get; set; } = 0.1f;
+        public float GenreWeight { get; set; }
+        public float MechanicsWeight { get; set; }
+        public float ThemeWeight { get; set; }
+        public float MoodWeight { get; set; }
         
         // Platform-specific properties (medium-high priority)
-        public float PlatformTypeWeight { get; set; } = 0.15f;
-        public float EraWeight { get; set; } = 0.12f;
-        public float CapabilityWeight { get; set; } = 0.08f;
+        public float PlatformTypeWeight { get; set; }
+        public float EraWeight { get; set; }
+        public float CapabilityWeight { get; set; }
         
         // Game mode-specific properties (medium priority)
-        public float PlayerInteractionWeight { get; set; } = 0.1f;
-        public float ScaleWeight { get; set; } = 0.08f;
-        public float CommunicationWeight { get; set; } = 0.07f;
+        public float PlayerInteractionWeight { get; set; }
+        public float ScaleWeight { get; set; }
+        public float CommunicationWeight { get; set; }
         
         // Visual and interface properties (lower priority)
-        public float ArtStyleWeight { get; set; } = 0.05f;
-        public float ViewpointWeight { get; set; } = 0.04f;
-        public float ImmersionWeight { get; set; } = 0.03f;
-        public float InterfaceWeight { get; set; } = 0.02f;
-        public float AudienceWeight { get; set; } = 0.03f;
+        public float ArtStyleWeight { get; set; }
+        public float ViewpointWeight { get; set; }
+        public float ImmersionWeight { get; set; }
+        public float InterfaceWeight { get; set; }
+        public float AudienceWeight { get; set; }
     }
 
     public class EmbeddingDimensions
     {
         /// <summary>
-        /// Base text embedding dimensions (default: from EmbeddingConstants)
+        /// Base text embedding dimensions (loaded from JSON)
         /// </summary>
-        public int BaseTextEmbedding { get; set; } = EmbeddingConstants.BASE_TEXT_EMBEDDING_DIMENSIONS;
+        public int BaseTextEmbedding { get; set; }
 
         /// <summary>
-        /// Total embedding dimensions (ONNX-only, no structured features)
+        /// Total embedding dimensions (should match BaseTextEmbedding for ONNX-only approach)
         /// </summary>
-        public int TotalDimensions => BaseTextEmbedding;
+        public int TotalDimensions { get; set; }
 
         /// <summary>
-        /// Semantic category position ranges for keyword placement
+        /// Category position ranges for positional keyword placement (loaded from JSON)
         /// </summary>
-        public CategoryPositionRanges CategoryRanges { get; set; } = new();
+        public Dictionary<string, JsonPositionRange> CategoryRanges { get; set; } = new();
     }
 
-    public class CategoryPositionRanges
+    /// <summary>
+    /// JSON-serializable position range structure
+    /// </summary>
+    public class JsonPositionRange
     {
-        // Core game properties (mapped to new SemanticCategoryMapping)
-        public PositionRange Genre { get; set; } = EmbeddingConstants.CategoryRanges.Genre;
-        public PositionRange Mechanics { get; set; } = EmbeddingConstants.CategoryRanges.Mechanics;
-        public PositionRange Theme { get; set; } = EmbeddingConstants.CategoryRanges.Theme;
-        public PositionRange Mood { get; set; } = EmbeddingConstants.CategoryRanges.Mood;
-        
-        // Platform-specific properties
-        public PositionRange PlatformType { get; set; } = EmbeddingConstants.CategoryRanges.PlatformType;
-        public PositionRange Era { get; set; } = EmbeddingConstants.CategoryRanges.Era;
-        public PositionRange Capability { get; set; } = EmbeddingConstants.CategoryRanges.Capability;
-        
-        // Game mode-specific properties
-        public PositionRange PlayerInteraction { get; set; } = EmbeddingConstants.CategoryRanges.PlayerInteraction;
-        public PositionRange Scale { get; set; } = EmbeddingConstants.CategoryRanges.Scale;
-        public PositionRange Communication { get; set; } = EmbeddingConstants.CategoryRanges.Communication;
-        
-        // Visual and interface properties
-        public PositionRange ArtStyle { get; set; } = EmbeddingConstants.CategoryRanges.ArtStyle;
-        public PositionRange Viewpoint { get; set; } = EmbeddingConstants.CategoryRanges.Viewpoint;
-        public PositionRange Immersion { get; set; } = EmbeddingConstants.CategoryRanges.Immersion;
-        public PositionRange Interface { get; set; } = EmbeddingConstants.CategoryRanges.Interface;
-        public PositionRange Audience { get; set; } = EmbeddingConstants.CategoryRanges.Audience;
+        public int Start { get; set; }
+        public int End { get; set; }
     }
 
     public record PositionRange(int Start, int End)

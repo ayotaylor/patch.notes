@@ -78,14 +78,18 @@ namespace Backend.Configuration
                 var configBasePath = Path.Combine(AppContext.BaseDirectory, "Configuration");
                 
                 // Load all configuration files
-                var semanticKeywordConfig = LoadSemanticKeywordMappings(configBasePath);
-                var genreKeywordConfig = LoadGenreKeywordMappings(configBasePath);
-                var platformKeywordConfig = LoadPlatformKeywordMappings(configBasePath);
-                var playerPerspectiveConfig = LoadPlayerPerspectiveMappings(configBasePath);
-                var platformAliasConfig = LoadPlatformAliases(configBasePath);
-                
-                // Check if we have configuration files for game modes
-                var gameModeKeywordConfig = LoadGameModeKeywordMappings(configBasePath);
+                var semanticKeywordConfig = LoadConfigurationFile<SemanticKeywordConfig>(
+                    Path.Combine(configBasePath, "SemanticKeywordMappings.json"), "SemanticKeywordMappings");
+                var genreKeywordConfig = LoadConfigurationFile<Dictionary<string, SemanticCategoryMapping>>(
+                    Path.Combine(configBasePath, "GenreKeywordMappings.json"), "GenreKeywordMappings");
+                var platformKeywordConfig = LoadConfigurationFile<Dictionary<string, SemanticCategoryMapping>>(
+                    Path.Combine(configBasePath, "PlatformKeywordMappings.json"), "PlatformKeywordMappings");
+                var playerPerspectiveConfig = LoadConfigurationFile<Dictionary<string, SemanticCategoryMapping>>(
+                    Path.Combine(configBasePath, "PlayerPerspectiveKeywordMappings.json"), "PlayerPerspectiveMappings");
+                var gameModeKeywordConfig = LoadConfigurationFile<Dictionary<string, SemanticCategoryMapping>>(
+                    Path.Combine(configBasePath, "GameModeKeywordMappings.json"), "GameModeKeywordMappings");
+                var platformAliasConfig = LoadConfigurationFile<Dictionary<string, List<string>>>(
+                    Path.Combine(configBasePath, "PlatformAlias.json"), "PlatformAlias");
 
                 // Merge all configurations
                 _semanticConfig = MergeConfigurations(
@@ -122,41 +126,6 @@ namespace Backend.Configuration
             }
         }
 
-        private SemanticKeywordConfig? LoadSemanticKeywordMappings(string basePath)
-        {
-            var filePath = Path.Combine(basePath, "SemanticKeywordMappings.json");
-            return LoadConfigurationFile<SemanticKeywordConfig>(filePath, "SemanticKeywordMappings");
-        }
-
-        private Dictionary<string, SemanticCategoryMapping>? LoadGenreKeywordMappings(string basePath)
-        {
-            var filePath = Path.Combine(basePath, "GenreKeywordMappings.json");
-            return LoadConfigurationFile<Dictionary<string, SemanticCategoryMapping>>(filePath, "GenreKeywordMappings");
-        }
-
-        private Dictionary<string, SemanticCategoryMapping>? LoadPlatformKeywordMappings(string basePath)
-        {
-            var filePath = Path.Combine(basePath, "PlatformKeywordMappings.json");
-            return LoadConfigurationFile<Dictionary<string, SemanticCategoryMapping>>(filePath, "PlatformKeywordMappings");
-        }
-
-        private Dictionary<string, SemanticCategoryMapping>? LoadPlayerPerspectiveMappings(string basePath)
-        {
-            var filePath = Path.Combine(basePath, "PlayerPerspectiveKeywordMappings.json");
-            return LoadConfigurationFile<Dictionary<string, SemanticCategoryMapping>>(filePath, "PlayerPerspectiveMappings");
-        }
-
-        private Dictionary<string, SemanticCategoryMapping>? LoadGameModeKeywordMappings(string basePath)
-        {
-            var filePath = Path.Combine(basePath, "GameModeKeywordMappings.json");
-            return LoadConfigurationFile<Dictionary<string, SemanticCategoryMapping>>(filePath, "GameModeKeywordMappings");
-        }
-
-        private Dictionary<string, List<string>>? LoadPlatformAliases(string basePath)
-        {
-            var filePath = Path.Combine(basePath, "PlatformAlias.json");
-            return LoadConfigurationFile<Dictionary<string, List<string>>>(filePath, "PlatformAlias");
-        }
 
         private T? LoadConfigurationFile<T>(string filePath, string configName) where T : class
         {
@@ -250,29 +219,90 @@ namespace Backend.Configuration
                 {
                     mergedConfig.PerspectiveMappings[kvp.Key] = kvp.Value;
                 }
-                _logger.LogDebug("Merged {Count} game mode mappings", perspectiveConfig.Count);
+                _logger.LogDebug("Merged {Count} perspective mappings", perspectiveConfig.Count);
             }
 
-            // If we had a main config with existing genre mappings, preserve them
-            // (the individual files take precedence over the main file)
-
-            // Ensure we have default weights and dimensions
-            mergedConfig.DefaultWeights ??= new SemanticWeights();
-            mergedConfig.Dimensions ??= new EmbeddingDimensions();
+            // Ensure fallback values with validation
+            EnsureConfigurationDefaults(mergedConfig);
 
             return mergedConfig;
         }
 
-        private static SemanticKeywordConfig CreateDefaultSemanticConfig()
+        private SemanticKeywordConfig CreateDefaultSemanticConfig()
         {
-            return new SemanticKeywordConfig
+            _logger.LogWarning("Creating fallback semantic configuration with EmbeddingConstants defaults");
+            
+            var config = new SemanticKeywordConfig
             {
-                DefaultWeights = new SemanticWeights(),
-                Dimensions = new EmbeddingDimensions(),
                 GenreMappings = new Dictionary<string, SemanticCategoryMapping>(),
                 PlatformMappings = new Dictionary<string, SemanticCategoryMapping>(),
                 GameModeMappings = new Dictionary<string, SemanticCategoryMapping>(),
                 PerspectiveMappings = new Dictionary<string, SemanticCategoryMapping>()
+            };
+            
+            EnsureConfigurationDefaults(config);
+            return config;
+        }
+
+        /// <summary>
+        /// Ensures configuration has proper defaults with validation
+        /// </summary>
+        private void EnsureConfigurationDefaults(SemanticKeywordConfig config)
+        {
+            // Ensure semantic weights with fallback values
+            config.DefaultWeights ??= CreateDefaultSemanticWeights();
+            
+            // Ensure dimensions with validation and fallback
+            config.Dimensions ??= CreateDefaultEmbeddingDimensions();
+            
+            // Validate JSON dimensions against EmbeddingConstants
+            if (config.Dimensions.TotalDimensions > 0 && 
+                !EmbeddingConstants.ValidateDimensions(config.Dimensions.TotalDimensions))
+            {
+                _logger.LogWarning(
+                    "Configuration dimensions {JsonDimensions} don't match EmbeddingConstants {ExpectedDimensions}. Using EmbeddingConstants values.",
+                    config.Dimensions.TotalDimensions, EmbeddingConstants.TOTAL_EMBEDDING_DIMENSIONS);
+                
+                config.Dimensions = CreateDefaultEmbeddingDimensions();
+            }
+        }
+
+        private static SemanticWeights CreateDefaultSemanticWeights()
+        {
+            return new SemanticWeights
+            {
+                // Core game properties (highest priority - structured metadata)
+                GenreWeight = 0.4f,
+                MechanicsWeight = 0.3f,
+                ThemeWeight = 0.2f,
+                MoodWeight = 0.1f,
+                
+                // Platform-specific properties (medium-high priority)
+                PlatformTypeWeight = 0.15f,
+                EraWeight = 0.12f,
+                CapabilityWeight = 0.08f,
+                
+                // Game mode-specific properties (medium priority)
+                PlayerInteractionWeight = 0.1f,
+                ScaleWeight = 0.08f,
+                CommunicationWeight = 0.07f,
+                
+                // Visual and interface properties (lower priority)
+                ArtStyleWeight = 0.05f,
+                ViewpointWeight = 0.04f,
+                ImmersionWeight = 0.03f,
+                InterfaceWeight = 0.02f,
+                AudienceWeight = 0.03f
+            };
+        }
+
+        private static EmbeddingDimensions CreateDefaultEmbeddingDimensions()
+        {
+            return new EmbeddingDimensions
+            {
+                BaseTextEmbedding = EmbeddingConstants.BASE_TEXT_EMBEDDING_DIMENSIONS,
+                TotalDimensions = EmbeddingConstants.TOTAL_EMBEDDING_DIMENSIONS,
+                CategoryRanges = new Dictionary<string, JsonPositionRange>()
             };
         }
     }

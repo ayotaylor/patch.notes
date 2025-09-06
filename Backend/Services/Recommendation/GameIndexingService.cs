@@ -151,7 +151,7 @@ namespace Backend.Services.Recommendation
                 await EnsureSemanticCacheReadyAsync();
 
                 var indexed = 0;
-                var batchSize = 50;
+                var batchSize = 200;
                 var skip = 0;
                 var processingStartTime = DateTime.UtcNow;
 
@@ -182,8 +182,11 @@ namespace Backend.Services.Recommendation
                         var embedding = embeddings[i];
 
                         // Validate embedding before adding to bulk operation
-                        if (!EmbeddingConstants.ValidateDimensions(embedding.Length))
+                        var (isValid, errorMessage) =
+                            EmbeddingDimensionValidator.ValidateEmbeddingDimensions(embedding.Length, "game embedding before upsert");
+                        if (!isValid)
                         {
+                            _logger.LogCritical("CRITICAL: {ErrorMessage}", errorMessage);
                             _logger.LogError("Skipping game {GameName} due to invalid embedding dimensions: {ActualDimensions}",
                                 game.Name, embedding.Length);
                             continue;
@@ -221,7 +224,7 @@ namespace Backend.Services.Recommendation
 
 
                     // Small delay between batches
-                    await Task.Delay(10);
+                    //await Task.Delay(10);
                 }
 
                 _logger.LogInformation("Completed indexing {Total} games", indexed);
@@ -365,13 +368,13 @@ namespace Backend.Services.Recommendation
             {
                 // Primary search with enhanced embedding
                 var results = await _vectorDatabase.SearchAsync(GAMES_COLLECTION, queryEmbedding, limit);
-                
+
                 // Apply semantic combination boosting for higher quality results
                 if (_semanticKeywordCache?.IsInitialized == true && results.Count > 0)
                 {
                     results = ApplySemanticBoosting(results);
                 }
-                
+
                 return results;
             }
             catch (Exception ex)
@@ -433,17 +436,17 @@ namespace Backend.Services.Recommendation
         private List<string> ExpandPlatformsWithAliases(List<string> platforms)
         {
             var expandedPlatforms = new List<string>();
-            
+
             foreach (var platform in platforms.Where(p => !string.IsNullOrWhiteSpace(p)))
             {
                 // Add original platform
                 expandedPlatforms.Add(platform);
-                
+
                 // Add up to 2 aliases to enrich embedding without text bloat
                 var aliases = _platformAliasService.GetAllPlatformAliases(platform);
                 expandedPlatforms.AddRange(aliases.Where(a => !string.Equals(a, platform, StringComparison.OrdinalIgnoreCase)).Take(2));
             }
-            
+
             return expandedPlatforms.Distinct(StringComparer.OrdinalIgnoreCase).ToList();
         }
 
@@ -478,36 +481,6 @@ namespace Backend.Services.Recommendation
                 ApplySemanticMapping(semanticConfig.PerspectiveMappings, perspective, gameInput);
             }
 
-            // Apply weights from configuration
-            if (semanticConfig.DefaultWeights != null)
-            {
-                gameInput.SemanticWeights = new Dictionary<string, float>
-                {
-                    // Core game properties
-                    ["genre"] = semanticConfig.DefaultWeights.GenreWeight,
-                    ["mechanics"] = semanticConfig.DefaultWeights.MechanicsWeight,
-                    ["theme"] = semanticConfig.DefaultWeights.ThemeWeight,
-                    ["mood"] = semanticConfig.DefaultWeights.MoodWeight,
-                    ["artstyle"] = semanticConfig.DefaultWeights.ArtStyleWeight,
-                    ["audience"] = semanticConfig.DefaultWeights.AudienceWeight,
-                    
-                    // Platform-specific properties
-                    ["platformtype"] = semanticConfig.DefaultWeights.PlatformTypeWeight,
-                    ["era"] = semanticConfig.DefaultWeights.EraWeight,
-                    ["capability"] = semanticConfig.DefaultWeights.CapabilityWeight,
-                    
-                    // Game mode-specific properties
-                    ["playerinteraction"] = semanticConfig.DefaultWeights.PlayerInteractionWeight,
-                    ["scale"] = semanticConfig.DefaultWeights.ScaleWeight,
-                    ["communication"] = semanticConfig.DefaultWeights.CommunicationWeight,
-                    
-                    // Visual and interface properties
-                    ["viewpoint"] = semanticConfig.DefaultWeights.ViewpointWeight,
-                    ["immersion"] = semanticConfig.DefaultWeights.ImmersionWeight,
-                    ["interface"] = semanticConfig.DefaultWeights.InterfaceWeight
-                };
-            }
-
             _logger.LogDebug("Applied simplified semantic enrichment for game: {GameName}", gameInput.Name);
         }
 
@@ -516,29 +489,36 @@ namespace Backend.Services.Recommendation
             if (mappings.TryGetValue(key, out var mapping))
             {
                 // Core game properties
-                gameInput.ExtractedGenreKeywords.AddRange(mapping.GenreKeywords);
-                gameInput.ExtractedMechanicKeywords.AddRange(mapping.MechanicKeywords);
-                gameInput.ExtractedThemeKeywords.AddRange(mapping.ThemeKeywords);
-                gameInput.ExtractedMoodKeywords.AddRange(mapping.MoodKeywords);
-                gameInput.ExtractedArtStyleKeywords.AddRange(mapping.ArtStyleKeywords);
-                gameInput.ExtractedAudienceKeywords.AddRange(mapping.AudienceKeywords);
+                AddKeywordsIfNotEmpty(mapping.GenreKeywords, gameInput.ExtractedGenreKeywords);
+                AddKeywordsIfNotEmpty(mapping.MechanicKeywords, gameInput.ExtractedMechanicKeywords);
+                AddKeywordsIfNotEmpty(mapping.ThemeKeywords, gameInput.ExtractedThemeKeywords);
+                AddKeywordsIfNotEmpty(mapping.MoodKeywords, gameInput.ExtractedMoodKeywords);
+                AddKeywordsIfNotEmpty(mapping.ArtStyleKeywords, gameInput.ExtractedArtStyleKeywords);
+                AddKeywordsIfNotEmpty(mapping.AudienceKeywords, gameInput.ExtractedAudienceKeywords);
                 
                 // Platform-specific properties
-                gameInput.ExtractedPlatformTypeKeywords.AddRange(mapping.PlatformType);
-                gameInput.ExtractedEraKeywords.AddRange(mapping.EraKeywords);
-                gameInput.ExtractedCapabilityKeywords.AddRange(mapping.CapabilityKeywords);
+                AddKeywordsIfNotEmpty(mapping.PlatformType, gameInput.ExtractedPlatformTypeKeywords);
+                AddKeywordsIfNotEmpty(mapping.EraKeywords, gameInput.ExtractedEraKeywords);
+                AddKeywordsIfNotEmpty(mapping.CapabilityKeywords, gameInput.ExtractedCapabilityKeywords);
                 
                 // Game mode-specific properties
-                gameInput.ExtractedPlayerInteractionKeywords.AddRange(mapping.PlayerInteractionKeywords);
-                gameInput.ExtractedScaleKeywords.AddRange(mapping.ScaleKeywords);
-                gameInput.ExtractedCommunicationKeywords.AddRange(mapping.CommunicationKeywords);
+                AddKeywordsIfNotEmpty(mapping.PlayerInteractionKeywords, gameInput.ExtractedPlayerInteractionKeywords);
+                AddKeywordsIfNotEmpty(mapping.ScaleKeywords, gameInput.ExtractedScaleKeywords);
+                AddKeywordsIfNotEmpty(mapping.CommunicationKeywords, gameInput.ExtractedCommunicationKeywords);
                 
                 // Perspective-specific properties
-                gameInput.ExtractedViewpointKeywords.AddRange(mapping.ViewpointKeywords);
-                gameInput.ExtractedImmersionKeywords.AddRange(mapping.ImmersionKeywords);
-                gameInput.ExtractedInterfaceKeywords.AddRange(mapping.InterfaceKeywords);
+                AddKeywordsIfNotEmpty(mapping.ViewpointKeywords, gameInput.ExtractedViewpointKeywords);
+                AddKeywordsIfNotEmpty(mapping.ImmersionKeywords, gameInput.ExtractedImmersionKeywords);
+                AddKeywordsIfNotEmpty(mapping.InterfaceKeywords, gameInput.ExtractedInterfaceKeywords);
             }
         }
-
+        
+        private static void AddKeywordsIfNotEmpty<T>(List<T> source, List<T> destination)
+        {
+            if (source != null && source.Count > 0)
+            {
+                destination.AddRange(source);
+            }
+        }
     }
 }

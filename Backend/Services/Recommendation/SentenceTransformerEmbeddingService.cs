@@ -15,6 +15,7 @@ namespace Backend.Services.Recommendation
         private readonly IConfiguration _configuration;
         private readonly ISemanticConfigurationService _configService;
         private readonly PlatformAliasService _platformAliasService;
+        private readonly HybridEmbeddingEnhancer _hybridEnhancer;
         private readonly bool _useOnnxModel;
         private readonly EmbeddingDimensions _dimensions;
         private readonly EmbeddingCacheManager _cacheManager;
@@ -30,12 +31,14 @@ namespace Backend.Services.Recommendation
             IConfiguration configuration, 
             ILogger<SentenceTransformerEmbeddingService> logger,
             ISemanticConfigurationService configService,
-            PlatformAliasService platformAliasService)
+            PlatformAliasService platformAliasService,
+            HybridEmbeddingEnhancer hybridEnhancer)
         {
             _logger = logger;
             _configuration = configuration;
             _configService = configService;
             _platformAliasService = platformAliasService;
+            _hybridEnhancer = hybridEnhancer;
 
             // Optimize cache sizes for high-throughput indexing
             var cacheConfig = configuration.GetSection("EmbeddingCache");
@@ -98,20 +101,7 @@ namespace Backend.Services.Recommendation
                 var config = _configService.SemanticConfig;
                 if (config?.Dimensions != null)
                 {
-                    // Validate loaded dimensions match our constants
-                    if (!EmbeddingConstants.ValidateDimensions(config.Dimensions.TotalDimensions))
-                    {
-                        _logger.LogError("Configuration dimensions mismatch! Config has {ConfigDimensions}, but constants expect {ExpectedMessage}",
-                            config.Dimensions.TotalDimensions, EmbeddingConstants.GetExpectedDimensionsMessage());
-                        _logger.LogWarning("Using EmbeddingConstants dimensions for consistency");
-
-                        return new EmbeddingDimensions
-                        {
-                            BaseTextEmbedding = EmbeddingConstants.BASE_TEXT_EMBEDDING_DIMENSIONS
-                        };
-                    }
-
-                    _logger.LogInformation("Loaded embedding dimensions from configuration service: {TotalDimensions} dimensions (ONNX-only)",
+                    _logger.LogDebug("Using embedding dimensions from configuration service: {TotalDimensions} dimensions",
                         config.Dimensions.TotalDimensions);
                     return config.Dimensions;
                 }
@@ -324,12 +314,13 @@ namespace Backend.Services.Recommendation
         {
             var gameText = BuildGameText(gameInput);
 
-            // Check cache first
+            // Check cache first (cache contains hybrid-enhanced embeddings)
             if (_cacheManager.TryGetEmbedding(gameText, out var cachedEmbedding))
             {
                 return cachedEmbedding;
             }
 
+            // Step 1: Generate base text embedding
             var textEmbedding = await GenerateRawTextEmbeddingAsync(gameText);
 
             // Validate text embedding dimensions
@@ -340,20 +331,26 @@ namespace Backend.Services.Recommendation
                 textEmbedding = ResizeEmbedding(textEmbedding, EmbeddingConstants.BASE_TEXT_EMBEDDING_DIMENSIONS);
             }
 
-            // Final validation
-            if (!EmbeddingConstants.ValidateDimensions(textEmbedding.Length))
+            // Step 2: Apply positional semantic enhancement
+            _hybridEnhancer.ApplyPositionalEnhancement(textEmbedding, gameInput);
+
+            // Step 3: Normalize the final hybrid embedding to maintain vector properties
+            var finalEmbedding = NormalizeVector(textEmbedding);
+
+            // Final validation using centralized helper
+            var (isValid, errorMessage) = EmbeddingDimensionValidator.ValidateEmbeddingDimensions(finalEmbedding.Length, "final embedding");
+            if (!isValid)
             {
-                var errorMessage = $"CRITICAL: Final embedding validation failed! Got {textEmbedding.Length}, expected {EmbeddingConstants.TOTAL_EMBEDDING_DIMENSIONS}";
-                _logger.LogCritical(errorMessage);
-                throw new InvalidOperationException(errorMessage);
+                _logger.LogCritical("CRITICAL: {ErrorMessage}", errorMessage);
+                throw new InvalidOperationException(errorMessage!);
             }
 
-            // Cache the result
-            _cacheManager.CacheEmbedding(gameText, textEmbedding);
+            // Cache the hybrid-enhanced result
+            _cacheManager.CacheEmbedding(gameText, finalEmbedding);
 
-            _logger.LogDebug("Successfully generated ONNX-only embedding: {TotalDims} dimensions", textEmbedding.Length);
+            _logger.LogDebug("Successfully generated hybrid embedding: {TotalDims} dimensions (text + positional)", finalEmbedding.Length);
 
-            return textEmbedding;
+            return finalEmbedding;
         }
 
         /// <summary>

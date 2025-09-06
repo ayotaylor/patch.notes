@@ -50,8 +50,6 @@ namespace Backend.Services.Recommendation.Interfaces
         public List<string> ExtractedViewpointKeywords { get; set; } = new();
         public List<string> ExtractedImmersionKeywords { get; set; } = new();
         public List<string> ExtractedInterfaceKeywords { get; set; } = new();
-        
-        public Dictionary<string, float> SemanticWeights { get; set; } = new();
     }
 
     public class UserPreferenceInput

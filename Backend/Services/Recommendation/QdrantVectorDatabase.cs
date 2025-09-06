@@ -49,11 +49,12 @@ namespace Backend.Services.Recommendation
             try
             {
                 // Strict validation: NEVER allow upserting vectors with incorrect dimensions
-                if (!EmbeddingConstants.ValidateDimensions(vector.Length))
+                var (isValid, errorMessage) = EmbeddingDimensionValidator.ValidateEmbeddingDimensions(vector.Length, $"collection {collectionName} upsert");
+                if (!isValid)
                 {
-                    var errorMessage = $"CRITICAL: Cannot upsert vector with incorrect dimensions to collection {collectionName}. Vector ID: {id}, Got {vector.Length}, {EmbeddingConstants.GetExpectedDimensionsMessage()}. This would corrupt the collection.";
-                    _logger.LogCritical(errorMessage);
-                    throw new InvalidOperationException(errorMessage);
+                    var criticalMessage = $"CRITICAL: Cannot upsert vector with incorrect dimensions. Vector ID: {id}, {errorMessage}. This would corrupt the collection.";
+                    _logger.LogCritical(criticalMessage);
+                    throw new InvalidOperationException(criticalMessage);
                 }
 
                 var pointStruct = new PointStruct
@@ -89,6 +90,7 @@ namespace Backend.Services.Recommendation
                 // Process in optimized chunks for maximum throughput
                 const int optimalChunkSize = 100;
                 var totalProcessed = 0;
+                var totalFailed = 0;
                 
                 for (int i = 0; i < vectors.Count; i += optimalChunkSize)
                 {
@@ -97,11 +99,12 @@ namespace Backend.Services.Recommendation
 
                     foreach (var (id, vector, payload) in chunk)
                     {
-                        // Validate each vector
+                        // Validate each vector - track failures
                         if (!EmbeddingConstants.ValidateDimensions(vector.Length))
                         {
                             _logger.LogError("Skipping vector {VectorId} due to incorrect dimensions: {ActualDimensions}", 
                                 id, vector.Length);
+                            totalFailed++;
                             continue;
                         }
 
@@ -128,10 +131,20 @@ namespace Backend.Services.Recommendation
                     }
                 }
 
-                _logger.LogDebug("Bulk upserted {Count} vectors to collection {CollectionName} in {ChunkCount} chunks", 
-                    totalProcessed, collectionName, (vectors.Count + optimalChunkSize - 1) / optimalChunkSize);
+                // Log detailed results and return accurate status
+                if (totalFailed > 0)
+                {
+                    _logger.LogWarning("Bulk upsert completed with {ProcessedCount} successful and {FailedCount} failed vectors to collection {CollectionName}", 
+                        totalProcessed, totalFailed, collectionName);
+                }
+                else
+                {
+                    _logger.LogDebug("Bulk upserted {Count} vectors to collection {CollectionName} in {ChunkCount} chunks", 
+                        totalProcessed, collectionName, (vectors.Count + optimalChunkSize - 1) / optimalChunkSize);
+                }
 
-                return true;
+                // Return true only if all vectors were processed successfully
+                return totalFailed == 0;
             }
             catch (Exception ex)
             {
@@ -145,11 +158,12 @@ namespace Backend.Services.Recommendation
             try
             {
                 // Strict validation: NEVER allow searching with incorrect dimensions
-                if (!EmbeddingConstants.ValidateDimensions(queryVector.Length))
+                var (isValid, errorMessage) = EmbeddingDimensionValidator.ValidateEmbeddingDimensions(queryVector.Length, $"collection {collectionName} search");
+                if (!isValid)
                 {
-                    var errorMessage = $"CRITICAL: Query vector dimension mismatch in collection {collectionName}. Got {queryVector.Length}, {EmbeddingConstants.GetExpectedDimensionsMessage()}. This will cause search failures.";
-                    _logger.LogCritical(errorMessage);
-                    throw new InvalidOperationException(errorMessage);
+                    var criticalMessage = $"CRITICAL: Query vector search failed. {errorMessage}. This will cause search failures.";
+                    _logger.LogCritical(criticalMessage);
+                    throw new InvalidOperationException(criticalMessage);
                 }
 
                 Filter? searchFilter = null;
