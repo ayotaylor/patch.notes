@@ -177,6 +177,15 @@ DETECTION GUIDELINES:
 - Cooperation clues: ""team up"" → Co-op, ""compete"" → Competitive multiplayer
 - Local vs online: ""couch gaming"" → Split-screen, ""online"" → Online multiplayer
 
+🎥 PLAYER PERSPECTIVES: Detect viewpoint and camera preferences (map to exact values):
+- First-person keywords: ""FPS"", ""first-person"", ""through character's eyes"", ""immersive view"" → ""First person""
+- Third-person keywords: ""third-person"", ""over the shoulder"", ""behind character"", ""3rd person"" → ""Third person""
+- Top-down keywords: ""isometric"", ""bird's eye view"", ""top-down"", ""overhead view"", ""from above"" → ""Bird view / Isometric""
+- Side-view keywords: ""side-scrolling"", ""2D platformer"", ""side view"", ""profile view"" → ""Side view""
+- VR keywords: ""virtual reality"", ""VR"", ""immersive VR"", ""headset"" → ""Virtual Reality""
+- Text-based keywords: ""text adventure"", ""interactive fiction"", ""text-only"", ""narrative"" → ""Text""
+- Audio keywords: ""audio game"", ""sound-based"", ""audio-only"", ""blind accessible"" → ""Auditory""
+
 😊 MOODS: Identify emotional goals and desired feelings:
 - Energy levels: ""relaxing"", ""chill"", ""intense"", ""adrenaline-pumping""  
 - Emotional states: ""nostalgic"", ""immersive"", ""challenging"", ""uplifting""
@@ -210,6 +219,7 @@ RETURN ONLY JSON (no markdown, explanations, or additional text):
     ""genres"": [""detected genres with alternatives""],
     ""platforms"": [""platform names and all aliases""],
     ""gameModes"": [""game modes and social aspects""],
+    ""playerPerspectives"": [""EXACT perspective values: First person, Third person, Bird view / Isometric, Side view, Virtual Reality, Text, Auditory""],
     ""moods"": [""emotional keywords and descriptors""],
     ""releaseDateRange"": {{""from"": ""YYYY-MM-DD"", ""to"": ""YYYY-MM-DD""}},
     ""processedQuery"": ""semantically enhanced search text with synonyms and keywords"",
@@ -227,6 +237,11 @@ RETURN ONLY JSON (no markdown, explanations, or additional text):
                 var jsonContent = ExtractJsonFromResponse(response);
 
                 var analysis = JsonSerializer.Deserialize<QueryAnalysis>(jsonContent);
+                if (analysis != null)
+                {
+                    // Validate and normalize player perspectives
+                    analysis.PlayerPerspectives = ValidatePlayerPerspectives(analysis.PlayerPerspectives);
+                }
                 return analysis ?? new QueryAnalysis { ProcessedQuery = query, ConfidenceScore = 0.5f };
             }
             catch (Exception ex)
@@ -273,6 +288,117 @@ RETURN ONLY JSON (no markdown, explanations, or additional text):
             return response;
         }
 
+        /// <summary>
+        /// Validates and maps player perspectives to exact database values
+        /// </summary>
+        private List<string> ValidatePlayerPerspectives(List<string> perspectives)
+        {
+            var validPerspectives = new HashSet<string>
+            {
+                "Side view",
+                "Bird view / Isometric", 
+                "Text",
+                "Auditory",
+                "First person",
+                "Virtual Reality",
+                "Third person"
+            };
+
+            var normalizedPerspectives = new List<string>();
+
+            foreach (var perspective in perspectives ?? [])
+            {
+                // Direct match (case-insensitive)
+                var exactMatch = validPerspectives.FirstOrDefault(v => 
+                    string.Equals(v, perspective, StringComparison.OrdinalIgnoreCase));
+                
+                if (exactMatch != null)
+                {
+                    normalizedPerspectives.Add(exactMatch);
+                    continue;
+                }
+
+                // Fuzzy matching for common variations
+                var normalized = NormalizePerspective(perspective);
+                if (normalized != null && !normalizedPerspectives.Contains(normalized))
+                {
+                    normalizedPerspectives.Add(normalized);
+                }
+            }
+
+            return normalizedPerspectives;
+        }
+
+        /// <summary>
+        /// Maps perspective variations to standard database values
+        /// </summary>
+        private string? NormalizePerspective(string perspective)
+        {
+            var lower = perspective.ToLowerInvariant().Trim();
+
+            // First person variations
+            if (lower.Contains("first") && lower.Contains("person") || 
+                lower.Contains("fps") || 
+                lower.Contains("first-person"))
+            {
+                return "First person";
+            }
+
+            // Third person variations  
+            if (lower.Contains("third") && lower.Contains("person") ||
+                lower.Contains("3rd") && lower.Contains("person") ||
+                lower.Contains("third-person"))
+            {
+                return "Third person";
+            }
+
+            // Isometric/Bird view variations
+            if (lower.Contains("isometric") || 
+                lower.Contains("bird") || 
+                lower.Contains("top-down") ||
+                lower.Contains("overhead") ||
+                lower.Contains("bird's eye"))
+            {
+                return "Bird view / Isometric";
+            }
+
+            // Side view variations
+            if (lower.Contains("side") ||
+                lower.Contains("2d") ||
+                lower.Contains("platformer") ||
+                lower.Contains("side-scrolling"))
+            {
+                return "Side view";
+            }
+
+            // VR variations
+            if (lower.Contains("vr") || 
+                lower.Contains("virtual reality") ||
+                lower.Contains("virtual-reality"))
+            {
+                return "Virtual Reality";
+            }
+
+            // Text variations
+            if (lower.Contains("text") || 
+                lower.Contains("interactive fiction") ||
+                lower.Contains("text-based") ||
+                lower.Contains("narrative"))
+            {
+                return "Text";
+            }
+
+            // Auditory variations
+            if (lower.Contains("audio") || 
+                lower.Contains("sound") ||
+                lower.Contains("auditory"))
+            {
+                return "Auditory";
+            }
+
+            return null;
+        }
+
         private class GroqResponse
         {
             [JsonPropertyName("choices")]
@@ -298,6 +424,61 @@ Game: {game.Summary.Substring(0, Math.Min(150, game.Summary.Length))} | Genres: 
 Keep explanation concise (2-3 sentences) and personal.";
 
             return await GenerateResponseAsync(prompt);
+        }
+
+        public async Task<List<string>> ExplainGameRecommendationsBatchAsync(List<GameRecommendation> games, string originalQuery)
+        {
+            if (games.Count == 0) return [];
+
+            var gameDetails = games.Select((game, index) => 
+                $"{index + 1}. {game.Name}\n   Summary: {game.Summary[..Math.Min(120, game.Summary.Length)]}...\n   Genres: {string.Join(", ", game.Genres)}\n   Rating: {game.Rating ?? 0}/100\n   Match Score: {game.ConfidenceScore:F2}"
+            ).ToList();
+
+            var prompt = $@"For the user query: '{originalQuery}'
+
+Explain why EACH of these {games.Count} games is a good match. Provide concise, personalized explanations (2-3 sentences each).
+
+GAMES:
+{string.Join("\n\n", gameDetails)}
+
+RESPONSE FORMAT: Return exactly {games.Count} explanations as a JSON array:
+[""explanation for game 1"", ""explanation for game 2"", ""explanation for game 3"", ...]
+
+Each explanation should:
+- Be 2-3 sentences maximum
+- Explain WHY it matches the user's query specifically
+- Be personal and engaging
+- Reference specific game features, genres, or qualities";
+
+            var response = await GenerateResponseAsync(prompt);
+
+            try
+            {
+                var jsonContent = ExtractJsonFromResponse(response);
+                var explanations = JsonSerializer.Deserialize<string[]>(jsonContent);
+                
+                if (explanations != null && explanations.Length == games.Count)
+                {
+                    return explanations.ToList();
+                }
+                
+                _logger.LogWarning("Batch explanation count mismatch: expected {Expected}, got {Actual}", 
+                    games.Count, explanations?.Length ?? 0);
+                
+                // Return fallback explanations if count doesn't match
+                return games.Select(game => 
+                    $"This game matches your search for {originalQuery} based on its {string.Join(", ", game.Genres)} gameplay and features."
+                ).ToList();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to parse batch explanations response: {Response}", response);
+                
+                // Return fallback explanations
+                return games.Select(game => 
+                    $"This game matches your search for {originalQuery} based on its {string.Join(", ", game.Genres)} gameplay and features."
+                ).ToList();
+            }
         }
     }
 }

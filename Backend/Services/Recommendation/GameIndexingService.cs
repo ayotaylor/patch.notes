@@ -154,6 +154,7 @@ namespace Backend.Services.Recommendation
                 var batchSize = 128;
                 var skip = 0;
                 var processingStartTime = DateTime.UtcNow;
+                TimeSpan elapsed = TimeSpan.Zero;
 
                 while (true)
                 {
@@ -195,7 +196,12 @@ namespace Backend.Services.Recommendation
                         var payload = new Dictionary<string, object>
                         {
                             {"name", game.Name},
-                            {"cover_url", game.Covers?.FirstOrDefault()?.Url ?? ""}
+                            {"cover_url", game.Covers?.FirstOrDefault()?.Url ?? ""},
+                            {"genres", game.GameGenres?.Select(gg => gg.Genre.Name).ToList() ?? []},
+                            {"platforms", ExpandPlatformsWithAliases(game.GamePlatforms?.Select(gp => gp.Platform.Name).ToList() ?? [])},
+                            {"game_modes", game.GameModes?.Select(gm => gm.GameMode.Name).ToList() ?? []},
+                            {"player_perspectives", game.GamePlayerPerspectives?.Select(gpp => gpp.PlayerPerspective.Name).ToList() ?? []},
+                            {"release_date", game.FirstReleaseDate}
                         };
 
                         vectorsToStore.Add((game.Id.ToString(), embedding, payload));
@@ -216,7 +222,7 @@ namespace Backend.Services.Recommendation
                     skip += batchSize;
 
                     // Enhanced logging with performance metrics and memory monitoring
-                    var elapsed = DateTime.UtcNow - processingStartTime;
+                    elapsed = DateTime.UtcNow - processingStartTime;
                     var gamesPerSecond = indexed > 0 ? Math.Round(indexed / elapsed.TotalSeconds, 2) : 0;
                     var memoryMB = GC.GetTotalMemory(false) / 1024 / 1024;
                     _logger.LogInformation("Indexed batch: {BatchSuccess}/{BatchTotal} games. Total: {Total} games in {Elapsed:mm\\:ss} ({Rate} games/sec, {Memory}MB memory)",
@@ -224,10 +230,10 @@ namespace Backend.Services.Recommendation
 
 
                     // Small delay between batches to prevent connection pool exhaustion
-                    await Task.Delay(5);
+                    //await Task.Delay(5);
                 }
 
-                _logger.LogInformation("Completed indexing {Total} games", indexed);
+                _logger.LogInformation("Completed indexing {Total} games in {time elapsed}", indexed, elapsed.ToString());
                 return indexed;
             }
             catch (Exception ex)
@@ -286,11 +292,16 @@ namespace Backend.Services.Recommendation
                     throw new InvalidOperationException(errorMessage);
                 }
 
-                // Simplified: only store minimal metadata needed for retrieval
+                // Store metadata needed for filtering and retrieval
                 var payload = new Dictionary<string, object>
                 {
                     {"name", game.Name},
-                    {"cover_url", game.Covers?.FirstOrDefault()?.Url ?? ""}
+                    {"cover_url", game.Covers?.FirstOrDefault()?.Url ?? ""},
+                    {"genres", game.GameGenres?.Select(gg => gg.Genre.Name).ToList() ?? []},
+                    {"platforms", ExpandPlatformsWithAliases(game.GamePlatforms?.Select(gp => gp.Platform.Name).ToList() ?? [])},
+                    {"game_modes", game.GameModes?.Select(gm => gm.GameMode.Name).ToList() ?? []},
+                    {"player_perspectives", game.GamePlayerPerspectives?.Select(gpp => gpp.PlayerPerspective.Name).ToList() ?? []},
+                    {"release_date", game.FirstReleaseDate}
                 };
 
                 var success = await _vectorDatabase.UpsertVectorAsync(
@@ -362,12 +373,15 @@ namespace Backend.Services.Recommendation
             }
         }
 
-        public async Task<List<VectorSearchResult>> SearchSimilarGamesAsync(float[] queryEmbedding, int limit = 20)
+        public async Task<List<VectorSearchResult>> SearchSimilarGamesAsync(float[] queryEmbedding, int limit = 20, QueryAnalysis? queryAnalysis = null)
         {
             try
             {
-                // Primary search with enhanced embedding
-                var results = await _vectorDatabase.SearchAsync(GAMES_COLLECTION, queryEmbedding, limit);
+                // Construct filters from query analysis
+                var filters = ConstructFiltersFromQuery(queryAnalysis);
+
+                // Primary search with enhanced embedding and filters
+                var results = await _vectorDatabase.SearchAsync(GAMES_COLLECTION, queryEmbedding, limit, filters);
 
                 // Apply semantic combination boosting for higher quality results
                 if (_semanticKeywordCache?.IsInitialized == true && results.Count > 0)
@@ -382,6 +396,88 @@ namespace Backend.Services.Recommendation
                 _logger.LogError(ex, "Error searching for similar games");
                 return new List<VectorSearchResult>();
             }
+        }
+
+        /// <summary>
+        /// Construct filters for vector database search based on query analysis
+        /// </summary>
+        private Dictionary<string, object>? ConstructFiltersFromQuery(QueryAnalysis? queryAnalysis)
+        {
+            if (queryAnalysis == null)
+                return null;
+
+            var filters = new Dictionary<string, object>();
+
+            // Filter by genres if specified
+            if (queryAnalysis.Genres.Count > 0)
+            {
+                filters["genres"] = new Dictionary<string, object>
+                {
+                    ["$in"] = queryAnalysis.Genres
+                };
+            }
+
+            // Filter by platforms if specified
+            if (queryAnalysis.Platforms.Count > 0)
+            {
+                // Expand platforms with aliases for better matching
+                var expandedPlatforms = queryAnalysis.Platforms
+                    .SelectMany(platform => new[] { platform }.Concat(_platformAliasService.GetAllPlatformAliases(platform)))
+                    .Distinct(StringComparer.OrdinalIgnoreCase)
+                    .ToList();
+
+                filters["platforms"] = new Dictionary<string, object>
+                {
+                    ["$in"] = expandedPlatforms
+                };
+            }
+
+            // Filter by game modes if specified
+            if (queryAnalysis.GameModes.Count > 0)
+            {
+                filters["game_modes"] = new Dictionary<string, object>
+                {
+                    ["$in"] = queryAnalysis.GameModes
+                };
+            }
+
+            // Filter by player perspectives if specified
+            if (queryAnalysis.PlayerPerspectives.Count > 0)
+            {
+                filters["player_perspectives"] = new Dictionary<string, object>
+                {
+                    ["$in"] = queryAnalysis.PlayerPerspectives
+                };
+            }
+
+            // Note: Moods are handled through semantic embedding enhancement, not direct filtering
+            // since games don't have explicit mood metadata in the database
+
+            // Filter by release date range if specified
+            if (queryAnalysis.ReleaseDateRange != null)
+            {
+                var dateFilter = new Dictionary<string, object>();
+                
+                if (queryAnalysis.ReleaseDateRange.From.HasValue)
+                {
+                    dateFilter["$gte"] = new DateTimeOffset(queryAnalysis.ReleaseDateRange.From.Value).ToUnixTimeSeconds();
+                }
+                
+                if (queryAnalysis.ReleaseDateRange.To.HasValue)
+                {
+                    dateFilter["$lte"] = new DateTimeOffset(queryAnalysis.ReleaseDateRange.To.Value).ToUnixTimeSeconds();
+                }
+
+                if (dateFilter.Count > 0)
+                {
+                    filters["release_date"] = dateFilter;
+                }
+            }
+
+            _logger.LogDebug("Constructed {FilterCount} filters for vector search: {Filters}", 
+                filters.Count, string.Join(", ", filters.Keys));
+
+            return filters.Count > 0 ? filters : null;
         }
 
         /// <summary>

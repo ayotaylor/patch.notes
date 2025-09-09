@@ -214,36 +214,15 @@ namespace Backend.Services.Recommendation
                 switch (filterItem.Key)
                 {
                     // Hard requirements - must match exactly
-                    case "release_year_from":
-                    case "release_year_to":
-                    case "platforms" when IsExactPlatformFilter(filterItem.Value):
+                    case "release_date":
                         mustConditions.Add(condition);
                         break;
 
-                    // Platform alias matching - flexible platform matching
-                    case "platform_aliases":
-                    case "canonical_platforms":
-                        shouldConditions.Add(condition);
-                        break;
-
-                    // Semantic expansions - should match for better relevance
-                    case "semantic_genres_expanded":
-                    case "semantic_moods":
-                    case "semantic_mechanics":
-                    case "semantic_themes":
-                        semanticConditions.Add(condition);
-                        break;
-
-                    // Quality preferences
-                    case "prefer_semantic_enhanced":
-                        shouldConditions.Add(condition);
-                        break;
-
-                    // Core content filters - flexible matching
+                    // Core content filters - flexible matching (should match for better relevance)
                     case "genres":
-                    case "game_modes":
-                    case "moods":
                     case "platforms":
+                    case "game_modes": 
+                    case "player_perspectives":
                     default:
                         shouldConditions.Add(condition);
                         break;
@@ -281,20 +260,6 @@ namespace Backend.Services.Recommendation
             return filter;
         }
 
-        private static bool IsExactPlatformFilter(object value)
-        {
-            // If 1-2 specific platforms are mentioned, treat as exact requirement
-            // If 3+ platforms, treat as general preference
-            if (value is string strValue)
-            {
-                var platforms = strValue.Split(',', StringSplitOptions.RemoveEmptyEntries)
-                    .Where(p => !string.IsNullOrWhiteSpace(p))
-                    .ToList();
-                    
-                return platforms.Count > 0 && platforms.Count <= 2;
-            }
-            return false;
-        }
 
         private static int CountFilterConditions(Filter? filter)
         {
@@ -306,160 +271,71 @@ namespace Backend.Services.Recommendation
         {
             try
             {
-                switch (value)
+                // Handle Dictionary<string, object> for complex operations ($in, $gte, $lte)
+                if (value is Dictionary<string, object> dictValue)
                 {
-                    case string stringValue:
-                        // Handle comma-separated values for multi-value fields like genres, platforms, game modes
-                        if (stringValue.Contains(','))
-                        {
-                            var values = stringValue.Split(',', StringSplitOptions.RemoveEmptyEntries)
-                                                   .Select(v => v.Trim())
-                                                   .ToList();
-
-                            // Create multiple conditions with OR logic - match ANY of the provided values
-                            var conditions = values.Select(value => new Condition
-                            {
-                                Field = new FieldCondition
-                                {
-                                    Key = key,
-                                    Match = new Match
-                                    {
-                                        Text = value
-                                    }
-                                }
-                            }).ToList();
-
-                            // Return a condition that matches ANY of the values
-                            return new Condition
-                            {
-                                Filter = new Filter
-                                {
-                                    Should = { conditions }
-                                }
-                            };
-                        }
-                        else
-                        {
-                            return new Condition
-                            {
-                                Field = new FieldCondition
-                                {
-                                    Key = key,
-                                    Match = new Match
-                                    {
-                                        Text = stringValue
-                                    }
-                                }
-                            };
-                        }
-
-                    case int intValue:
-                        // Handle range filters for years
-                        if (key.EndsWith("_from"))
-                        {
-                            return new Condition
-                            {
-                                Field = new FieldCondition
-                                {
-                                    Key = key.Replace("_from", ""),
-                                    Range = new Qdrant.Client.Grpc.Range
-                                    {
-                                        Gte = intValue
-                                    }
-                                }
-                            };
-                        }
-                        else if (key.EndsWith("_to"))
-                        {
-                            return new Condition
-                            {
-                                Field = new FieldCondition
-                                {
-                                    Key = key.Replace("_to", ""),
-                                    Range = new Qdrant.Client.Grpc.Range
-                                    {
-                                        Lte = intValue
-                                    }
-                                }
-                            };
-                        }
-                        else
-                        {
-                            return new Condition
-                            {
-                                Field = new FieldCondition
-                                {
-                                    Key = key,
-                                    Match = new Match
-                                    {
-                                        Integer = intValue
-                                    }
-                                }
-                            };
-                        }
-
-                    case double doubleValue:
-                        // Handle range filters with _from/_to suffixes, otherwise exact match
-                        if (key.EndsWith("_from"))
-                        {
-                            return new Condition
-                            {
-                                Field = new FieldCondition
-                                {
-                                    Key = key.Replace("_from", ""),
-                                    Range = new Qdrant.Client.Grpc.Range
-                                    {
-                                        Gte = doubleValue
-                                    }
-                                }
-                            };
-                        }
-                        else if (key.EndsWith("_to"))
-                        {
-                            return new Condition
-                            {
-                                Field = new FieldCondition
-                                {
-                                    Key = key.Replace("_to", ""),
-                                    Range = new Qdrant.Client.Grpc.Range
-                                    {
-                                        Lte = doubleValue
-                                    }
-                                }
-                            };
-                        }
-                        else
-                        {
-                            return new Condition
-                            {
-                                Field = new FieldCondition
-                                {
-                                    Key = key,
-                                    Match = new Match
-                                    {
-                                        Text = doubleValue.ToString()
-                                    }
-                                }
-                            };
-                        }
-
-                    case bool boolValue:
-                        return new Condition
-                        {
-                            Field = new FieldCondition
-                            {
-                                Key = key,
-                                Match = new Match
-                                {
-                                    Text = boolValue.ToString().ToLower()
-                                }
-                            }
-                        };
-
-                    default:
-                        _logger.LogWarning("Unsupported filter value type: {Type} for key: {Key}", value.GetType(), key);
-                        return null;
+                    return CreateComplexCondition(key, dictValue);
                 }
+
+                // Handle string values
+                if (value is string stringValue)
+                {
+                    // Handle comma-separated values (legacy support)
+                    if (stringValue.Contains(','))
+                    {
+                        var values = stringValue.Split(',', StringSplitOptions.RemoveEmptyEntries)
+                                               .Select(v => v.Trim())
+                                               .ToList();
+                        return CreateInCondition(key, values);
+                    }
+                    
+                    // Simple string match
+                    return CreateMatchCondition(key, stringValue);
+                }
+
+                // Handle integer values TODO: check if this is needed
+                if (value is int intValue)
+                {
+                    if (key.EndsWith("_from"))
+                    {
+                        return CreateRangeCondition(key.Replace("_from", ""), intValue, null);
+                    }
+                    else if (key.EndsWith("_to"))
+                    {
+                        return CreateRangeCondition(key.Replace("_to", ""), null, intValue);
+                    }
+                    else
+                    {
+                        return CreateMatchCondition(key, intValue);
+                    }
+                }
+
+                // Handle double values
+                if (value is double doubleValue)
+                {
+                    if (key.EndsWith("_from"))
+                    {
+                        return CreateRangeCondition(key.Replace("_from", ""), doubleValue, null);
+                    }
+                    else if (key.EndsWith("_to"))
+                    {
+                        return CreateRangeCondition(key.Replace("_to", ""), null, doubleValue);
+                    }
+                    else
+                    {
+                        return CreateMatchCondition(key, doubleValue.ToString());
+                    }
+                }
+
+                // Handle boolean values
+                if (value is bool boolValue)
+                {
+                    return CreateMatchCondition(key, boolValue.ToString().ToLower());
+                }
+
+                // Unsupported type
+                _logger.LogWarning("Unsupported filter value type: {Type} for key: {Key}", value.GetType(), key);
+                return null;
             }
             catch (Exception ex)
             {
@@ -467,6 +343,113 @@ namespace Backend.Services.Recommendation
                 return null;
             }
         }
+
+        private Condition? CreateComplexCondition(string key, Dictionary<string, object> dictValue)
+        {
+            // Handle $in operations (lists of values)
+            if (dictValue.TryGetValue("$in", out var inValue))
+            {
+                return CreateInCondition(key, inValue);
+            }
+                
+            // Handle range operations ($gte and $lte)
+            var hasGte = dictValue.TryGetValue("$gte", out var gteValue);
+            var hasLte = dictValue.TryGetValue("$lte", out var lteValue);
+            
+            if (hasGte || hasLte)
+            {
+                var gte = hasGte ? gteValue : null;
+                var lte = hasLte ? lteValue : null;
+                return CreateRangeCondition(key, gte, lte);
+            }
+                
+            return null;
+        }
+
+        private static Condition CreateInCondition(string key, object inValue)
+        {
+            List<string> values;
+
+            // Convert the input value to a list of strings
+            if (inValue is List<string> stringList)
+            {
+                values = stringList;
+            }
+            else if (inValue is IEnumerable<string> stringEnum)
+            {
+                values = stringEnum.ToList();
+            }
+            else if (inValue is string singleValue)
+            {
+                values = new List<string> { singleValue };
+            }
+            else
+            {
+                values = new List<string> { inValue?.ToString() ?? "" };
+            }
+
+            // Create a condition for each value
+            var conditions = new List<Condition>();
+            foreach (var val in values)
+            {
+                var condition = new Condition
+                {
+                    Field = new FieldCondition
+                    {
+                        Key = key,
+                        Match = new Match { Text = val }
+                    }
+                };
+                conditions.Add(condition);
+            }
+
+            // Return a condition that matches ANY of the values (OR logic)
+            return new Condition
+            {
+                Filter = new Filter { Should = { conditions } }
+            };
+        }
+
+        private Condition CreateRangeCondition(string key, object? gteValue, object? lteValue)
+        {
+            var range = new Qdrant.Client.Grpc.Range();
+            
+            if (gteValue != null)
+                range.Gte = Convert.ToDouble(gteValue);
+            if (lteValue != null)
+                range.Lte = Convert.ToDouble(lteValue);
+
+            return new Condition
+            {
+                Field = new FieldCondition
+                {
+                    Key = key,
+                    Range = range
+                }
+            };
+        }
+
+        private Condition CreateMatchCondition(string key, object value)
+        {
+            var fieldCondition = new FieldCondition { Key = key };
+
+            // Handle different value types for matching
+            if (value is int intVal)
+            {
+                fieldCondition.Match = new Match { Integer = intVal };
+            }
+            else if (value is string strVal)
+            {
+                fieldCondition.Match = new Match { Text = strVal };
+            }
+            else
+            {
+                fieldCondition.Match = new Match { Text = value.ToString() };
+            }
+
+            return new Condition { Field = fieldCondition };
+        }
+
 
         private static Dictionary<string, object> ExtractPayload(Google.Protobuf.Collections.MapField<string, Value> payload)
         {

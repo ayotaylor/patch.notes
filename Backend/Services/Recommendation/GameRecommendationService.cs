@@ -49,14 +49,14 @@ namespace Backend.Services.Recommendation
                 // Step 1: Analyze query with Groq
                 var queryAnalysis = await _languageModel.AnalyzeQueryAsync(request.Query);
                 
-                // Step 2: Enhance query with semantic combinations
+                // Step 2: Enhance query with semantic combinations  TODO: review this
                 var enhancedQuery = await EnhanceQueryWithSemanticCombinations(queryAnalysis);
                 
                 // Step 3: Generate embedding for enhanced query
                 var queryEmbedding = await _embeddingService.GenerateEmbeddingAsync(enhancedQuery);
 
-                // Step 4: Search vector database
-                var searchResults = await _gameIndexingService.SearchSimilarGamesAsync(queryEmbedding, request.MaxResults);
+                // Step 4: Search vector database with filters
+                var searchResults = await _gameIndexingService.SearchSimilarGamesAsync(queryEmbedding, request.MaxResults, queryAnalysis);
 
                 _logger.LogInformation("Vector search returned {Count} results for enhanced query", searchResults.Count);
 
@@ -198,13 +198,14 @@ namespace Backend.Services.Recommendation
         }
 
         /// <summary>
-        /// Convert search results to recommendations with per-game explanations
+        /// Convert search results to recommendations with batch explanations
         /// </summary>
         private async Task<List<GameRecommendation>> ConvertToRecommendationsWithExplanationsAsync(
             List<VectorSearchResult> searchResults, string originalQuery)
         {
             var gameIds = searchResults.Select(r => Guid.Parse(r.Id)).ToList();
 
+            // TODO: fetch only necessary fields using select
             var games = await _context.Games
                 .Where(g => gameIds.Contains(g.Id))
                 .Include(g => g.Covers)
@@ -228,22 +229,39 @@ namespace Backend.Services.Recommendation
                     Rating = game.Rating,
                     ConfidenceScore = result.Score,
                     CoverUrl = game.Covers?.FirstOrDefault()?.Url,
-                    Genres = game.GameGenres?.Select(gg => gg.Genre.Name).ToList() ?? new List<string>(),
-                    Platforms = game.GamePlatforms?.Select(gp => gp.Platform.Name).ToList() ?? new List<string>()
+                    Genres = game.GameGenres?.Select(gg => gg.Genre.Name).ToList() ?? [],
+                    Platforms = game.GamePlatforms?.Select(gp => gp.Platform.Name).ToList() ?? []
                 };
 
-                // Generate per-game explanation
-                try
-                {
-                    recommendation.Reasoning = await _languageModel.ExplainGameRecommendationAsync(recommendation, originalQuery);
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogWarning(ex, "Failed to generate explanation for game {GameName}", game.Name);
-                    recommendation.Reasoning = $"This game matches your search for {originalQuery} based on its genre and features.";
-                }
-
                 recommendations.Add(recommendation);
+            }
+
+            // Generate explanations for all games in a single batch call
+            try
+            {
+                var explanations = await _languageModel.ExplainGameRecommendationsBatchAsync(recommendations, originalQuery);
+                
+                for (int i = 0; i < recommendations.Count && i < explanations.Count; i++)
+                {
+                    recommendations[i].Reasoning = explanations[i];
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to generate batch explanations, using fallback individual explanations");
+                
+                // Fallback to individual explanations if batch fails
+                foreach (var recommendation in recommendations)
+                {
+                    try
+                    {
+                        recommendation.Reasoning = await _languageModel.ExplainGameRecommendationAsync(recommendation, originalQuery);
+                    }
+                    catch
+                    {
+                        recommendation.Reasoning = $"This game matches your search for {originalQuery} based on its genre and features.";
+                    }
+                }
             }
 
             return recommendations.OrderByDescending(r => r.ConfidenceScore).ToList();

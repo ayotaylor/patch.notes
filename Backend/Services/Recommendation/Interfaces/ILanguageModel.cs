@@ -10,6 +10,7 @@ namespace Backend.Services.Recommendation.Interfaces
         Task<string> ExplainRecommendationsAsync(List<GameRecommendation> recommendations, string originalQuery);
         Task<QueryAnalysis> AnalyzeQueryAsync(string query);
         Task<string> ExplainGameRecommendationAsync(GameRecommendation game, string originalQuery);
+        Task<List<string>> ExplainGameRecommendationsBatchAsync(List<GameRecommendation> games, string originalQuery);
     }
 
     public class QueryAnalysis
@@ -22,6 +23,9 @@ namespace Backend.Services.Recommendation.Interfaces
         
         [JsonPropertyName("gameModes")]
         public List<string> GameModes { get; set; } = new();
+        
+        [JsonPropertyName("playerPerspectives")]
+        public List<string> PlayerPerspectives { get; set; } = new();
         
         [JsonPropertyName("moods")]
         public List<string> Moods { get; set; } = new();
@@ -42,9 +46,34 @@ namespace Backend.Services.Recommendation.Interfaces
     public class DateRange
     {
         [JsonPropertyName("from")]
-        public DateTime? From { get; set; }
+        public string? FromString { get; set; }
         
         [JsonPropertyName("to")]
-        public DateTime? To { get; set; }
+        public string? ToString { get; set; }
+        
+        // Helper properties to parse dates safely
+        public DateTime? From => ParseDate(FromString);
+        public DateTime? To => ParseDate(ToString);
+        
+        private static DateTime? ParseDate(string? dateString)
+        {
+            if (string.IsNullOrWhiteSpace(dateString))
+                return null;
+                
+            if (DateTime.TryParseExact(dateString, "yyyy-MM-dd", 
+                System.Globalization.CultureInfo.InvariantCulture, 
+                System.Globalization.DateTimeStyles.None, out var result))
+            {
+                return result;
+            }
+            
+            // Fallback to general parsing
+            if (DateTime.TryParse(dateString, out var fallbackResult))
+            {
+                return fallbackResult;
+            }
+            
+            return null;
+        }
     }
 }
