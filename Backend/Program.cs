@@ -33,8 +33,9 @@ builder.Services.AddMemoryCache();
 // Add semantic configuration service as singleton (loaded once at startup)
 builder.Services.AddSingleton<ISemanticConfigurationService, SemanticConfigurationService>();
 
-// Add platform alias service
-builder.Services.AddScoped<PlatformAliasService>();
+
+// Add category normalization service as scoped (to work with scoped DbContext)
+builder.Services.AddScoped<CategoryNormalizationService>();
 
 // Add hybrid embedding enhancer
 builder.Services.AddScoped<HybridEmbeddingEnhancer>();
@@ -87,6 +88,7 @@ builder.Services.AddSingleton<ConversationStateService>();
 // Add game change tracking service and initial indexing service
 builder.Services.AddHostedService<GameIndexingBackgroundService>();
 builder.Services.AddHostedService<SemanticCacheWarmupService>();
+builder.Services.AddHostedService<CategoryNormalizationInitializationService>();
 builder.Services.AddScoped<GameChangeTrackingService>();
 
 // add igdb import service -- TODO: to be removed later

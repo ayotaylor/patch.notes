@@ -15,7 +15,7 @@ namespace Backend.Services.Recommendation
         private readonly UserPreferenceService _userPreferenceService;
         private readonly GameIndexingService _gameIndexingService;
         private readonly ISemanticKeywordCache? _semanticKeywordCache;
-        private readonly PlatformAliasService _platformAliasService;
+        private readonly CategoryNormalizationService _categoryNormalizationService;
         private readonly ILogger<GameRecommendationService> _logger;
 
         public GameRecommendationService(
@@ -25,7 +25,7 @@ namespace Backend.Services.Recommendation
             ILanguageModel languageModel,
             UserPreferenceService userPreferenceService,
             GameIndexingService gameIndexingService,
-            PlatformAliasService platformAliasService,
+            CategoryNormalizationService categoryNormalizationService,
             ILogger<GameRecommendationService> logger,
             ISemanticKeywordCache? semanticKeywordCache = null)
         {
@@ -36,7 +36,7 @@ namespace Backend.Services.Recommendation
             _userPreferenceService = userPreferenceService;
             _gameIndexingService = gameIndexingService;
             _semanticKeywordCache = semanticKeywordCache;
-            _platformAliasService = platformAliasService;
+            _categoryNormalizationService = categoryNormalizationService;
             _logger = logger;
         }
 
@@ -47,22 +47,25 @@ namespace Backend.Services.Recommendation
                 _logger.LogInformation("Processing recommendation request: {Query}", request.Query);
 
                 // Step 1: Analyze query with Groq
-                var queryAnalysis = await _languageModel.AnalyzeQueryAsync(request.Query);
+                var rawQueryAnalysis = await _languageModel.AnalyzeQueryAsync(request.Query);
                 
-                // Step 2: Enhance query with semantic combinations  TODO: review this
-                var enhancedQuery = await EnhanceQueryWithSemanticCombinations(queryAnalysis);
+                // Step 2: Normalize LLM terms to database canonical names
+                var normalizedQueryAnalysis = await NormalizeQueryAnalysisAsync(rawQueryAnalysis);
                 
-                // Step 3: Generate embedding for enhanced query
+                // Step 3: Enhance query with semantic combinations using normalized terms
+                var enhancedQuery = await EnhanceQueryWithSemanticCombinations(normalizedQueryAnalysis);
+                
+                // Step 4: Generate embedding for enhanced query
                 var queryEmbedding = await _embeddingService.GenerateEmbeddingAsync(enhancedQuery);
 
-                // Step 4: Search vector database with filters
-                var searchResults = await _gameIndexingService.SearchSimilarGamesAsync(queryEmbedding, request.MaxResults, queryAnalysis);
+                // Step 5: Search vector database with normalized filters
+                var searchResults = await _gameIndexingService.SearchSimilarGamesAsync(queryEmbedding, request.MaxResults, normalizedQueryAnalysis);
 
                 _logger.LogInformation("Vector search returned {Count} results for enhanced query", searchResults.Count);
 
                 if (searchResults.Count == 0)
                 {
-                    var followUpQuestions = queryAnalysis.IsAmbiguous 
+                    var followUpQuestions = normalizedQueryAnalysis.IsAmbiguous 
                         ? await _languageModel.GenerateFollowUpQuestionsAsync(request.Query, new List<GameRecommendation>())
                         : new List<string>();
 
@@ -79,7 +82,7 @@ namespace Backend.Services.Recommendation
                 var recommendations = await ConvertToRecommendationsWithExplanationsAsync(searchResults, request.Query);
 
                 // Step 6: Generate follow-up questions if needed
-                var shouldGenerateFollowUp = queryAnalysis.IsAmbiguous || queryAnalysis.ConfidenceScore < 0.7f || searchResults.Count < request.MaxResults / 2;
+                var shouldGenerateFollowUp = normalizedQueryAnalysis.IsAmbiguous || normalizedQueryAnalysis.ConfidenceScore < 0.7f || searchResults.Count < request.MaxResults / 2;
                 var followUps = shouldGenerateFollowUp 
                     ? await _languageModel.GenerateFollowUpQuestionsAsync(request.Query, recommendations)
                     : new List<string>();
@@ -167,21 +170,18 @@ namespace Backend.Services.Recommendation
                     }
                 }
             }
-            
-            // Add platform aliases and platform-genre combinations
-            foreach (var platform in analysis.Platforms.Take(2))
+
+            // Add platform-genre combinations for semantic enhancement
+            // TODO: copmpare platforms with aliases
+            foreach (var platform in analysis.Platforms)
             {
-                // Add platform aliases for broader matching
-                var aliases = _platformAliasService.GetAllPlatformAliases(platform);
-                enhancementKeywords.AddRange(aliases.Take(3));
-                
-                foreach (var genre in analysis.Genres.Take(2))
+                foreach (var genre in analysis.Genres)
                 {
                     var combination = $"{platform} {genre}";
                     var comboMapping = _semanticKeywordCache.GetCombinationKeywords(combination);
                     if (comboMapping != null)
                     {
-                        enhancementKeywords.AddRange(comboMapping.PlatformType.Take(2));
+                        enhancementKeywords.AddRange(comboMapping.PlatformType);
                         enhancementKeywords.AddRange(comboMapping.EraKeywords.Take(2));
                     }
                 }
@@ -265,6 +265,61 @@ namespace Backend.Services.Recommendation
             }
 
             return recommendations.OrderByDescending(r => r.ConfidenceScore).ToList();
+        }
+
+        /// <summary>
+        /// Normalizes LLM-provided terms in QueryAnalysis to database canonical names
+        /// </summary>
+        private async Task<QueryAnalysis> NormalizeQueryAnalysisAsync(QueryAnalysis rawQueryAnalysis)
+        {
+            try
+            {
+                _logger.LogDebug("Normalizing QueryAnalysis - Original: Genres={Genres}, Platforms={Platforms}, GameModes={GameModes}, Perspectives={Perspectives}",
+                    string.Join(",", rawQueryAnalysis.Genres),
+                    string.Join(",", rawQueryAnalysis.Platforms),
+                    string.Join(",", rawQueryAnalysis.GameModes),
+                    string.Join(",", rawQueryAnalysis.PlayerPerspectives));
+
+                // Normalize each category using the CategoryNormalizationService
+                var normalizedGenres = await _categoryNormalizationService.NormalizeFilterValuesAsync(
+                    FilterCategory.Genre, rawQueryAnalysis.Genres);
+                
+                var normalizedPlatforms = await _categoryNormalizationService.NormalizeFilterValuesAsync(
+                    FilterCategory.Platform, rawQueryAnalysis.Platforms);
+                
+                var normalizedGameModes = await _categoryNormalizationService.NormalizeFilterValuesAsync(
+                    FilterCategory.GameMode, rawQueryAnalysis.GameModes);
+                
+                var normalizedPerspectives = await _categoryNormalizationService.NormalizeFilterValuesAsync(
+                    FilterCategory.PlayerPerspective, rawQueryAnalysis.PlayerPerspectives);
+
+                // Create a new QueryAnalysis with normalized values
+                var normalizedQueryAnalysis = new QueryAnalysis
+                {
+                    Genres = normalizedGenres,
+                    Platforms = normalizedPlatforms,
+                    GameModes = normalizedGameModes,
+                    PlayerPerspectives = normalizedPerspectives,
+                    Moods = rawQueryAnalysis.Moods, // Moods don't need normalization as they're not in DB
+                    ReleaseDateRange = rawQueryAnalysis.ReleaseDateRange,
+                    ProcessedQuery = rawQueryAnalysis.ProcessedQuery,
+                    IsAmbiguous = rawQueryAnalysis.IsAmbiguous,
+                    ConfidenceScore = rawQueryAnalysis.ConfidenceScore
+                };
+
+                _logger.LogInformation("QueryAnalysis normalized successfully - Normalized: Genres={Genres}, Platforms={Platforms}, GameModes={GameModes}, Perspectives={Perspectives}",
+                    string.Join(",", normalizedQueryAnalysis.Genres),
+                    string.Join(",", normalizedQueryAnalysis.Platforms),
+                    string.Join(",", normalizedQueryAnalysis.GameModes),
+                    string.Join(",", normalizedQueryAnalysis.PlayerPerspectives));
+
+                return normalizedQueryAnalysis;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to normalize QueryAnalysis, falling back to raw values");
+                return rawQueryAnalysis; // Fallback to original if normalization fails
+            }
         }
     }
 }

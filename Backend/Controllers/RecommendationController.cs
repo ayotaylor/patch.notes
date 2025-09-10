@@ -306,6 +306,42 @@ namespace Backend.Controllers
         }
 
         /// <summary>
+        /// Initialize or re-index all games in parallel in 
+        /// the vector database (Admin only)
+        /// </summary>
+        /// <returns>Number of games indexed</returns>
+        [HttpPost("admin/reindex-parallel")]
+        public async Task<IActionResult> ReindexParallel()
+        {
+            try
+            {
+                _logger.LogInformation("Starting game reindexing process");
+
+                // Initialize collection if it doesn't exist
+                var initialized = await _indexingService.InitializeCollectionAsync();
+                if (!initialized)
+                {
+                    return StatusCode(500, new ApiResponse<int>
+                    {
+                        Success = false,
+                        Message = "Failed to initialize vector database collection"
+                    });
+                }
+                var success = await _indexingService.IndexGamesInParallelAsync();
+                return Ok(new { Success = success });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error during game reindexing");
+                return StatusCode(500, new ApiResponse<int>
+                {
+                    Success = false,
+                    Message = "An error occurred during reindexing"
+                });
+            }
+        }
+
+        /// <summary>
         /// Get examples of supported query types
         /// </summary>
         /// <returns>List of example queries users can try</returns>

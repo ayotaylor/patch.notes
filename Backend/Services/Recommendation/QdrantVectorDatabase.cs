@@ -2,6 +2,7 @@ using Backend.Services.Recommendation.Interfaces;
 using Backend.Configuration;
 using Qdrant.Client;
 using Qdrant.Client.Grpc;
+using static Qdrant.Client.Grpc.Conditions;
 
 namespace Backend.Services.Recommendation
 {
@@ -9,13 +10,11 @@ namespace Backend.Services.Recommendation
     {
         private readonly QdrantClient _client;
         private readonly ILogger<QdrantVectorDatabase> _logger;
-        private readonly PlatformAliasService _platformAliasService;
 
-        public QdrantVectorDatabase(QdrantClient client, ILogger<QdrantVectorDatabase> logger, PlatformAliasService platformAliasService)
+        public QdrantVectorDatabase(QdrantClient client, ILogger<QdrantVectorDatabase> logger)
         {
             _client = client;
             _logger = logger;
-            _platformAliasService = platformAliasService;
         }
 
         public async Task<bool> CreateCollectionAsync(string collectionName, int vectorSize)
@@ -28,13 +27,51 @@ namespace Backend.Services.Recommendation
                     return true;
                 }
 
-                await _client.CreateCollectionAsync(collectionName, new VectorParams
-                {
-                    Size = (ulong)vectorSize,
-                    Distance = Distance.Dot
-                });
+                await _client.CreateCollectionAsync(
+                    collectionName: collectionName,
+                    vectorsConfig: new VectorParams
+                    {
+                        Size = (ulong)vectorSize, // 384D for your embeddings
+                        Distance = Distance.Cosine, // Optimal for normalized embeddings
+                        // Keep in memory during bulk indexing for maximum speed
+                        OnDisk = false,
+                        HnswConfig = new HnswConfigDiff
+                        {
+                            // Optimized for bulk indexing speed, then accuracy
+                            M = 48, // Good balance of speed and accuracy for 300k vectors
+                            EfConstruct = 256, // Higher for better indexing quality
+                            FullScanThreshold = 20000, // Avoid full scans during bulk ops
+                            MaxIndexingThreads = 0 // Use all CPU cores
+                        }
+                    },
+                    optimizersConfig: new OptimizersConfigDiff
+                    {
+                        // More segments for parallel bulk processing
+                        DefaultSegmentNumber = 16,
+                        // Larger segments to handle 300k vectors efficiently
+                        MaxSegmentSize = 50000,
+                        // Reduce memory pressure during bulk indexing
+                        MemmapThreshold = 1000,
+                        // Delay indexing until more vectors are added (huge speed boost)
+                        IndexingThreshold = 20000,
+                        // Less frequent flushes during bulk operations
+                        FlushIntervalSec = 30,
+                        // Use all CPU cores for optimization
+                        MaxOptimizationThreads = new MaxOptimizationThreads
+                        {
+                            Value = 0
+                        }
+                    },
+                    walConfig: new WalConfigDiff
+                    {
+                        WalCapacityMb = 128,
+                        WalSegmentsAhead = 3
+                    }
+                );
 
-                _logger.LogInformation("Created Qdrant collection: {CollectionName}", collectionName);
+                _logger.LogInformation("Created bulk-optimized Qdrant collection: {CollectionName} " +
+                    "with {VectorSize}D Cosine vectors (M=48, EfConstruct=256, 16 segments)", 
+                    collectionName, vectorSize);
                 return true;
             }
             catch (Exception ex)
@@ -63,10 +100,10 @@ namespace Backend.Services.Recommendation
                     Vectors = new Vectors { Vector = new Vector { Data = { vector } } }
                 };
 
-                // Add payload
+                // Add payload with proper type handling
                 foreach (var kvp in payload)
                 {
-                    pointStruct.Payload.Add(kvp.Key, new Value { StringValue = kvp.Value?.ToString() ?? "" });
+                    pointStruct.Payload.Add(kvp.Key, ConvertToQdrantValue(kvp.Value));
                 }
 
                 var points = new List<PointStruct> { pointStruct };
@@ -85,12 +122,21 @@ namespace Backend.Services.Recommendation
             try
             {
                 if (vectors == null || vectors.Count == 0)
+                {
+                    _logger.LogWarning("UPSERT DEBUG: Empty vector list provided to UpsertVectorsBulkAsync");
                     return true;
+                }
+
+                _logger.LogInformation("UPSERT DEBUG: Starting bulk upsert for {Count} vectors to collection {CollectionName}", 
+                    vectors.Count, collectionName);
 
                 // Process in optimized chunks for maximum throughput
-                const int optimalChunkSize = 100;
+                const int optimalChunkSize = 500; // Larger chunks for better performance
                 var totalProcessed = 0;
                 var totalFailed = 0;
+                var initialPointCount = await GetCollectionPointCountAsync(collectionName);
+                
+                _logger.LogInformation("UPSERT DEBUG: Initial point count: {InitialCount}", initialPointCount);
                 
                 for (int i = 0; i < vectors.Count; i += optimalChunkSize)
                 {
@@ -114,10 +160,10 @@ namespace Backend.Services.Recommendation
                             Vectors = new Vectors { Vector = new Vector { Data = { vector } } }
                         };
 
-                        // Add payload
+                        // Add payload with proper type handling
                         foreach (var kvp in payload)
                         {
-                            pointStruct.Payload.Add(kvp.Key, new Value { StringValue = kvp.Value?.ToString() ?? "" });
+                            pointStruct.Payload.Add(kvp.Key, ConvertToQdrantValue(kvp.Value));
                         }
 
                         points.Add(pointStruct);
@@ -125,26 +171,39 @@ namespace Backend.Services.Recommendation
 
                     if (points.Count > 0)
                     {
-                        // Optimized bulk upsert with wait=false for better throughput
+                        _logger.LogInformation("UPSERT DEBUG: About to upsert chunk of {Count} vectors", points.Count);
+                        // Maximum performance: wait=false for async processing
                         await _client.UpsertAsync(collectionName, points, wait: false);
                         totalProcessed += points.Count;
+                        _logger.LogInformation("UPSERT DEBUG: Queued chunk of {Count} vectors to Qdrant (async) - totalProcessed now {Total}", 
+                            points.Count, totalProcessed);
                     }
                 }
 
+                // Verify completion by checking point count after brief delay
+                await Task.Delay(100); // Allow time for async processing
+                var finalPointCount = await GetCollectionPointCountAsync(collectionName);
+                var actuallyAdded = finalPointCount - initialPointCount;
+
+                _logger.LogInformation("UPSERT DEBUG: Final verification - Initial: {Initial}, Final: {Final}, Added: {Added}, Queued: {Queued}, Failed: {Failed}", 
+                    initialPointCount, finalPointCount, actuallyAdded, totalProcessed, totalFailed);
+
                 // Log detailed results and return accurate status
-                if (totalFailed > 0)
+                if (totalFailed > 0 || actuallyAdded < totalProcessed)
                 {
-                    _logger.LogWarning("Bulk upsert completed with {ProcessedCount} successful and {FailedCount} failed vectors to collection {CollectionName}", 
-                        totalProcessed, totalFailed, collectionName);
+                    _logger.LogWarning("UPSERT RESULT: queued {Queued}, failed validation {Failed}, actually persisted {Persisted} vectors to {CollectionName} - RETURNING FALSE", 
+                        totalProcessed, totalFailed, actuallyAdded, collectionName);
+                    return actuallyAdded > 0; // Partial success if some vectors were added
                 }
                 else
                 {
-                    _logger.LogDebug("Bulk upserted {Count} vectors to collection {CollectionName} in {ChunkCount} chunks", 
-                        totalProcessed, collectionName, (vectors.Count + optimalChunkSize - 1) / optimalChunkSize);
+                    _logger.LogInformation("UPSERT RESULT: Successfully bulk upserted {Count} vectors to collection {CollectionName} - verified {Persisted} persisted - RETURNING TRUE", 
+                        totalProcessed, collectionName, actuallyAdded);
                 }
 
-                // Return true only if all vectors were processed successfully
-                return totalFailed == 0;
+                var success = totalFailed == 0 && actuallyAdded >= totalProcessed - totalFailed;
+                _logger.LogInformation("UPSERT DEBUG: Final return value: {Success}", success);
+                return success;
             }
             catch (Exception ex)
             {
@@ -153,7 +212,21 @@ namespace Backend.Services.Recommendation
             }
         }
 
-        public async Task<List<VectorSearchResult>> SearchAsync(string collectionName, float[] queryVector, int limit = 10, Dictionary<string, object>? filter = null)
+        private async Task<long> GetCollectionPointCountAsync(string collectionName)
+        {
+            try
+            {
+                var info = await _client.GetCollectionInfoAsync(collectionName);
+                return (long)info.PointsCount;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to get point count for collection: {CollectionName}", collectionName);
+                return 0;
+            }
+        }
+
+        public async Task<List<VectorSearchResult>> SearchAsync(string collectionName, float[] queryVector, int limit = 10, Dictionary<string, object>? filter = null, QueryAnalysis? queryAnalysis = null)
         {
             try
             {
@@ -171,16 +244,40 @@ namespace Backend.Services.Recommendation
                 // Apply filters if provided to enrich the search results
                 if (filter != null && filter.Count > 0)
                 {
-                    searchFilter = BuildSemanticSearchFilter(filter);
+                    searchFilter = BuildDynamicSearchFilter(filter, queryAnalysis);
                     _logger.LogDebug("Built search filter with {FilterCount} conditions for collection: {CollectionName}", 
                         CountFilterConditions(searchFilter), collectionName);
                 }
 
+                // Accuracy-optimized search for game recommendations (10-30 results)
                 var searchResult = await _client.SearchAsync(
                     collectionName: collectionName,
                     vector: queryVector,
                     filter: searchFilter,
-                    limit: (ulong)limit);
+                    limit: (ulong)limit,
+                    // TODO: remove the arguments below if they don't help with search
+                    // Search parameters optimized for accuracy over speed
+                    searchParams: new SearchParams
+                    {
+                        // Higher ef for better accuracy - rule of thumb: 2-4x the limit
+                        HnswEf = (ulong)Math.Max(128, limit * 4),
+                        // Enable exact search for highest accuracy when needed
+                        Exact = false, // Keep false for performance, but higher ef compensates
+                        // Return vectors for debugging if needed
+                        Quantization = null
+                    },
+                    // Minimal score threshold - let the algorithm rank naturally
+                    scoreThreshold: 0.01f,
+                    // Return full payload for game recommendations
+                    payloadSelector: new WithPayloadSelector
+                    {
+                         Enable = true
+                    },
+                    // Return vectors if you need them for analysis
+                    vectorsSelector: new WithVectorsSelector
+                    {
+                        Enable = false
+                    });
 
                 _logger.LogDebug("Search returned {ResultCount} results for collection: {CollectionName} with {FilterCount} filters", 
                     searchResult.Count, collectionName, filter?.Count ?? 0);
@@ -199,65 +296,99 @@ namespace Backend.Services.Recommendation
             }
         }
 
-        private Filter BuildSemanticSearchFilter(Dictionary<string, object> filters)
+        private Filter BuildDynamicSearchFilter(Dictionary<string, object> filters, QueryAnalysis? queryAnalysis)
         {
-            var mustConditions = new List<Condition>();      // Required filters (AND logic)
-            var shouldConditions = new List<Condition>();    // Optional filters (OR logic) 
-            var semanticConditions = new List<Condition>();  // Semantic expansion filters
+            var mustConditions = new List<Condition>();
+            var shouldConditions = new List<Condition>();
+
+            // Determine filtering strategy based on query confidence and ambiguity
+            var filteringStrategy = DetermineFilteringStrategy(queryAnalysis);
 
             foreach (var filterItem in filters)
             {
                 var condition = CreateFilterCondition(filterItem.Key, filterItem.Value);
                 if (condition == null) continue;
 
-                // Categorize filters based on their purpose and priority
-                switch (filterItem.Key)
+                // Apply dynamic logic based on field type and query confidence
+                if (ShouldUseStrictFiltering(filterItem.Key, filteringStrategy))
                 {
-                    // Hard requirements - must match exactly
-                    case "release_date":
-                        mustConditions.Add(condition);
-                        break;
-
-                    // Core content filters - flexible matching (should match for better relevance)
-                    case "genres":
-                    case "platforms":
-                    case "game_modes": 
-                    case "player_perspectives":
-                    default:
-                        shouldConditions.Add(condition);
-                        break;
+                    mustConditions.Add(condition);
+                }
+                else
+                {
+                    shouldConditions.Add(condition);
                 }
             }
 
-            // Build hierarchical filter structure
+            return BuildFilterFromConditions(mustConditions, shouldConditions);
+        }
+
+        private static FilteringStrategy DetermineFilteringStrategy(QueryAnalysis? queryAnalysis)
+        {
+            if (queryAnalysis == null)
+                return FilteringStrategy.Strict;
+
+            // High confidence + not ambiguous = strict filtering
+            if (queryAnalysis.ConfidenceScore >= 0.8f && !queryAnalysis.IsAmbiguous)
+                return FilteringStrategy.Strict;
+
+            // Low confidence = exploratory filtering  
+            if (queryAnalysis.ConfidenceScore < 0.5f)
+                return FilteringStrategy.Exploratory;
+
+            // Medium confidence or ambiguous = balanced filtering
+            return FilteringStrategy.Balanced;
+        }
+
+        private static bool ShouldUseStrictFiltering(string filterKey, FilteringStrategy strategy)
+        {
+            // Always strict for compatibility and date constraints
+            if (IsHardRequirement(filterKey))
+                return true;
+
+            return strategy switch
+            {
+                FilteringStrategy.Strict => true,
+                FilteringStrategy.Balanced => IsHighPriorityFilter(filterKey),
+                FilteringStrategy.Exploratory => false,
+                _ => false
+            };
+        }
+
+        private static bool IsHardRequirement(string filterKey)
+        {
+            return filterKey is "release_date" or "platforms";
+        }
+
+        private static bool IsHighPriorityFilter(string filterKey)
+        {
+            return filterKey is "genres" or "platforms" or "release_date";
+        }
+
+        private static Filter BuildFilterFromConditions(List<Condition> mustConditions, List<Condition> shouldConditions)
+        {
             var filter = new Filter();
 
-            // Add required conditions (must match ALL)
             if (mustConditions.Count > 0)
             {
                 filter.Must.AddRange(mustConditions);
             }
 
-            // Add flexible content conditions (match ANY)
             if (shouldConditions.Count > 0)
             {
                 filter.Should.AddRange(shouldConditions);
-            }
-
-            // Add semantic expansion conditions (bonus scoring)
-            if (semanticConditions.Count > 0)
-            {
-                // Semantic conditions boost relevance but don't exclude results
-                filter.Should.AddRange(semanticConditions);
-            }
-
-            // Ensure at least one "should" condition matches if any are specified
-            if (shouldConditions.Count > 0 || semanticConditions.Count > 0)
-            {
+                // Require at least one "should" condition to match for variety
                 filter.MinShould = new MinShould { MinCount = 1 };
             }
 
             return filter;
+        }
+
+        private enum FilteringStrategy
+        {
+            Strict,      // High confidence: All filters as must (AND logic)
+            Balanced,    // Medium confidence: Mixed must/should logic  
+            Exploratory  // Low confidence: Prefer should for variety (OR logic)
         }
 
 
@@ -388,26 +519,9 @@ namespace Backend.Services.Recommendation
                 values = new List<string> { inValue?.ToString() ?? "" };
             }
 
-            // Create a condition for each value
-            var conditions = new List<Condition>();
-            foreach (var val in values)
-            {
-                var condition = new Condition
-                {
-                    Field = new FieldCondition
-                    {
-                        Key = key,
-                        Match = new Match { Text = val }
-                    }
-                };
-                conditions.Add(condition);
-            }
-
-            // Return a condition that matches ANY of the values (OR logic)
-            return new Condition
-            {
-                Filter = new Filter { Should = { conditions } }
-            };
+            // Use Qdrant's static Conditions.Match method for array matching
+            // This will match if ANY value in the stored array matches ANY of our filter values
+            return Match(key, values.ToArray());
         }
 
         private Condition CreateRangeCondition(string key, object? gteValue, object? lteValue)
@@ -450,6 +564,48 @@ namespace Backend.Services.Recommendation
             return new Condition { Field = fieldCondition };
         }
 
+        private static Value ConvertToQdrantValue(object? value)
+        {
+            if (value == null)
+                return new Value { StringValue = "" };
+
+            if (value is string str)
+                return new Value { StringValue = str };
+            
+            if (value is int intVal)
+                return new Value { IntegerValue = intVal };
+            
+            if (value is long longVal)
+                return new Value { IntegerValue = longVal };
+            
+            if (value is double doubleVal)
+                return new Value { DoubleValue = doubleVal };
+            
+            if (value is float floatVal)
+                return new Value { DoubleValue = floatVal };
+            
+            if (value is bool boolVal)
+                return new Value { BoolValue = boolVal };
+            
+            if (value is DateTime dateTime)
+                return new Value { IntegerValue = new DateTimeOffset(dateTime).ToUnixTimeSeconds() };
+            
+            if (value is DateTimeOffset dateTimeOffset)
+                return new Value { IntegerValue = dateTimeOffset.ToUnixTimeSeconds() };
+            
+            if (value is IEnumerable<string> stringList)
+            {
+                var listValue = new ListValue();
+                foreach (var item in stringList)
+                {
+                    listValue.Values.Add(new Value { StringValue = item });
+                }
+                return new Value { ListValue = listValue };
+            }
+            
+            return new Value { StringValue = value.ToString() ?? "" };
+        }
+
 
         private static Dictionary<string, object> ExtractPayload(Google.Protobuf.Collections.MapField<string, Value> payload)
         {
@@ -463,6 +619,9 @@ namespace Backend.Services.Recommendation
                     Value.KindOneofCase.IntegerValue => kvp.Value.IntegerValue,
                     Value.KindOneofCase.DoubleValue => kvp.Value.DoubleValue,
                     Value.KindOneofCase.BoolValue => kvp.Value.BoolValue,
+                    Value.KindOneofCase.ListValue => kvp.Value.ListValue.Values
+                        .Select(v => v.StringValue)
+                        .ToList(),
                     _ => kvp.Value.StringValue
                 };
 
@@ -476,13 +635,6 @@ namespace Backend.Services.Recommendation
         {
             try
             {
-                // var selector = new PointsSelector
-                // {
-                //     Points = new PointsIdsList
-                //     {
-                //         Ids = { new PointId { Uuid = id } }
-                //     }
-                // };
                 var points = new List<PointId> { new() { Uuid = id } };
 
                 await _client.DeleteAsync(collectionName, points);
@@ -506,6 +658,20 @@ namespace Backend.Services.Recommendation
             {
                 _logger.LogError(ex, "Failed to check if collection exists: {CollectionName}", collectionName);
                 return false;
+            }
+        }
+
+        public async Task<long> GetPointCountAsync(string collectionName)
+        {
+            try
+            {
+                var info = await _client.GetCollectionInfoAsync(collectionName);
+                return (long)info.PointsCount;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to get point count for collection: {CollectionName}", collectionName);
+                return 0;
             }
         }
     }

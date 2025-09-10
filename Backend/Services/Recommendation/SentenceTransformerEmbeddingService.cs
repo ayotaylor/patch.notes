@@ -5,6 +5,8 @@ using Microsoft.ML.OnnxRuntime.Tensors;
 using Backend.Configuration;
 using System.Buffers;
 using System.Text;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace Backend.Services.Recommendation
 {
@@ -14,7 +16,6 @@ namespace Backend.Services.Recommendation
         private readonly ILogger<SentenceTransformerEmbeddingService> _logger;
         private readonly IConfiguration _configuration;
         private readonly ISemanticConfigurationService _configService;
-        private readonly PlatformAliasService _platformAliasService;
         private readonly HybridEmbeddingEnhancer _hybridEnhancer;
         private readonly bool _useOnnxModel;
         private readonly EmbeddingDimensions _dimensions;
@@ -24,6 +25,11 @@ namespace Backend.Services.Recommendation
         private readonly ArrayPool<float> _floatArrayPool = ArrayPool<float>.Shared;
         private const int MaxBatchSize = 50;
         private ITokenizationStrategy? _cachedWorkingStrategy;
+        
+        // GPU Service integration
+        private readonly HttpClient? _gpuServiceClient;
+        private readonly bool _useGpuService;
+        private readonly string _gpuServiceUrl;
 
         public int EmbeddingDimensions => _dimensions.TotalDimensions;
 
@@ -31,13 +37,11 @@ namespace Backend.Services.Recommendation
             IConfiguration configuration, 
             ILogger<SentenceTransformerEmbeddingService> logger,
             ISemanticConfigurationService configService,
-            PlatformAliasService platformAliasService,
             HybridEmbeddingEnhancer hybridEnhancer)
         {
             _logger = logger;
             _configuration = configuration;
             _configService = configService;
-            _platformAliasService = platformAliasService;
             _hybridEnhancer = hybridEnhancer;
 
             // Optimize cache sizes for high-throughput indexing
@@ -92,6 +96,163 @@ namespace Backend.Services.Recommendation
                 _session?.Dispose();
                 _session = null;
             }
+
+            // Initialize GPU service
+            _useGpuService = _configuration.GetValue<bool>("EmbeddingService:UseGpuService", false);
+            _gpuServiceUrl = _configuration.GetValue<string>("EmbeddingService:GpuServiceUrl", "http://localhost:8001");
+            
+            if (_useGpuService)
+            {
+                _gpuServiceClient = new HttpClient
+                {
+                    BaseAddress = new Uri(_gpuServiceUrl),
+                    Timeout = TimeSpan.FromMinutes(5) // Long timeout for large batches
+                };
+                _logger.LogInformation("GPU service integration enabled at: {Url}", _gpuServiceUrl);
+            }
+            else
+            {
+                _logger.LogInformation("GPU service integration disabled, using local embedding generation");
+            }
+        }
+
+        #region GPU Service Integration
+
+        /// <summary>
+        /// Generate embeddings for a batch of texts using GPU acceleration
+        /// </summary>
+        public async Task<List<float[]>> GenerateEmbeddingsBatchAsync(List<string> texts)
+        {
+            if (texts == null || texts.Count == 0)
+                return new List<float[]>();
+
+            // Use GPU service if enabled and we have multiple texts
+            if (_useGpuService && _gpuServiceClient != null && texts.Count > 1)
+            {
+                try
+                {
+                    return await CallGpuServiceBatchAsync(texts);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "GPU service failed, falling back to local processing for {Count} texts", texts.Count);
+                    // Fall through to local processing
+                }
+            }
+
+            // Fallback to local processing (individual or ONNX batch)
+            if (_useOnnxModel && texts.Count > 1)
+            {
+                return await ProcessTextBatchWithOnnx(texts);
+            }
+            else
+            {
+                // Individual processing for small batches or when ONNX unavailable
+                var tasks = texts.Select(text => GenerateEmbeddingAsync(text));
+                return (await Task.WhenAll(tasks)).ToList();
+            }
+        }
+
+        /// <summary>
+        /// Generate embeddings for game inputs using GPU acceleration
+        /// </summary>
+        public async Task<List<float[]>> GenerateGameEmbeddingsBatchAsync(List<GameEmbeddingInput> gameInputs)
+        {
+            if (gameInputs == null || gameInputs.Count == 0)
+                return new List<float[]>();
+
+            // Convert game inputs to texts
+            var texts = gameInputs.Select(BuildGameText).ToList();
+            
+            // Use the batch text processing
+            return await GenerateEmbeddingsBatchAsync(texts);
+        }
+
+        /// <summary>
+        /// Call the Python GPU service for batch embedding generation
+        /// </summary>
+        private async Task<List<float[]>> CallGpuServiceBatchAsync(List<string> texts)
+        {
+            if (_gpuServiceClient == null)
+                throw new InvalidOperationException("GPU service client not initialized");
+
+            const int maxBatchSize = 100; // Reasonable batch size for HTTP requests
+            var allEmbeddings = new List<float[]>();
+
+            // Process in chunks to avoid request size limits
+            for (int i = 0; i < texts.Count; i += maxBatchSize)
+            {
+                var batch = texts.Skip(i).Take(maxBatchSize).ToList();
+                var embeddings = await CallGpuServiceSingleBatch(batch);
+                allEmbeddings.AddRange(embeddings);
+            }
+
+            return allEmbeddings;
+        }
+
+        /// <summary>
+        /// Call GPU service for a single batch
+        /// </summary>
+        private async Task<List<float[]>> CallGpuServiceSingleBatch(List<string> texts)
+        {
+            var startTime = DateTime.UtcNow;
+            
+            var request = new { texts = texts, batch_size = Math.Min(texts.Count, 64) };
+            var json = JsonSerializer.Serialize(request);
+            var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+            var response = await _gpuServiceClient!.PostAsync("/embed/batch", content);
+            
+            if (!response.IsSuccessStatusCode)
+            {
+                var errorContent = await response.Content.ReadAsStringAsync();
+                throw new HttpRequestException($"GPU service returned {response.StatusCode}: {errorContent}");
+            }
+
+            var responseJson = await response.Content.ReadAsStringAsync();
+            var result = JsonSerializer.Deserialize<GpuServiceResponse>(responseJson);
+
+            if (result?.Embeddings == null)
+                throw new InvalidOperationException("GPU service returned null embeddings");
+
+            var processingTime = (DateTime.UtcNow - startTime).TotalMilliseconds;
+            var rate = texts.Count / (processingTime / 1000.0);
+            
+            _logger.LogDebug("GPU service processed {Count} embeddings in {Time:F0}ms ({Rate:F1} emb/sec) on {Device}", 
+                texts.Count, processingTime, rate, result.DeviceUsed ?? "unknown");
+
+            return result.Embeddings.Select(e => e.ToArray()).ToList();
+        }
+
+        /// <summary>
+        /// Process text batch with local ONNX model (fallback)
+        /// </summary>
+        private async Task<List<float[]>> ProcessTextBatchWithOnnx(List<string> texts)
+        {
+            // This would use your existing ONNX processing logic
+            // For now, fall back to individual processing
+            var tasks = texts.Select(text => GenerateEmbeddingAsync(text));
+            return (await Task.WhenAll(tasks)).ToList();
+        }
+
+        #endregion
+
+        /// <summary>
+        /// Response model for GPU service batch embedding endpoint
+        /// </summary>
+        private class GpuServiceResponse
+        {
+            [JsonPropertyName("embeddings")]
+            public List<List<float>> Embeddings { get; set; } = new();
+            
+            [JsonPropertyName("processing_time")]
+            public double ProcessingTime { get; set; }
+            
+            [JsonPropertyName("device_used")]
+            public string? DeviceUsed { get; set; }
+            
+            [JsonPropertyName("batch_size")]
+            public int BatchSize { get; set; }
         }
 
         private EmbeddingDimensions LoadEmbeddingDimensions()
@@ -657,22 +818,13 @@ namespace Backend.Services.Recommendation
             if (gameInput.Platforms.Count > 0)
             {
                 sb.Append(". Platforms: ");
-                var expandedPlatforms = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                // var expandedPlatforms = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
                 
-                // Add original platforms and their aliases for richer embedding
-                foreach (var platform in gameInput.Platforms)
-                {
-                    expandedPlatforms.Add(platform);
-                    var aliases = _platformAliasService.GetAllPlatformAliases(platform);
-                    // Add up to 2 most common aliases to avoid text bloat
-                    foreach (var alias in aliases.Take(2))
-                    {
-                        expandedPlatforms.Add(alias);
-                    }
-                }
+                // // Add platforms directly (normalization handled at filter level)
+                // expandedPlatforms.AddRange(gameInput.Platforms);
 
                 bool first = true;
-                foreach (var platform in expandedPlatforms)
+                foreach (var platform in gameInput.Platforms)
                 {
                     if (!first) sb.Append(", ");
                     sb.Append(platform);
@@ -827,7 +979,7 @@ namespace Backend.Services.Recommendation
                 if (gameInput.ExtractedEraKeywords.Count > 0)
                 {
                     sb.Append(". Era: ");
-                    for (int i = 0; i < Math.Min(2, gameInput.ExtractedEraKeywords.Count); i++)
+                    for (int i = 0; i < Math.Min(5, gameInput.ExtractedEraKeywords.Count); i++)
                     {
                         if (i > 0) sb.Append(", ");
                         sb.Append(gameInput.ExtractedEraKeywords[i]);
@@ -858,7 +1010,7 @@ namespace Backend.Services.Recommendation
                 if (gameInput.ExtractedScaleKeywords.Count > 0)
                 {
                     sb.Append(". Scale: ");
-                    for (int i = 0; i < Math.Min(2, gameInput.ExtractedScaleKeywords.Count); i++)
+                    for (int i = 0; i < Math.Min(3, gameInput.ExtractedScaleKeywords.Count); i++)
                     {
                         if (i > 0) sb.Append(", ");
                         sb.Append(gameInput.ExtractedScaleKeywords[i]);
@@ -997,6 +1149,7 @@ namespace Backend.Services.Recommendation
         public void Dispose()
         {
             _session?.Dispose();
+            _gpuServiceClient?.Dispose();
             GC.SuppressFinalize(this);
         }
     }

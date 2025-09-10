@@ -13,8 +13,11 @@ namespace Backend.Services.Recommendation
         private readonly ILogger<GameIndexingService> _logger;
         private readonly ISemanticKeywordCache? _semanticKeywordCache;
         private readonly ISemanticConfigurationService _configService;
-        private readonly PlatformAliasService _platformAliasService;
+        private readonly CategoryNormalizationService _categoryNormalizationService;
         private const string GAMES_COLLECTION = "games";
+        
+        // Collection name property for consistency
+        private string CollectionName => GAMES_COLLECTION;
 
         public GameIndexingService(
             ApplicationDbContext context,
@@ -22,7 +25,7 @@ namespace Backend.Services.Recommendation
             IEmbeddingService embeddingService,
             ILogger<GameIndexingService> logger,
             ISemanticConfigurationService configService,
-            PlatformAliasService platformAliasService,
+            CategoryNormalizationService categoryNormalizationService,
             ISemanticKeywordCache? semanticKeywordCache = null)
         {
             _context = context;
@@ -30,7 +33,7 @@ namespace Backend.Services.Recommendation
             _embeddingService = embeddingService;
             _logger = logger;
             _configService = configService;
-            _platformAliasService = platformAliasService;
+            _categoryNormalizationService = categoryNormalizationService;
             _semanticKeywordCache = semanticKeywordCache;
         }
 
@@ -198,7 +201,7 @@ namespace Backend.Services.Recommendation
                             {"name", game.Name},
                             {"cover_url", game.Covers?.FirstOrDefault()?.Url ?? ""},
                             {"genres", game.GameGenres?.Select(gg => gg.Genre.Name).ToList() ?? []},
-                            {"platforms", ExpandPlatformsWithAliases(game.GamePlatforms?.Select(gp => gp.Platform.Name).ToList() ?? [])},
+                            {"platforms", game.GamePlatforms?.Select(gp => gp.Platform.Name).ToList() ?? []},
                             {"game_modes", game.GameModes?.Select(gm => gm.GameMode.Name).ToList() ?? []},
                             {"player_perspectives", game.GamePlayerPerspectives?.Select(gpp => gpp.PlayerPerspective.Name).ToList() ?? []},
                             {"release_date", game.FirstReleaseDate}
@@ -253,7 +256,7 @@ namespace Backend.Services.Recommendation
                 // Use AsSplitQuery() to optimize relationship loading and improve connection pool efficiency
                 var games = await _context.Games
                     .AsNoTracking() // Better performance for read-only operations, reduces connection time
-                    .AsSplitQuery() // Handles relationship loading efficiently with split queries
+
                     .Include(g => g.GameGenres).ThenInclude(gg => gg.Genre)
                     .Include(g => g.GamePlatforms).ThenInclude(gp => gp.Platform)
                     .Include(g => g.GameModes).ThenInclude(gm => gm.GameMode)
@@ -261,6 +264,7 @@ namespace Backend.Services.Recommendation
                     .Include(g => g.Covers)
                     .Include(g => g.GameType)
                     .Include(g => g.GameCompanies).ThenInclude(gc => gc.Company)
+                    .AsSplitQuery() // Handles relationship loading efficiently with split queries
                     .OrderBy(g => g.Id) // Consistent ordering for pagination
                     .Skip(skip)
                     .Take(take)
@@ -298,7 +302,7 @@ namespace Backend.Services.Recommendation
                     {"name", game.Name},
                     {"cover_url", game.Covers?.FirstOrDefault()?.Url ?? ""},
                     {"genres", game.GameGenres?.Select(gg => gg.Genre.Name).ToList() ?? []},
-                    {"platforms", ExpandPlatformsWithAliases(game.GamePlatforms?.Select(gp => gp.Platform.Name).ToList() ?? [])},
+                    {"platforms", game.GamePlatforms?.Select(gp => gp.Platform.Name).ToList() ?? []},
                     {"game_modes", game.GameModes?.Select(gm => gm.GameMode.Name).ToList() ?? []},
                     {"player_perspectives", game.GamePlayerPerspectives?.Select(gpp => gpp.PlayerPerspective.Name).ToList() ?? []},
                     {"release_date", game.FirstReleaseDate}
@@ -330,7 +334,6 @@ namespace Backend.Services.Recommendation
             {
                 var game = await _context.Games
                     .AsNoTracking() // Better performance for read-only operations
-                    .AsSplitQuery() // Optimize relationship loading
                     .Include(g => g.GameGenres).ThenInclude(gg => gg.Genre)
                     .Include(g => g.GamePlatforms).ThenInclude(gp => gp.Platform)
                     .Include(g => g.GameModes).ThenInclude(gm => gm.GameMode)
@@ -338,6 +341,7 @@ namespace Backend.Services.Recommendation
                     .Include(g => g.GameType)
                     .Include(g => g.Covers)
                     .Include(g => g.GameCompanies).ThenInclude(gc => gc.Company)
+                    .AsSplitQuery()
                     .FirstOrDefaultAsync(g => g.Id == gameId);
 
                 if (game == null)
@@ -377,11 +381,11 @@ namespace Backend.Services.Recommendation
         {
             try
             {
-                // Construct filters from query analysis
+                // Construct filters from normalized query analysis
                 var filters = ConstructFiltersFromQuery(queryAnalysis);
 
                 // Primary search with enhanced embedding and filters
-                var results = await _vectorDatabase.SearchAsync(GAMES_COLLECTION, queryEmbedding, limit, filters);
+                var results = await _vectorDatabase.SearchAsync(GAMES_COLLECTION, queryEmbedding, limit, filters, queryAnalysis);
 
                 // Apply semantic combination boosting for higher quality results
                 if (_semanticKeywordCache?.IsInitialized == true && results.Count > 0)
@@ -399,7 +403,7 @@ namespace Backend.Services.Recommendation
         }
 
         /// <summary>
-        /// Construct filters for vector database search based on query analysis
+        /// Construct filters for vector database search based on normalized query analysis
         /// </summary>
         private Dictionary<string, object>? ConstructFiltersFromQuery(QueryAnalysis? queryAnalysis)
         {
@@ -408,7 +412,7 @@ namespace Backend.Services.Recommendation
 
             var filters = new Dictionary<string, object>();
 
-            // Filter by genres if specified
+            // Filter by genres if specified (already normalized)
             if (queryAnalysis.Genres.Count > 0)
             {
                 filters["genres"] = new Dictionary<string, object>
@@ -417,22 +421,16 @@ namespace Backend.Services.Recommendation
                 };
             }
 
-            // Filter by platforms if specified
+            // Filter by platforms if specified (already normalized)
             if (queryAnalysis.Platforms.Count > 0)
             {
-                // Expand platforms with aliases for better matching
-                var expandedPlatforms = queryAnalysis.Platforms
-                    .SelectMany(platform => new[] { platform }.Concat(_platformAliasService.GetAllPlatformAliases(platform)))
-                    .Distinct(StringComparer.OrdinalIgnoreCase)
-                    .ToList();
-
                 filters["platforms"] = new Dictionary<string, object>
                 {
-                    ["$in"] = expandedPlatforms
+                    ["$in"] = queryAnalysis.Platforms
                 };
             }
 
-            // Filter by game modes if specified
+            // Filter by game modes if specified (already normalized)
             if (queryAnalysis.GameModes.Count > 0)
             {
                 filters["game_modes"] = new Dictionary<string, object>
@@ -441,7 +439,7 @@ namespace Backend.Services.Recommendation
                 };
             }
 
-            // Filter by player perspectives if specified
+            // Filter by player perspectives if specified (already normalized)
             if (queryAnalysis.PlayerPerspectives.Count > 0)
             {
                 filters["player_perspectives"] = new Dictionary<string, object>
@@ -508,7 +506,7 @@ namespace Backend.Services.Recommendation
                 // Summary = game.Summary ?? "",
                 // Storyline = game.Storyline ?? "",
                 Genres = game.GameGenres?.Select(gg => gg.Genre.Name).ToList() ?? new List<string>(),
-                Platforms = ExpandPlatformsWithAliases(game.GamePlatforms?.Select(gp => gp.Platform.Name).ToList() ?? new List<string>()),
+                Platforms = game.GamePlatforms?.Select(gp => gp.Platform.Name).ToList() ?? new List<string>(),
                 GameModes = game.GameModes?.Select(gm => gm.GameMode.Name).ToList() ?? new List<string>(),
                 PlayerPerspectives = game.GamePlayerPerspectives?.Select(gpp => gpp.PlayerPerspective.Name).ToList() ?? new List<string>(),
                 //Rating = game.Rating,
@@ -526,25 +524,6 @@ namespace Backend.Services.Recommendation
             return gameInput;
         }
 
-        /// <summary>
-        /// Expands platform names to include aliases for better matching
-        /// </summary>
-        private List<string> ExpandPlatformsWithAliases(List<string> platforms)
-        {
-            var expandedPlatforms = new List<string>();
-
-            foreach (var platform in platforms.Where(p => !string.IsNullOrWhiteSpace(p)))
-            {
-                // Add original platform
-                expandedPlatforms.Add(platform);
-
-                // Add up to 2 aliases to enrich embedding without text bloat
-                var aliases = _platformAliasService.GetAllPlatformAliases(platform);
-                expandedPlatforms.AddRange(aliases.Where(a => !string.Equals(a, platform, StringComparison.OrdinalIgnoreCase)).Take(2));
-            }
-
-            return expandedPlatforms.Distinct(StringComparer.OrdinalIgnoreCase).ToList();
-        }
 
 
         private void ApplySemanticEnrichment(GameEmbeddingInput gameInput)
@@ -615,6 +594,306 @@ namespace Backend.Services.Recommendation
             {
                 destination.AddRange(source);
             }
+        }
+
+        /// <summary>
+        /// High-performance parallel bulk indexing optimized for 300k+ games
+        /// Processes games in parallel batches using all available CPU cores
+        /// </summary>
+        public async Task<bool> IndexGamesInParallelAsync(int batchSize = 100, int maxParallelism = 8, int skipCount = 0)
+        {
+            try
+            {
+                _logger.LogInformation("Starting parallel bulk indexing with batchSize={BatchSize}, maxParallelism={MaxParallelism}, skip={Skip}", 
+                    batchSize, maxParallelism, skipCount);
+
+                var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+
+                // Get total count for progress tracking
+                var totalGames = await _context.Games.CountAsync();
+                var gamesToProcess = totalGames - skipCount;
+                
+                _logger.LogInformation("Processing {GamesToProcess} games out of {TotalGames} total games", gamesToProcess, totalGames);
+
+                // Process games in parallel batches
+                var totalProcessed = 0;
+                var totalFailed = 0;
+                var semaphore = new SemaphoreSlim(maxParallelism);
+                var tasks = new List<Task<(int processed, int failed)>>();
+
+                // Fetch games in chunks to avoid loading everything into memory
+                const int fetchChunkSize = 2000; // Larger chunks for better performance
+                var processedChunks = 0;
+                
+                for (int offset = skipCount; offset < totalGames; offset += fetchChunkSize)
+                {
+                    var games = await GetGamesBatchForIndexing(offset, fetchChunkSize);
+                    if (games.Count == 0) break;
+
+                    _logger.LogDebug("Fetched {Count} games at offset {Offset}", games.Count, offset);
+
+                    // Split this chunk into processing batches
+                    var batches = games.Chunk(batchSize).ToList();
+                    
+                    foreach (var batch in batches)
+                    {
+                        tasks.Add(ProcessGameBatchAsync(batch.ToList(), semaphore));
+                    }
+
+                    _logger.LogDebug("Created {BatchCount} processing tasks from chunk, total tasks: {TotalTasks}", batches.Count, tasks.Count);
+
+                    // Process accumulated tasks more frequently for better progress tracking
+                    if (tasks.Count >= maxParallelism || offset + fetchChunkSize >= totalGames)
+                    {
+                        var completedTasks = await Task.WhenAll(tasks);
+                        var batchProcessed = completedTasks.Sum(r => r.processed);
+                        var batchFailed = completedTasks.Sum(r => r.failed);
+                        
+                        totalProcessed += batchProcessed;
+                        totalFailed += batchFailed;
+                        processedChunks++;
+                        
+                        tasks.Clear();
+
+                        // Progress reporting with better frequency
+                        if (processedChunks % 5 == 0 || offset + fetchChunkSize >= totalGames)
+                        {
+                            var elapsed = stopwatch.Elapsed;
+                            var rate = totalProcessed > 0 ? totalProcessed / elapsed.TotalMinutes : 0;
+                            var eta = totalProcessed > 0 ? (gamesToProcess - totalProcessed) * elapsed.TotalMinutes / totalProcessed : double.PositiveInfinity;
+                            
+                            _logger.LogInformation("Progress: {Processed}/{Total} games indexed ({Failed} failed) - " +
+                                "Rate: {Rate:F1} games/min - ETA: {ETA:F1} minutes - Chunk {ChunkNum}", 
+                                totalProcessed, gamesToProcess, totalFailed, rate, eta, processedChunks);
+                        }
+                        
+                        // Periodic verification every 10 chunks
+                        if (processedChunks % 10 == 0)
+                        {
+                            await VerifyIndexingProgress(totalProcessed);
+                        }
+                    }
+                }
+
+                // Process remaining tasks
+                if (tasks.Count != 0)
+                {
+                    var completedTasks = await Task.WhenAll(tasks);
+                    totalProcessed += completedTasks.Sum(r => r.processed);
+                    totalFailed += completedTasks.Sum(r => r.failed);
+                }
+
+                stopwatch.Stop();
+                var finalRate = totalProcessed / stopwatch.Elapsed.TotalMinutes;
+                
+                _logger.LogInformation("Parallel bulk indexing completed: {Processed} games indexed, {Failed} failed " +
+                    "in {Duration:F1} minutes (Rate: {Rate:F1} games/min)", 
+                    totalProcessed, totalFailed, stopwatch.Elapsed.TotalMinutes, finalRate);
+
+                return totalFailed == 0;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed during parallel bulk indexing");
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Processes a single batch of games with semaphore control for parallelism
+        /// </summary>
+        private async Task<(int processed, int failed)> ProcessGameBatchAsync(List<Backend.Models.Game.Game> games, SemaphoreSlim semaphore)
+        {
+            await semaphore.WaitAsync();
+            try
+            {
+                _logger.LogInformation("BATCH START: Processing batch of {Count} games", games.Count);
+                var processed = 0;
+                var failed = 0;
+
+                // Generate embeddings for all games in the batch
+                var gameEmbeddings = new List<(string id, float[] vector, Dictionary<string, object> payload)>();
+
+                // Prepare all game inputs for batch processing
+                var gameInputs = new List<(Backend.Models.Game.Game game, GameEmbeddingInput input)>();
+                
+                foreach (var game in games)
+                {
+                    try
+                    {
+                        var gameInput = MapGameToEmbeddingInput(game);
+                        gameInputs.Add((game, gameInput));
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogWarning(ex, "Failed to prepare game for embedding: {GameId} - {GameName}", game.Id, game.Name);
+                        failed++;
+                    }
+                }
+
+                // Generate embeddings in batch using GPU acceleration
+                if (gameInputs.Count > 0)
+                {
+                    try
+                    {
+                        _logger.LogInformation("EMBEDDING: Starting generation for {Count} games", gameInputs.Count);
+                        var inputs = gameInputs.Select(gi => gi.input).ToList();
+                        
+                        _logger.LogInformation("EMBEDDING: Service type is {ServiceType}", _embeddingService.GetType().Name);
+                        
+                        // Use the new batch method that supports GPU acceleration
+                        List<float[]> embeddings;
+                        if (_embeddingService is SentenceTransformerEmbeddingService stService)
+                        {
+                            _logger.LogInformation("EMBEDDING: Using GPU-accelerated batch processing");
+                            // Use GPU-accelerated batch processing
+                            embeddings = await stService.GenerateGameEmbeddingsBatchAsync(inputs);
+                        }
+                        else
+                        {
+                            _logger.LogInformation("EMBEDDING: Using fallback batch method");
+                            // Fallback to existing batch method
+                            embeddings = await _embeddingService.ProcessGamesInBatch(inputs);
+                        }
+                        
+                        _logger.LogInformation("EMBEDDING: Generated {EmbeddingCount} embeddings for {InputCount} games", 
+                            embeddings?.Count ?? -1, gameInputs.Count);
+                            
+                        if (embeddings == null)
+                        {
+                            _logger.LogError("EMBEDDING: Embeddings returned NULL!");
+                        }
+                        
+                        // Create game embeddings with payloads
+                        if (embeddings != null && embeddings.Count > 0)
+                        {
+                            _logger.LogInformation("EMBEDDING: Processing {EmbeddingCount} embeddings into payloads", embeddings.Count);
+                            for (int i = 0; i < gameInputs.Count && i < embeddings.Count; i++)
+                            {
+                                var (game, _) = gameInputs[i];
+                                var embedding = embeddings[i];
+                                
+                                if (embedding == null || embedding.Length == 0)
+                                {
+                                    _logger.LogWarning("EMBEDDING: Empty embedding at index {Index} for game: {GameId} - {GameName}", i, game.Id, game.Name);
+                                    failed++;
+                                    continue;
+                                }
+                                
+                                _logger.LogDebug("EMBEDDING: Valid embedding at index {Index} with {Dimensions} dimensions for game {GameId}", 
+                                    i, embedding.Length, game.Id);
+                                
+                                var payload = new Dictionary<string, object>
+                                {
+                                    ["name"] = game.Name ?? "",
+                                    ["summary"] = game.Summary ?? "",
+                                    ["genres"] = game.GameGenres?.Select(gg => gg.Genre.Name).ToList() ?? new List<string>(),
+                                    ["platforms"] = game.GamePlatforms?.Select(gp => gp.Platform.Name).ToList() ?? new List<string>(),
+                                    ["game_modes"] = game.GameModes?.Select(gm => gm.GameMode.Name).ToList() ?? new List<string>(),
+                                    ["player_perspectives"] = game.GamePlayerPerspectives?.Select(gpp => gpp.PlayerPerspective.Name).ToList() ?? new List<string>(),
+                                    ["release_date"] = game.FirstReleaseDate?.ToString("yyyy-MM-dd") ?? "",
+                                    ["rating"] = (double)(game.Rating ?? 0.0m)
+                                };
+                                
+                                gameEmbeddings.Add((game.Id.ToString(), embedding, payload));
+                                processed++;
+                            }
+                            _logger.LogInformation("EMBEDDING: Created {GameEmbeddingCount} game embeddings from {ProcessedCount} games", 
+                                gameEmbeddings.Count, processed);
+                        }
+                        else
+                        {
+                            _logger.LogError("EMBEDDING: No embeddings to process - embeddings is null or empty");
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(ex, "Failed to generate batch embeddings for {Count} games", gameInputs.Count);
+                        failed += gameInputs.Count;
+                    }
+                }
+
+                // Bulk upsert the entire batch if we have any successful embeddings
+                if (gameEmbeddings.Count > 0)
+                {
+                    _logger.LogInformation("UPSERT: Attempting to upsert {Count} game embeddings to vector database", gameEmbeddings.Count);
+                    var upsertSuccess = await _vectorDatabase.UpsertVectorsBulkAsync(CollectionName, gameEmbeddings);
+                    if (!upsertSuccess)
+                    {
+                        _logger.LogError("UPSERT FAILED: Bulk upsert failed for batch of {Count} games", gameEmbeddings.Count);
+                        failed += gameEmbeddings.Count;
+                        processed -= gameEmbeddings.Count;
+                    }
+                    else
+                    {
+                        _logger.LogInformation("UPSERT SUCCESS: Successfully upserted {Count} game embeddings", gameEmbeddings.Count);
+                    }
+                }
+                else
+                {
+                    _logger.LogError("NO EMBEDDINGS: No valid embeddings generated for batch of {Count} games", games.Count);
+                }
+
+                _logger.LogInformation("BATCH END: {Processed} processed, {Failed} failed out of {Total} games", processed, failed, games.Count);
+                return (processed, failed);
+            }
+            finally
+            {
+                semaphore.Release();
+            }
+        }
+
+        /// <summary>
+        /// Verify indexing progress by checking actual point count in vector database
+        /// </summary>
+        private async Task VerifyIndexingProgress(int expectedCount)
+        {
+            try
+            {
+                var actualCount = await _vectorDatabase.CollectionExistsAsync(CollectionName) 
+                    ? await GetCollectionPointCount() 
+                    : 0;
+                    
+                _logger.LogInformation("Indexing verification: Expected {Expected}, Actual {Actual} points in collection", 
+                    expectedCount, actualCount);
+                    
+                if (actualCount < expectedCount * 0.9) // Allow 10% tolerance for async operations
+                {
+                    _logger.LogWarning("Potential indexing lag detected: {Actual} points vs {Expected} expected", 
+                        actualCount, expectedCount);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to verify indexing progress");
+            }
+        }
+
+        /// <summary>
+        /// Get current point count from the vector database collection
+        /// </summary>
+        private async Task<long> GetCollectionPointCount()
+        {
+            return await _vectorDatabase.GetPointCountAsync(CollectionName);
+        }
+
+        /// <summary>
+        /// Optimized database query for batch fetching games with minimal includes
+        /// </summary>
+        private async Task<List<Backend.Models.Game.Game>> GetGamesBatchForIndexing(int offset, int limit)
+        {
+            return await _context.Games
+                .AsNoTracking() // Critical for performance - no change tracking
+                .Include(g => g.Covers) // Include all covers, will filter in memory if needed
+                .Include(g => g.GameGenres).ThenInclude(gg => gg.Genre)
+                .Include(g => g.GamePlatforms).ThenInclude(gp => gp.Platform)
+                .Include(g => g.GameModes).ThenInclude(gm => gm.GameMode)
+                .Include(g => g.GamePlayerPerspectives).ThenInclude(gpp => gpp.PlayerPerspective)
+                .AsSplitQuery() // Prevent cartesian explosion
+                .OrderBy(g => g.Id) // Consistent ordering for pagination
+                .Skip(offset)
+                .Take(limit)
+                .ToListAsync();
         }
     }
 }

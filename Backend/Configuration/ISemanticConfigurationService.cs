@@ -14,6 +14,21 @@ namespace Backend.Configuration
         /// Platform aliases for fuzzy matching
         /// </summary>
         Dictionary<string, List<string>> PlatformAliases { get; }
+        
+        // /// <summary>
+        // /// Genre aliases for fuzzy matching
+        // /// </summary>
+        // Dictionary<string, List<string>> GenreAliases { get; }
+        
+        // /// <summary>
+        // /// Game mode aliases for fuzzy matching
+        // /// </summary>
+        // Dictionary<string, List<string>> GameModeAliases { get; }
+        
+        // /// <summary>
+        // /// Player perspective aliases for fuzzy matching
+        // /// </summary>
+        // Dictionary<string, List<string>> PlayerPerspectiveAliases { get; }
 
         /// <summary>
         /// Indicates if the configuration was loaded successfully
