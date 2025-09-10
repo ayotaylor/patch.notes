@@ -51,8 +51,9 @@ namespace Backend.Services.Recommendation
                 
                 // Step 2: Normalize LLM terms to database canonical names
                 var normalizedQueryAnalysis = await NormalizeQueryAnalysisAsync(rawQueryAnalysis);
-                
+
                 // Step 3: Enhance query with semantic combinations using normalized terms
+                // TODO: review this
                 var enhancedQuery = await EnhanceQueryWithSemanticCombinations(normalizedQueryAnalysis);
                 
                 // Step 4: Generate embedding for enhanced query

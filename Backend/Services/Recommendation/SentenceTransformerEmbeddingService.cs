@@ -798,9 +798,17 @@ namespace Backend.Services.Recommendation
                 (gameInput.Genres.Sum(g => g.Length) + gameInput.Genres.Count * 2) +
                 (gameInput.Platforms.Sum(p => p.Length) + gameInput.Platforms.Count * 2) +
                 (gameInput.GameModes.Sum(m => m.Length) + gameInput.GameModes.Count * 2) +
-                (gameInput.Companies.Sum(c => c.Length) + gameInput.Companies.Count * 2);
+                (gameInput.Companies.Sum(c => c.Length) + gameInput.Companies.Count * 2) +
+                (gameInput.PlayerPerspectives.Sum(pp => pp.Length) + gameInput.PlayerPerspectives.Count * 2) +
+                (gameInput.GameType.Length * 2) +
+                (gameInput.ReleaseDate != null ?
+                    gameInput.ReleaseDate?.ToString().Length * 2 : 0) +
+                (gameInput.Rating != null ?
+                    gameInput.Rating?.ToString().Length * 2 : 0);
 
-            var sb = new StringBuilder(estimatedLength);
+            var estimatedLengthVal = estimatedLength.Value;
+
+            var sb = new StringBuilder(estimatedLengthVal);
 
             // Build text directly without intermediate collections
             sb.Append("Game: ").Append(gameInput.Name);
@@ -879,7 +887,7 @@ namespace Backend.Services.Recommendation
 
             if (gameInput.ReleaseDate.HasValue)
             {
-                sb.Append(". Released: ").Append(gameInput.ReleaseDate.Value.Year);
+                sb.Append(". Released(unix timestamp): ").Append(gameInput.ReleaseDate.Value.ToString());
             }
 
             if (gameInput.Rating.HasValue)

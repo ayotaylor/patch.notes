@@ -20,7 +20,7 @@ namespace Backend.Services.Recommendation.Interfaces
         public List<string> GameModes { get; set; } = new();
         public List<string> PlayerPerspectives { get; set; } = new();
         public decimal? Rating { get; set; }
-        public DateTime? ReleaseDate { get; set; }
+        public long? ReleaseDate { get; set; }
 
         // Additional required fields
         public List<string> AgeRatings { get; set; } = new();

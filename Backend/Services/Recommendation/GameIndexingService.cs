@@ -447,6 +447,19 @@ namespace Backend.Services.Recommendation
                     ["$in"] = queryAnalysis.PlayerPerspectives
                 };
             }
+            
+            if (!string.IsNullOrWhiteSpace(queryAnalysis.GameType))
+            {
+                filters["game_type"] = queryAnalysis.GameType;
+            }
+
+            if (queryAnalysis.Companies?.Count > 0)
+            {
+                filters["companies"] = new Dictionary<string, object>
+                {
+                    ["$in"] = queryAnalysis.Companies
+                };
+            }
 
             // Note: Moods are handled through semantic embedding enhancement, not direct filtering
             // since games don't have explicit mood metadata in the database
@@ -455,12 +468,12 @@ namespace Backend.Services.Recommendation
             if (queryAnalysis.ReleaseDateRange != null)
             {
                 var dateFilter = new Dictionary<string, object>();
-                
+
                 if (queryAnalysis.ReleaseDateRange.From.HasValue)
                 {
                     dateFilter["$gte"] = new DateTimeOffset(queryAnalysis.ReleaseDateRange.From.Value).ToUnixTimeSeconds();
                 }
-                
+
                 if (queryAnalysis.ReleaseDateRange.To.HasValue)
                 {
                     dateFilter["$lte"] = new DateTimeOffset(queryAnalysis.ReleaseDateRange.To.Value).ToUnixTimeSeconds();
@@ -509,8 +522,8 @@ namespace Backend.Services.Recommendation
                 Platforms = game.GamePlatforms?.Select(gp => gp.Platform.Name).ToList() ?? new List<string>(),
                 GameModes = game.GameModes?.Select(gm => gm.GameMode.Name).ToList() ?? new List<string>(),
                 PlayerPerspectives = game.GamePlayerPerspectives?.Select(gpp => gpp.PlayerPerspective.Name).ToList() ?? new List<string>(),
-                //Rating = game.Rating,
-                ReleaseDate = game.FirstReleaseDate.HasValue ? DateTimeOffset.FromUnixTimeSeconds(game.FirstReleaseDate.Value).DateTime : null
+                Rating = game.Rating ?? null,
+                ReleaseDate = game.FirstReleaseDate
             };
 
             // Add the new required fields
@@ -598,7 +611,7 @@ namespace Backend.Services.Recommendation
 
         /// <summary>
         /// High-performance parallel bulk indexing optimized for 300k+ games
-        /// Processes games in parallel batches using all available CPU cores
+        /// Processes games in parallel batches using all available CPU cores/GPU
         /// </summary>
         public async Task<bool> IndexGamesInParallelAsync(int batchSize = 100, int maxParallelism = 8, int skipCount = 0)
         {
@@ -791,7 +804,9 @@ namespace Backend.Services.Recommendation
                                     ["platforms"] = game.GamePlatforms?.Select(gp => gp.Platform.Name).ToList() ?? new List<string>(),
                                     ["game_modes"] = game.GameModes?.Select(gm => gm.GameMode.Name).ToList() ?? new List<string>(),
                                     ["player_perspectives"] = game.GamePlayerPerspectives?.Select(gpp => gpp.PlayerPerspective.Name).ToList() ?? new List<string>(),
-                                    ["release_date"] = game.FirstReleaseDate?.ToString("yyyy-MM-dd") ?? "",
+                                    ["release_date"] = game.FirstReleaseDate,
+                                    ["companies"] = game.GameCompanies?.Select(gc => gc.Company.Name).ToList() ?? [],
+                                    ["game_type"] = game.GameType?.Type ?? "",
                                     ["rating"] = (double)(game.Rating ?? 0.0m)
                                 };
                                 
@@ -884,11 +899,13 @@ namespace Backend.Services.Recommendation
         {
             return await _context.Games
                 .AsNoTracking() // Critical for performance - no change tracking
-                .Include(g => g.Covers) // Include all covers, will filter in memory if needed
+                                //.Include(g => g.Covers) // Include all covers, will filter in memory if needed
                 .Include(g => g.GameGenres).ThenInclude(gg => gg.Genre)
                 .Include(g => g.GamePlatforms).ThenInclude(gp => gp.Platform)
                 .Include(g => g.GameModes).ThenInclude(gm => gm.GameMode)
                 .Include(g => g.GamePlayerPerspectives).ThenInclude(gpp => gpp.PlayerPerspective)
+                .Include(g => g.GameType)
+                .Include(g => g.GameCompanies).ThenInclude(gc => gc.Company)
                 .AsSplitQuery() // Prevent cartesian explosion
                 .OrderBy(g => g.Id) // Consistent ordering for pagination
                 .Skip(offset)

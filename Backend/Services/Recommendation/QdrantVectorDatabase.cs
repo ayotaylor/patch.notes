@@ -328,13 +328,13 @@ namespace Backend.Services.Recommendation
             if (queryAnalysis == null)
                 return FilteringStrategy.Strict;
 
-            // High confidence + not ambiguous = strict filtering
-            if (queryAnalysis.ConfidenceScore >= 0.8f && !queryAnalysis.IsAmbiguous)
-                return FilteringStrategy.Strict;
+            // // High confidence + not ambiguous = strict filtering
+            // if (queryAnalysis.ConfidenceScore >= 0.8f && !queryAnalysis.IsAmbiguous)
+            //     return FilteringStrategy.Strict;
 
-            // Low confidence = exploratory filtering  
-            if (queryAnalysis.ConfidenceScore < 0.5f)
-                return FilteringStrategy.Exploratory;
+            // // Low confidence = exploratory filtering  
+            // if (queryAnalysis.ConfidenceScore < 0.5f)
+            //     return FilteringStrategy.Exploratory;
 
             // Medium confidence or ambiguous = balanced filtering
             return FilteringStrategy.Balanced;
@@ -349,6 +349,7 @@ namespace Backend.Services.Recommendation
             return strategy switch
             {
                 FilteringStrategy.Strict => true,
+                // TODO: review this. should genres or platforms be must conditions?
                 FilteringStrategy.Balanced => IsHighPriorityFilter(filterKey),
                 FilteringStrategy.Exploratory => false,
                 _ => false
@@ -357,7 +358,7 @@ namespace Backend.Services.Recommendation
 
         private static bool IsHardRequirement(string filterKey)
         {
-            return filterKey is "release_date" or "platforms";
+            return filterKey is "release_date";
         }
 
         private static bool IsHighPriorityFilter(string filterKey)

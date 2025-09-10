@@ -32,6 +32,12 @@ namespace Backend.Services.Recommendation.Interfaces
         
         [JsonPropertyName("releaseDateRange")]
         public DateRange? ReleaseDateRange { get; set; }
+
+        [JsonPropertyName("companies")]
+        public List<string>? Companies { get; set; }
+
+        [JsonPropertyName("gameType")]
+        public string? GameType { get; set; }
         
         [JsonPropertyName("processedQuery")]
         public string ProcessedQuery { get; set; } = string.Empty;
@@ -46,14 +52,14 @@ namespace Backend.Services.Recommendation.Interfaces
     public class DateRange
     {
         [JsonPropertyName("from")]
-        public string? FromString { get; set; }
+        public string? FromStr { get; set; }
         
         [JsonPropertyName("to")]
-        public string? ToString { get; set; }
+        public string? ToStr { get; set; }
         
         // Helper properties to parse dates safely
-        public DateTime? From => ParseDate(FromString);
-        public DateTime? To => ParseDate(ToString);
+        public DateTime? From => ParseDate(FromStr);
+        public DateTime? To => ParseDate(ToStr);
         
         private static DateTime? ParseDate(string? dateString)
         {

@@ -174,7 +174,7 @@ namespace Backend.Services.Recommendation
                 GameModes = ["Single-player", "Multiplayer"],
                 PlayerPerspectives = ["Third person"],
                 Rating = 8,
-                ReleaseDate = new DateTime(2023, 1, 1)
+                ReleaseDate = long.Parse("1704067200"), // Jan 1, 2024
             };
         }
 
