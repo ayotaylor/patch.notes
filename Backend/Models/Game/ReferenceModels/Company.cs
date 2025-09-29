@@ -11,7 +11,7 @@ namespace Backend.Models.Game.ReferenceModels
         public string Name { get; set; } = string.Empty;
 
         [MaxLength(100)]
-        public string? Country { get; set; }
+        public int? CountryCode { get; set; }
 
         public string? Description { get; set; }
 

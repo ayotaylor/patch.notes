@@ -205,38 +205,29 @@ namespace Backend.Services.Recommendation
         {
             return category switch
             {
-                FilterCategory.Genre => (await _context.Genres
+                FilterCategory.Genre => await _context.Genres
                     .AsNoTracking()
                     .Select(g => g.Name)
                     .Where(n => !string.IsNullOrEmpty(n))
-                    .Distinct()
-                    .ToListAsync())
-                    .ToHashSet(StringComparer.OrdinalIgnoreCase),
+                    .ToHashSetAsync(StringComparer.OrdinalIgnoreCase),
 
-                FilterCategory.Platform => (await _context.Platforms
+                FilterCategory.Platform => await _context.Platforms
                     .AsNoTracking()
-                    .Select(p => p.Name)
+                    .SelectMany(p => new List<string> { p.Name, p.AlternativeName })
                     .Where(n => !string.IsNullOrEmpty(n))
-                    .Distinct()
-                    .ToListAsync())
-                    .Where(n => n != null)
-                    .ToHashSet(StringComparer.OrdinalIgnoreCase),
+                    .ToHashSetAsync(StringComparer.OrdinalIgnoreCase),
 
-                FilterCategory.GameMode => (await _context.GameModes
+                FilterCategory.GameMode => await _context.GameModes
                     .AsNoTracking()
                     .Select(gm => gm.Name)
                     .Where(n => !string.IsNullOrEmpty(n))
-                    .Distinct()
-                    .ToListAsync())
-                    .ToHashSet(StringComparer.OrdinalIgnoreCase),
+                    .ToHashSetAsync(StringComparer.OrdinalIgnoreCase),
 
-                FilterCategory.PlayerPerspective => (await _context.PlayerPerspectives
+                FilterCategory.PlayerPerspective => await _context.PlayerPerspectives
                     .AsNoTracking()
                     .Select(pp => pp.Name)
                     .Where(n => !string.IsNullOrEmpty(n))
-                    .Distinct()
-                    .ToListAsync())
-                    .ToHashSet(StringComparer.OrdinalIgnoreCase),
+                    .ToHashSetAsync(StringComparer.OrdinalIgnoreCase),
 
                 _ => new HashSet<string>(StringComparer.OrdinalIgnoreCase)
             };

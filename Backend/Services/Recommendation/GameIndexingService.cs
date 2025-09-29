@@ -201,7 +201,11 @@ namespace Backend.Services.Recommendation
                             {"name", game.Name},
                             {"cover_url", game.Covers?.FirstOrDefault()?.Url ?? ""},
                             {"genres", game.GameGenres?.Select(gg => gg.Genre.Name).ToList() ?? []},
-                            {"platforms", game.GamePlatforms?.Select(gp => gp.Platform.Name).ToList() ?? []},
+                            {"platforms", game.GamePlatforms?
+                                .SelectMany(gp =>
+                                    new List<string> {gp.Platform.Name , gp.Platform.AlternativeName})
+                                .Where(gp => !string.IsNullOrEmpty(gp))
+                                .ToList() ?? []},
                             {"game_modes", game.GameModes?.Select(gm => gm.GameMode.Name).ToList() ?? []},
                             {"player_perspectives", game.GamePlayerPerspectives?.Select(gpp => gpp.PlayerPerspective.Name).ToList() ?? []},
                             {"release_date", game.FirstReleaseDate}
@@ -302,7 +306,10 @@ namespace Backend.Services.Recommendation
                     {"name", game.Name},
                     {"cover_url", game.Covers?.FirstOrDefault()?.Url ?? ""},
                     {"genres", game.GameGenres?.Select(gg => gg.Genre.Name).ToList() ?? []},
-                    {"platforms", game.GamePlatforms?.Select(gp => gp.Platform.Name).ToList() ?? []},
+                    {"platforms", game.GamePlatforms?
+                        .SelectMany(gp =>
+                            new List<string> {gp.Platform.Name , gp.Platform.AlternativeName})
+                        .Where(gp => !string.IsNullOrEmpty(gp)).ToList() ?? []},
                     {"game_modes", game.GameModes?.Select(gm => gm.GameMode.Name).ToList() ?? []},
                     {"player_perspectives", game.GamePlayerPerspectives?.Select(gpp => gpp.PlayerPerspective.Name).ToList() ?? []},
                     {"release_date", game.FirstReleaseDate}
@@ -519,7 +526,11 @@ namespace Backend.Services.Recommendation
                 // Summary = game.Summary ?? "",
                 // Storyline = game.Storyline ?? "",
                 Genres = game.GameGenres?.Select(gg => gg.Genre.Name).ToList() ?? new List<string>(),
-                Platforms = game.GamePlatforms?.Select(gp => gp.Platform.Name).ToList() ?? new List<string>(),
+                Platforms = game.GamePlatforms?
+                    .SelectMany(gp =>
+                        new List<string> { gp.Platform.Name, gp.Platform.AlternativeName })
+                    .Where(gp => !string.IsNullOrEmpty(gp))
+                    .ToList() ?? new List<string>(),
                 GameModes = game.GameModes?.Select(gm => gm.GameMode.Name).ToList() ?? new List<string>(),
                 PlayerPerspectives = game.GamePlayerPerspectives?.Select(gpp => gpp.PlayerPerspective.Name).ToList() ?? new List<string>(),
                 Rating = game.Rating ?? null,
@@ -801,7 +812,11 @@ namespace Backend.Services.Recommendation
                                     ["name"] = game.Name ?? "",
                                     ["summary"] = game.Summary ?? "",
                                     ["genres"] = game.GameGenres?.Select(gg => gg.Genre.Name).ToList() ?? new List<string>(),
-                                    ["platforms"] = game.GamePlatforms?.Select(gp => gp.Platform.Name).ToList() ?? new List<string>(),
+                                    ["platforms"] = game.GamePlatforms?
+                                        .SelectMany(gp =>
+                                            new List<string> { gp.Platform.Name, gp.Platform.AlternativeName })
+                                        .Where(gp => !string.IsNullOrEmpty(gp))
+                                        .ToList() ?? [],
                                     ["game_modes"] = game.GameModes?.Select(gm => gm.GameMode.Name).ToList() ?? new List<string>(),
                                     ["player_perspectives"] = game.GamePlayerPerspectives?.Select(gpp => gpp.PlayerPerspective.Name).ToList() ?? new List<string>(),
                                     ["release_date"] = game.FirstReleaseDate,

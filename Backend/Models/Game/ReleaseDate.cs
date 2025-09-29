@@ -17,7 +17,7 @@ namespace Backend.Models.Game
         [Required]
         public Guid RegionId { get; set; }
 
-        public DateTime? Date { get; set; }
+        public long? Date { get; set; }
 
         [ForeignKey("GameId")]
         public virtual Game Game { get; set; } = null!;

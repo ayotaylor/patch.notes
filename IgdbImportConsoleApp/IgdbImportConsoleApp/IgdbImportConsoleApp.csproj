@@ -22,7 +22,7 @@
 
     <!-- Reference your web API project to reuse models and DbContext -->
   <ItemGroup>
-    <ProjectReference Include="/home/ayo/workspace/patch.notes/Backend/Backend.csproj" />
+    <ProjectReference Include="../../Backend/Backend.csproj" />
   </ItemGroup>
 
   <!-- Copy configuration files to output -->

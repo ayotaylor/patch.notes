@@ -231,7 +231,10 @@ namespace Backend.Services.Recommendation
                     ConfidenceScore = result.Score,
                     CoverUrl = game.Covers?.FirstOrDefault()?.Url,
                     Genres = game.GameGenres?.Select(gg => gg.Genre.Name).ToList() ?? [],
-                    Platforms = game.GamePlatforms?.Select(gp => gp.Platform.Name).ToList() ?? []
+                    Platforms = game.GamePlatforms?
+                        .SelectMany(gp =>
+                            new List<string> {gp.Platform.Name , gp.Platform.AlternativeName})
+                        .Where(gp => !string.IsNullOrEmpty(gp)).ToList() ?? []
                 };
 
                 recommendations.Add(recommendation);

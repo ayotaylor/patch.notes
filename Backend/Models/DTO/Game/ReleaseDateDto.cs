@@ -4,6 +4,6 @@ namespace Backend.Models.DTO.Game
     {
         public PlatformDto Platform { get; set; } = new();
         public RegionDto Region { get; set; } = new();
-        public DateTime? Date { get; set; }
+        public long? Date { get; set; }
     }
 }

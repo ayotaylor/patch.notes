@@ -12,6 +12,8 @@ namespace Backend.Models.DTO.Game
         public long? FirstReleaseDate { get; set; }
         public int Hypes { get; set; }
         public decimal? IgdbRating { get; set; }
+        public decimal? IgdbTotalRating { get; set; }
+        public int? IgdbTotalRatingCount { get; set; }
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
 
@@ -28,6 +30,7 @@ namespace Backend.Models.DTO.Game
         public List<PlatformDto> Platforms { get; set; } = new();
         public List<PlayerPerspectiveDto> PlayerPerspectives { get; set; } = new();
         public List<ReleaseDateDto> ReleaseDates { get; set; } = new();
+        public List<ThemeDto> Themes { get; set; } = null!;
 
         // Game relationships
         public List<GameRelationshipDto> Dlcs { get; set; } = new();

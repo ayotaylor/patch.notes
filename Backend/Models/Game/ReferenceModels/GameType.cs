@@ -9,6 +9,6 @@ namespace Backend.Models.Game.ReferenceModels
         [Required, MaxLength(100)]
         public string Type { get; set; } = string.Empty; // dlc, bundle, episode, etc.
 
-        public virtual ICollection<Game> Games { get; set; } = new List<Game>();
+        public virtual ICollection<Game> Games { get; set; } = [];
     }
 }

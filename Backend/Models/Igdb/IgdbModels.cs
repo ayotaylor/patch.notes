@@ -8,6 +8,8 @@ public class IgdbGame : IHasId
     public long? FirstReleaseDate { get; set; }
     public int? Hypes { get; set; }
     public double? Rating { get; set; }
+    public double? TotalRating { get; set; }
+    public int? TotalRatingCount { get; set; }
 
     public List<IgdbGenre>? Genres { get; set; }
     public List<IgdbAgeRating>? AgeRatings { get; set; }
@@ -30,6 +32,14 @@ public class IgdbGame : IHasId
     public List<int>? Remakes { get; set; }
     public List<int>? Remasters { get; set; }
     public List<int>? SimilarGames { get; set; }
+    public List<IgdbTheme>? Themes { get; set; }
+}
+
+public class IgdbTheme : IHasId
+{
+    public int Id { get; set; }
+    public string? Name { get; set; }
+    public string? Slug { get; set; }
 }
 
 public class IgdbAgeRating: IHasId

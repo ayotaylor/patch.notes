@@ -4,6 +4,7 @@ using Backend.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Backend.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250926013346_FixAgeRating")]
+    partial class FixAgeRating
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -360,9 +363,8 @@ namespace Backend.Migrations
                         .HasPrecision(4, 1)
                         .HasColumnType("decimal(4,1)");
 
-                    b.Property<string>("ReviewSummary")
-                        .HasMaxLength(500)
-                        .HasColumnType("varchar(500)");
+                    b.Property<Guid?>("ReviewSummaryId")
+                        .HasColumnType("char(36)");
 
                     b.Property<string>("Slug")
                         .IsRequired()
@@ -531,6 +533,44 @@ namespace Backend.Migrations
                     b.ToTable("Companies");
                 });
 
+            modelBuilder.Entity("Backend.Models.Game.ReferenceModels.ExternalReviewSummary", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("char(36)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<DateTime>("CreatedAt"));
+
+                    b.Property<Guid>("ExternalReviewerId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<Guid>("GameId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<string>("Summary")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("varchar(500)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("timestamp");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlComputedColumn(b.Property<DateTime?>("UpdatedAt"));
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("GameId");
+
+                    b.HasIndex("ExternalReviewerId", "GameId");
+
+                    b.ToTable("ExternalReviewSummaries");
+                });
+
             modelBuilder.Entity("Backend.Models.Game.ReferenceModels.ExternalReviewer", b =>
                 {
                     b.Property<Guid>("Id")
@@ -564,44 +604,6 @@ namespace Backend.Migrations
                     b.HasIndex("Source");
 
                     b.ToTable("ExternalReviewers");
-                });
-
-            modelBuilder.Entity("Backend.Models.Game.ReferenceModels.ExternalReviews", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("char(36)");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("timestamp");
-
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<DateTime>("CreatedAt"));
-
-                    b.Property<Guid>("ExternalReviewerId")
-                        .HasColumnType("char(36)");
-
-                    b.Property<Guid>("GameId")
-                        .HasColumnType("char(36)");
-
-                    b.Property<string>("Review")
-                        .IsRequired()
-                        .HasMaxLength(500)
-                        .HasColumnType("varchar(500)");
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .ValueGeneratedOnAddOrUpdate()
-                        .HasColumnType("timestamp");
-
-                    MySqlPropertyBuilderExtensions.UseMySqlComputedColumn(b.Property<DateTime?>("UpdatedAt"));
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("GameId");
-
-                    b.HasIndex("ExternalReviewerId", "GameId");
-
-                    b.ToTable("ExternalReviews");
                 });
 
             modelBuilder.Entity("Backend.Models.Game.ReferenceModels.Franchise", b =>
@@ -1922,10 +1924,10 @@ namespace Backend.Migrations
                     b.Navigation("RatingOrganization");
                 });
 
-            modelBuilder.Entity("Backend.Models.Game.ReferenceModels.ExternalReviews", b =>
+            modelBuilder.Entity("Backend.Models.Game.ReferenceModels.ExternalReviewSummary", b =>
                 {
                     b.HasOne("Backend.Models.Game.ReferenceModels.ExternalReviewer", "ExternalReviewer")
-                        .WithMany("ExternalReviews")
+                        .WithMany("ExternalReviewSummary")
                         .HasForeignKey("ExternalReviewerId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -2443,7 +2445,7 @@ namespace Backend.Migrations
 
             modelBuilder.Entity("Backend.Models.Game.ReferenceModels.ExternalReviewer", b =>
                 {
-                    b.Navigation("ExternalReviews");
+                    b.Navigation("ExternalReviewSummary");
                 });
 
             modelBuilder.Entity("Backend.Models.Game.ReferenceModels.Franchise", b =>

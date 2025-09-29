@@ -32,13 +32,21 @@ namespace Backend.Services.Recommendation
                     ? $"Previous context: {conversationContext}\n\nUser query: {prompt}"
                     : prompt;
 
+                var llmPurpose = "You are a game recommendation assistant. Provide helpful, concise responses about games.";
+
                 var request = new
                 {
                     model = "llama-3.1-8b-instant",
                     messages = new[]
                     {
-                        new { role = "system", content = "You are a game recommendation assistant. Provide helpful, concise responses about games." },
-                        new { role = "user", content = fullPrompt }
+                        new {
+                            role = "system",
+                            content = llmPurpose
+                        },
+                        new {
+                            role = "user",
+                            content = fullPrompt
+                        }
                     },
                     max_tokens = 500,
                     temperature = 0.7

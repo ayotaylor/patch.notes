@@ -219,7 +219,10 @@ namespace Backend.Services.Recommendation
                 // Summary = game.Summary ?? "",
                 // Storyline = game.Storyline,
                 Genres = game.GameGenres?.Select(gg => gg.Genre.Name).ToList() ?? new List<string>(),
-                Platforms = game.GamePlatforms?.Select(gp => gp.Platform.Name).ToList() ?? new List<string>(),
+                Platforms = game.GamePlatforms?
+                    .SelectMany(gp => new List<string> { gp.Platform.Name, gp.Platform.AlternativeName })
+                    .Where(gp => !string.IsNullOrEmpty(gp))
+                    .ToList() ?? [],
                 GameModes = game.GameModes?.Select(gm => gm.GameMode.Name).ToList() ?? new List<string>(),
                 PlayerPerspectives = game.GamePlayerPerspectives?.Select(gpp => gpp.PlayerPerspective.Name).ToList() ?? new List<string>(),
                 Rating = game.Rating,

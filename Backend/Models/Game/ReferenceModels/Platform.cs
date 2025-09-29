@@ -10,6 +10,9 @@ namespace Backend.Models.Game.ReferenceModels
         [Required, MaxLength(100)]
         public string? Name { get; set; } = string.Empty;
 
+        [Required, MaxLength(100)]
+        public string? AlternativeName { get; set; } = string.Empty;
+
         [Required, MaxLength(150)]
         public string? Slug { get; set; } = string.Empty;
 

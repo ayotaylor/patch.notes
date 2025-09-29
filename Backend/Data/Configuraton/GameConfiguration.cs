@@ -23,7 +23,6 @@ namespace Backend.Data.Configuration
                 .WithMany(gt => gt.Games)
                 .HasForeignKey(g => g.GameTypeId)
                 .OnDelete(DeleteBehavior.Restrict); // Prevent cascade delete
-
             //builder.HasIndex(g => g.Hypes);
         }
     }

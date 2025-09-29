@@ -20,6 +20,8 @@ namespace Backend.Mapping
                 FirstReleaseDate = game.FirstReleaseDate,
                 Hypes = game.Hypes,
                 IgdbRating = game.Rating,
+                IgdbTotalRating = game.TotalRating,
+                IgdbTotalRatingCount = game.TotalRatingCount,
                 Genres = game.GameGenres.Select(g => g.Genre.ToDto()).ToList(),
                 AltNames = game.AltNames.Select(an => an.ToDto()).ToList(),
                 Platforms = game.ReleaseDates
@@ -39,6 +41,8 @@ namespace Backend.Mapping
                     .Select(gc => gc.Company.ToDto(game.Id)).ToList(),
                 PlayerPerspectives = game.GamePlayerPerspectives
                     .Select(pp => pp.PlayerPerspective.ToDto()).ToList(),
+                Themes = game.GameThemes
+                    .Select(gt => gt.Theme.ToDto()).ToList(),
                 Dlcs = game.DlcGames.Select(d => d.DlcGame.ToRelationshipDto()).ToList(),
                 Expansions = game.ExpansionGames
                     .Select(e => e.ExpansionGame.ToRelationshipDto()).ToList(),
@@ -83,6 +87,16 @@ namespace Backend.Mapping
             };
         }
 
+        public static ThemeDto ToDto(this Theme theme)
+        {
+            return new ThemeDto
+            {
+                IgdbId = theme.IgdbId,
+                Name = theme.Name,
+                Slug = theme.Slug
+            };
+        }
+
         public static AltNameDto ToDto(this AltName altName)
         {
             return new AltNameDto
@@ -97,7 +111,9 @@ namespace Backend.Mapping
             {
                 IgdbId = platform.IgdbId,
                 Name = platform.Name,
-                Slug = platform.Slug
+                Slug = platform.Slug,
+                Abbreviation = platform.Abbreviation,
+                AlternativeName = platform.AlternativeName,
             };
         }
 
@@ -105,7 +121,7 @@ namespace Backend.Mapping
         {
             return new AgeRatingDto
             {
-                Name = ageRating.Name,
+                Name = ageRating.AgeRatingCategory.Rating,
                 RatingOrganization = ageRating.AgeRatingCategory?.RatingOrganization?.ToDto(),
             };
         }
@@ -221,7 +237,7 @@ namespace Backend.Mapping
             {
                 IgdbId = company.IgdbId,
                 Name = company.Name,
-                Country = company.Country,
+                Country = company.CountryCode,
                 Description = company.Description,
                 Url = company.Url,
                 Roles = roles
@@ -257,7 +273,7 @@ namespace Backend.Mapping
             {
                 IgdbId = company.IgdbId,
                 Name = company.Name,
-                Country = company.Country,
+                Country = company.CountryCode,
                 Description = company.Description,
                 Url = company.Url,
                 Roles = roles
@@ -284,6 +300,8 @@ namespace Backend.Mapping
                 Slug = game.Slug,
                 CoverUrl = game.Covers?.FirstOrDefault()?.Url,
                 IgdbRating = game.Rating,
+                IgdbTotalRating = game.TotalRating,
+                IgdbTotalRatingCount = game.TotalRatingCount,
                 FirstReleaseDate = game.FirstReleaseDate
             };
         }
@@ -298,6 +316,8 @@ namespace Backend.Mapping
                 Summary = game.Summary,
                 FirstReleaseDate = game.FirstReleaseDate,
                 IgdbRating = game.Rating,
+                IgdbTotalRating = game.TotalRating,
+                IgdbTotalRatingCount = game.TotalRatingCount,
                 Hypes = game.Hypes,
                 Genres = game.GameGenres.Select(g => g.Genre.ToDto()).ToList(),
                 Covers = game.Covers.Select(c => c.ToDto()).ToList(),

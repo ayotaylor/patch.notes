@@ -32,6 +32,9 @@ namespace Backend.Data
         public DbSet<Platform> Platforms { get; set; }
         public DbSet<PlayerPerspective> PlayerPerspectives { get; set; }
         public DbSet<ReleaseDateRegion> Regions { get; set; }
+        public DbSet<Theme> Themes { get; set; }
+        public DbSet<ExternalReviewer> ExternalReviewers { get; set; }
+        public DbSet<ExternalReviews> ExternalReviews { get; set; }
         // Game-specific data
         public DbSet<AltName> AltNames { get; set; }
         public DbSet<Cover> Covers { get; set; }
@@ -46,6 +49,7 @@ namespace Backend.Data
         public DbSet<GameCompany> GameCompanies { get; set; }
         public DbSet<GamePlatform> GamePlatforms { get; set; }
         public DbSet<GamePlayerPerspective> GamePlayerPerspectives { get; set; }
+        public DbSet<GameTheme> GameThemes { get; set; }
         // Game relationships
         public DbSet<GameDlc> GameDlcs { get; set; }
         public DbSet<GameExpansion> GameExpansions { get; set; }
@@ -108,6 +112,9 @@ namespace Backend.Data
 
             // builder.Entity<GameTypeGame>()
             //     .HasKey(gtg => new { gtg.GameId, gtg.GameTypeId });
+
+            builder.Entity<GameTheme>()
+                .HasKey(gg => new { gg.GameId, gg.ThemeId });
 
             builder.Entity<GameCompany>()
                 .HasKey(gc => new { gc.GameId, gc.CompanyId });
@@ -176,7 +183,7 @@ namespace Backend.Data
 
             // Comment constraints
             builder.Entity<Comment>()
-                .ToTable(t => t.HasCheckConstraint("CK_Comment_Target", 
+                .ToTable(t => t.HasCheckConstraint("CK_Comment_Target",
                     "(ReviewId IS NOT NULL AND GameListId IS NULL) OR (ReviewId IS NULL AND GameListId IS NOT NULL)"));
 
             // game company indexes
@@ -264,7 +271,7 @@ namespace Backend.Data
 
             builder.Entity<Cover>()
                 .HasIndex(c => c.IgdbId);
-            
+
             builder.Entity<ReleaseDate>()
                 .HasIndex(grd => grd.GameId);
 
@@ -310,7 +317,20 @@ namespace Backend.Data
                 .IsUnique();
             builder.Entity<ReleaseDateRegion>()
                 .HasIndex(r => r.IgdbId)
-                .IsUnique();    
+                .IsUnique();
+            builder.Entity<Theme>()
+                .HasIndex(g => g.IgdbId)
+                .IsUnique();
+            builder.Entity<Theme>()
+                .HasIndex(c => c.Slug);
+            builder.Entity<ExternalReviewer>()
+                .HasIndex(er => er.IgdbId);
+            builder.Entity<ExternalReviewer>()
+                .HasIndex(er => er.Source);
+            builder.Entity<ExternalReviews>()
+                .HasIndex(er => new { er.ExternalReviewerId, er.GameId }); 
+            builder.Entity<ExternalReviews>()
+                .HasIndex(er => er.GameId);  
 
             // // Configure enum conversion
             // builder.Entity<Company>()
