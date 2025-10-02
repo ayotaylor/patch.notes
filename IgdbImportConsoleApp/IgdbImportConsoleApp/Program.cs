@@ -1,4 +1,5 @@
-﻿using System.Globalization;
+﻿using System.Diagnostics;
+using System.Globalization;
 using System.Reflection;
 using System.Text;
 using System.Text.Json;
@@ -39,6 +40,7 @@ namespace IgdbImportConsoleApp
         private readonly Dictionary<int, Guid> _themeCache = new();
         private readonly Dictionary<int, Guid> _regionCache = new();
         private readonly Dictionary<int, Guid> _ageRatingCache = new();
+        private readonly Dictionary<int, Guid> _externalReviewersCache = [];
 
         // Duplicate checking optimization
         private readonly HashSet<int> _existingGameIds = new();
@@ -140,6 +142,7 @@ namespace IgdbImportConsoleApp
             await ProcessPlayerPerspectives(context);
             await ProcessThemes(context);
             await ProcessRegions(context);
+            await ProcessExternalReveiwers(context);
 
             //Save independent entities first
             await context.SaveChangesAsync();
@@ -416,6 +419,26 @@ namespace IgdbImportConsoleApp
                 if (result.Count > 0)
                 {
                     await BulkUpsertRegions(context, result);
+                    _logger.LogInformation("Pre-populated reference data for {endpoint} -> {CurrentBatch} of {TotalBatches} batches",
+                        endpoint, i + 1, totalBatches);
+                }
+            }
+        }
+
+        private async Task ProcessExternalReveiwers(ApplicationDbContext context)
+        {
+            var endpoint = "external_game_sources";
+            var total = await GetTotalCountAsync($"{endpoint}/count");
+            var totalBatches = (int)Math.Ceiling((double)total / _igdbSettings.BatchSize);
+
+            for (int i = 0; i < totalBatches; i++)
+            {
+                var offset = i * _igdbSettings.BatchSize;
+                var result = await FetchBatchFromGameSourceAsync<IgdbExternaGameSources>(ApiQueries.IGDB_EXTERNAL_GAME_SOURCES,
+                    endpoint, offset, _igdbSettings.BatchSize);
+                if (result.Count > 0)
+                {
+                    await BulkUpsertExternalReviewers(context, result);
                     _logger.LogInformation("Pre-populated reference data for {endpoint} -> {CurrentBatch} of {TotalBatches} batches",
                         endpoint, i + 1, totalBatches);
                 }
@@ -748,6 +771,42 @@ namespace IgdbImportConsoleApp
                 if (regionToAdd.Count > 0)
                 {
                     await context.Regions.AddRangeAsync(regionToAdd);
+                    await context.SaveChangesAsync();
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Error executing bulk upsert for Regions");
+            }
+        }
+
+        private async Task BulkUpsertExternalReviewers(ApplicationDbContext context, List<IgdbExternaGameSources> igdbExternalGameSources)
+        {
+            var uniqueReviewers = igdbExternalGameSources
+                .GroupBy(r => r.Id)
+                .Select(r => r.First())
+                .ToList();
+
+            if (uniqueReviewers.Count == 0) return;
+
+            try
+            {
+                var igdbIds = uniqueReviewers.Select(r => r.Id).ToList();
+                var exisitingReviewers = await context.ExternalReviewers
+                    .Where(r => igdbIds.Contains(r.IgdbId))
+                    .ToDictionaryAsync(r => r.IgdbId);
+
+                var externalReviewersToAdd = uniqueReviewers
+                    .Where(r => !exisitingReviewers.ContainsKey(r.Id))
+                    .Select(g => new ExternalReviewer
+                    {
+                        IgdbId = g.Id,
+                        Source = g.Name ?? "",
+                    }).ToList();
+
+                if (externalReviewersToAdd.Count > 0)
+                {
+                    await context.ExternalReviewers.AddRangeAsync(externalReviewersToAdd);
                     await context.SaveChangesAsync();
                 }
             }
@@ -1313,7 +1372,7 @@ namespace IgdbImportConsoleApp
                     totalGames, totalBatches);
 
                 // Step 2: Pre-populate reference data and initialize caches
-                //await PrePopulateAllReferenceDataAsync();
+                await PrePopulateAllReferenceDataAsync();
                 await InitializeCachesAsync();
 
                 // Step 3: Process each batch sequentially
@@ -1359,6 +1418,7 @@ namespace IgdbImportConsoleApp
             var themes = await context.Themes.ToDictionaryAsync(x => x.IgdbId, x => x.Id);
             var regions = await context.Regions.ToDictionaryAsync(x => x.IgdbId, x => x.Id);
             var ageRatings = await context.AgeRatings.ToDictionaryAsync(x => x.IgdbId, x => x.Id);
+            var externalReviewers = await context.ExternalReviewers.ToDictionaryAsync(x => x.IgdbId, x => x.Id);
 
             // Populate cache dictionaries
             foreach (var item in gameTypes) _gameTypeCache[item.Key] = item.Value;
@@ -1371,6 +1431,7 @@ namespace IgdbImportConsoleApp
             foreach (var item in themes) _themeCache[item.Key] = item.Value;
             foreach (var item in regions) _regionCache[item.Key] = item.Value;
             foreach (var item in ageRatings) _ageRatingCache[item.Key] = item.Value;
+            foreach (var item in externalReviewers) _externalReviewersCache[item.Key] = item.Value;
 
             // Load existing IDs for duplicate checking and game ID mapping
             var gameIdMappings = await context.Games.ToDictionaryAsync(g => g.IgdbId, g => g.Id);
@@ -1465,6 +1526,8 @@ namespace IgdbImportConsoleApp
                 franchises.id, franchises.name, franchises.slug,
                 game_modes.id, game_modes.name, game_modes.slug,
                 game_type.id, game_type.type,
+                external_games.name, external_games.uid, 
+                external_games.external_game_source.id, external_games.external_game_source.name, 
                 involved_companies.id, involved_companies.company.id, 
                 involved_companies.company.name, involved_companies.company.country,
                 involved_companies.company.description, 

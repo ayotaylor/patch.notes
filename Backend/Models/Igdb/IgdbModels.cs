@@ -24,6 +24,7 @@ public class IgdbGame : IHasId
     public List<IgdbInvolvedCompany>? InvolvedCompanies { get; set; }
     public List<IgdbPlatform>? Platforms { get; set; }
     public List<IgdbPlayerPerspective>? PlayerPerspectives { get; set; }
+    public List<IgdbExternaGame>? ExternalGames { get; set; }
 
     // Relationship IDs
     public List<int>? Dlcs { get; set; }
@@ -133,7 +134,6 @@ public class IgdbGameType : IHasId
     public string? Type { get; set; }
 }
 
-
 public class IgdbFranchise : IHasId
 {
     public int Id { get; set; }
@@ -166,4 +166,18 @@ public class IgdbInvolvedCompany : IHasId
     public bool? Publisher { get; set; }
     public bool? Porting { get; set; }
     public bool? Supporting { get; set; }
+}
+
+public class IgdbExternaGameSources : IHasId
+{
+    public int Id { get; set; }
+    public string? Name { get; set; }
+}
+
+public class IgdbExternaGame : IHasId
+{
+    public int Id { get; set; }
+    public int Uid { get; set; }
+    public string? Name { get; set; }
+    public IgdbExternaGameSources? ExternaGameSources { get; set; }
 }

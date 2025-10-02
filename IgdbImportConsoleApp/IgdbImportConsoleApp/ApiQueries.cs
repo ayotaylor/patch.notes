@@ -21,6 +21,8 @@ namespace IgdbImportConsoleApp
                 franchises.id, franchises.name, franchises.slug,
                 game_modes.id, game_modes.name, game_modes.slug,
                 game_type.id, game_type.type,
+                external_games.name, external_games.uid, 
+                external_games.external_game_source.id, external_games.external_game_source.name,
                 involved_companies.id, involved_companies.company.id, 
                 involved_companies.company.name, involved_companies.company.country,
                 involved_companies.company.description, 
@@ -82,6 +84,10 @@ namespace IgdbImportConsoleApp
         public const string IGDB_RELEASE_DATE_REGIONS = $@"
             fields 
                 id, region;
+                sort id asc;";
+        public const string IGDB_EXTERNAL_GAME_SOURCES = $@"
+            fields 
+                id, name;
                 sort id asc;";
     }
 }
