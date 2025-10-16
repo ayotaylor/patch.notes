@@ -12,6 +12,9 @@ window.bootstrap = bootstrap
 // Font Awesome
 import '@fortawesome/fontawesome-free/css/all.min.css'
 
+//tailwind
+import './assets/main.css'
+
 const app = createApp(App)
 const pinia = createPinia();
 

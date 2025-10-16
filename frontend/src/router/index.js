@@ -6,6 +6,7 @@ import CompleteProfile from "@/components/CompleteProfile.vue";
 
 // Import your views/components
 // You'll need to create these components or adjust the paths to match your existing ones
+const HomePage = () => import("@/components/home/HomePage.vue");
 const LoginComponent = () => import("@/components/LoginComponent.vue");
 const RegisterComponent = () => import("@/components/RegisterComponent.vue");
 const DashboardComponent = () => import("@/components/DashboardComponent.vue");
@@ -23,6 +24,16 @@ const routes = [
   {
     path: "/",
     redirect: "/dashboard",
+  },
+  {
+    path: "/home-page",
+    name: "Home",
+    component: HomePage,
+    meta: {
+      requiresAuth: false,
+      validateToken: "never",
+      title: "Home",
+    }
   },
   {
     path: "/login",
