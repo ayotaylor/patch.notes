@@ -173,7 +173,7 @@ const popularMembers = [
               </p>
               <p class="font-tinos text-base text-ebony-clay leading-6 mt-2">{{ review.excerpt }}</p>
             </div>
-            <img :src="review.image" :alt="review.game" class="w-full md:w-60 aspect-[3/4] object-cover rounded-lg" />
+            <img :src="review.image" :alt="review.game" class="w-full md:w-32 aspect-[3/4] object-cover rounded-lg" />
           </div>
         </div>
       </div>
