@@ -61,16 +61,9 @@ const optimizedImageUrl = computed(() => {
 </script>
 
 <style scoped>
+/* Component-specific styles only - .line-clamp-2 is now in base.css @layer components */
 .game-card {
   display: flex;
   flex-direction: column;
-}
-
-.line-clamp-2 {
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 </style>

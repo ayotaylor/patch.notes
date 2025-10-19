@@ -95,7 +95,7 @@ const handleGameClick = (game) => {
 // Update games per page based on screen size
 const updateGamesPerPage = () => {
   const width = window.innerWidth
-  if (width < 640) {
+  if (width < 560) {
     gamesPerPage.value = 2
   } else if (width < 768) {
     gamesPerPage.value = 3
@@ -195,65 +195,15 @@ onBeforeUnmount(() => {
 </template>
 
 <style scoped>
-/* Main Container */
-.game-carousel {
-  width: 100%;
-}
+/* Carousel-specific styles only - shared utilities are in base.css @layer components */
 
-/* Loading State */
-.loading-state {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: 64px 0; /* py-16 = 4rem = 64px */
-}
-
-.spinner {
-  width: 48px;
-  height: 48px;
-  border: 2px solid #e5e7eb;
-  border-top-color: #333;
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
-
-/* Error State */
-.error-state {
-  text-align: center;
-  padding: 64px 0;
-}
-
-.retry-btn {
-  margin-top: 16px; /* mt-4 */
-  padding: 8px 16px; /* py-2 px-4 */
-  background: #333;
-  color: white;
-  border-radius: 4px;
-  transition: opacity 0.2s;
-}
-
-.retry-btn:hover {
-  opacity: 0.8;
-}
-
-/* Empty State */
-.empty-state {
-  text-align: center;
-  padding: 64px 0;
-}
-
-/* Carousel Content */
+/* Carousel Structure */
 .carousel-content {
   position: relative;
   display: flex;
   justify-content: center;
 }
 
-/* Games Container - holds the transition */
 .games-container {
   position: relative;
   width: fit-content;
@@ -274,32 +224,32 @@ onBeforeUnmount(() => {
   grid-row: 1;
 }
 
-/* Responsive Heights - 4pt grid (multiples of 4px) */
+/* Responsive Heights */
+/* Use min-height to prevent cutoff while allowing growth for longer titles */
 @media (max-width: 640px) {
   .games-wrapper {
-    height: calc(63vw + 48px); /* Image height + title (3rem = 48px) */
+    min-height: calc(63vw + 60px);
   }
 }
 
 @media (min-width: 640px) and (max-width: 768px) {
   .games-wrapper {
-    height: calc(41vw + 48px);
+    min-height: calc(41vw + 60px);
   }
 }
 
 @media (min-width: 768px) and (max-width: 1024px) {
   .games-wrapper {
-    height: calc(30vw + 48px);
+    min-height: calc(30vw + 60px);
   }
 }
 
 @media (min-width: 1024px) {
   .games-wrapper {
-    height: 268px; /* 220px image + 48px title */
+    min-height: calc(18vw + 60px);
   }
 }
 
-/* Grid Wrapper - the element that transitions */
 .games-grid-wrapper {
   width: 100%;
   height: 100%;
@@ -309,7 +259,7 @@ onBeforeUnmount(() => {
 .games-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 24px; /* gap-6 = 24px = 6×4pt */
+  gap: 24px;
   width: 100%;
 }
 
@@ -331,7 +281,7 @@ onBeforeUnmount(() => {
   }
 }
 
-/* Navigation Arrows Container */
+/* Navigation Arrows */
 .nav-arrows {
   position: absolute;
   top: 0;
@@ -342,7 +292,6 @@ onBeforeUnmount(() => {
   z-index: 10;
 }
 
-/* Arrow Buttons */
 .arrow {
   position: absolute;
   display: flex;
@@ -365,22 +314,20 @@ onBeforeUnmount(() => {
   cursor: not-allowed;
 }
 
-/* Arrow Positioning - Vertically centered on images (4pt grid) */
 .arrow-left {
-  left: -40px; /* -10×4pt */
+  left: -40px;
 }
 
 .arrow-right {
   right: -40px;
 }
 
-/* Responsive Arrow Positioning */
 @media (max-width: 640px) {
   .arrow {
-    top: 120px; /* 30×4pt */
+    top: 120px;
   }
   .arrow-left {
-    left: -32px; /* -8×4pt */
+    left: -32px;
   }
   .arrow-right {
     right: -32px;
@@ -389,45 +336,48 @@ onBeforeUnmount(() => {
 
 @media (min-width: 640px) and (max-width: 768px) {
   .arrow {
-    top: 100px; /* 25×4pt */
+    top: 100px;
   }
 }
 
 @media (min-width: 768px) and (max-width: 1024px) {
   .arrow {
-    top: 90px; /* 22.5×4pt ≈ 23×4pt = 92px, using 90px */
+    top: 90px;
   }
 }
 
 @media (min-width: 1024px) {
   .arrow {
-    top: 110px; /* 27.5×4pt ≈ 28×4pt = 112px, using 110px */
+    top: 110px;
   }
 }
 
-/* Slide Transitions */
-/* The wrapper is what gets transitioned */
-
-/* Slide Left - Next page (right arrow clicked) */
-.slide-left-enter-active {
-  z-index: 2;
+/* Carousel Slide Transitions */
+.slide-left-enter-active,
+.slide-left-leave-active,
+.slide-right-enter-active,
+.slide-right-leave-active {
   transition: transform 0.6s ease-out;
 }
 
-.slide-left-leave-active {
+.slide-left-enter-active,
+.slide-right-enter-active {
+  z-index: 2;
+}
+
+.slide-left-leave-active,
+.slide-right-leave-active {
   z-index: 1;
-  transition: transform 0.6s ease-out;
 }
 
 .slide-left-enter-from {
   transform: translateX(100%);
 }
 
-.slide-left-enter-to {
-  transform: translateX(0);
-}
-
-.slide-left-leave-from {
+.slide-left-enter-to,
+.slide-left-leave-from,
+.slide-right-enter-to,
+.slide-right-leave-from {
   transform: translateX(0);
 }
 
@@ -435,27 +385,8 @@ onBeforeUnmount(() => {
   transform: translateX(-100%);
 }
 
-/* Slide Right - Previous page (left arrow clicked) */
-.slide-right-enter-active {
-  z-index: 2;
-  transition: transform 0.6s ease-out;
-}
-
-.slide-right-leave-active {
-  z-index: 1;
-  transition: transform 0.6s ease-out;
-}
-
 .slide-right-enter-from {
   transform: translateX(-100%);
-}
-
-.slide-right-enter-to {
-  transform: translateX(0);
-}
-
-.slide-right-leave-from {
-  transform: translateX(0);
 }
 
 .slide-right-leave-to {

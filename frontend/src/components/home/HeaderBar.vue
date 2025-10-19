@@ -1,8 +1,8 @@
 <template>
   <div class="flex justify-center px-4 md:px-8 lg:px-40">
     <div class="w-full max-w-1280">
-      <!-- Top Bar -->
-      <div class="flex items-center justify-between border-b border-gray-300 py-2">
+      <!-- Top Bar - Hidden on mobile (< lg), shown on desktop -->
+      <div class="hidden lg:flex items-center justify-between border-b border-gray-300 py-2">
         <!-- Search Bar -->
         <SearchBar />
 

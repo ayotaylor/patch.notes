@@ -2,6 +2,41 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Shared component utilities */
+@layer components {
+  /* Loading spinner */
+  .spinner {
+    @apply w-12 h-12 border-2 border-gray-200 rounded-full animate-spin;
+    border-top-color: #333;
+  }
+
+  /* State containers */
+  .loading-state {
+    @apply flex justify-center items-center py-16;
+  }
+
+  .error-state {
+    @apply text-center py-16;
+  }
+
+  .empty-state {
+    @apply text-center py-16;
+  }
+
+  /* Retry button */
+  .retry-btn {
+    @apply mt-4 px-4 py-2 bg-cod-gray text-white rounded transition-opacity hover:opacity-80;
+  }
+
+  /* Text utilities */
+  .line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+}
+
 /* color palette from <https://github.com/vuejs/theme> */
 :root {
   --vt-c-white: #ffffff;
