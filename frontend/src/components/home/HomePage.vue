@@ -1,6 +1,19 @@
 <script setup>
+import { useRouter } from 'vue-router'
 import HomeHeader from './HeaderBar.vue'
 import HomeNavigation from './NavigationBar.vue'
+import GameCarousel from './GameCarousel.vue'
+
+const router = useRouter()
+
+const handleGameClick = (game) => {
+  // Navigate to game details page using slug or id
+  if (game.slug) {
+    router.push({ name: 'game-details', params: { slug: game.slug } })
+  } else if (game.id) {
+    router.push({ name: 'game-details', params: { id: game.id } })
+  }
+}
 
 const recentGames = [
   {
@@ -142,16 +155,28 @@ const popularMembers = [
       </div>
     </div>
 
+    <!-- Popular Games Section -->
+    <div class="flex justify-center px-4 md:px-8 lg:px-40 mt-8">
+      <div class="w-full max-w-1280">
+        <GameCarousel
+          title="Popular Games"
+          :show-border="true"
+          image-size="default"
+          @game-click="handleGameClick"
+        />
+      </div>
+    </div>
+
     <!-- Recently Reviewed Section -->
     <div class="flex justify-center px-4 md:px-8 lg:px-40 mt-8">
-      <div class="w-full max-w-1280 py-8">
+      <div class="w-full max-w-1280">
         <h3 class="font-newsreader text-2xl font-bold text-cod-gray mb-4 border-b border-gray-300">
           Recently Reviewed
         </h3>
         <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-6 overflow-x-auto">
-          <div v-for="game in recentGames" :key="game.title" class="flex flex-col gap-3">
+          <div v-for="game in recentGames" :key="game.title" class="flex flex-col">
             <img :src="game.image" :alt="game.title" class="w-full aspect-[3/4] object-cover rounded-lg" />
-            <p class="font-tinos text-base text-cod-gray">{{ game.title }}</p>
+            <p class="font-tinos text-base text-cod-gray mt-3">{{ game.title }}</p>
           </div>
         </div>
       </div>
@@ -159,15 +184,15 @@ const popularMembers = [
 
     <!-- Popular Reviews Section -->
     <div class="flex justify-center px-4 md:px-8 lg:px-40 mt-8">
-      <div class="w-full max-w-1280 py-8">
+      <div class="w-full max-w-1280">
         <h3 class="font-newsreader text-2xl font-bold text-cod-gray mb-4 border-b border-gray-300">Popular Reviews</h3>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div v-for="(review, index) in popularReviews" :key="index" class="flex flex-col md:flex-row gap-6">
             <div class="flex-1">
-              <h4 class="font-newsreader text-xl font-bold text-cod-gray mb-1 whitespace-pre-line">
+              <h4 class="font-newsreader text-xl font-bold text-cod-gray mb-2 whitespace-pre-line">
                 {{ review.title }}
               </h4>
-              <p class="font-tinos text-sm text-river-bed mb-1">
+              <p class="font-tinos text-sm text-river-bed mb-2">
                 <span class="text-river-bed">By {{ review.author }} on </span>
                 <span class="text-cod-gray">{{ review.game }}</span>
               </p>
@@ -181,11 +206,11 @@ const popularMembers = [
 
     <!-- Popular Lists Section -->
     <div class="flex justify-center px-4 md:px-8 lg:px-40 mt-8">
-      <div class="w-full max-w-1280 py-8">
+      <div class="w-full max-w-1280">
         <h3 class="font-newsreader text-2xl font-bold text-cod-gray mb-4 border-b border-gray-300">Popular Lists</h3>
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           <div v-for="(list, index) in popularLists" :key="index" class="flex flex-col">
-            <img :src="list.image" :alt="list.title" class="w-full aspect-video object-cover rounded-lg mb-3" />
+            <img :src="list.image" :alt="list.title" class="w-full aspect-video object-cover rounded-lg mb-4" />
             <h4 class="font-newsreader text-lg font-bold text-cod-gray mb-2">{{ list.title }}</h4>
             <div class="flex items-center gap-2">
               <img :src="list.avatar" :alt="list.author" class="w-6 h-6 rounded-full" />
@@ -204,11 +229,11 @@ const popularMembers = [
 
     <!-- Popular Members Section -->
     <div class="flex justify-center px-4 md:px-8 lg:px-40 mt-8 pb-16">
-      <div class="w-full max-w-1280 py-8">
+      <div class="w-full max-w-1280">
         <h3 class="font-newsreader text-2xl font-bold text-cod-gray mb-4 border-b border-gray-300">Popular Members</h3>
         <div class="flex flex-wrap justify-center gap-8">
-          <div v-for="(member, index) in popularMembers" :key="index" class="flex flex-col items-center gap-2">
-            <img :src="member.avatar" :alt="member.name" class="w-24 h-24 rounded-full" />
+          <div v-for="(member, index) in popularMembers" :key="index" class="flex flex-col items-center">
+            <img :src="member.avatar" :alt="member.name" class="w-24 h-24 rounded-full mb-2" />
             <p class="font-tinos text-base text-cod-gray text-center">{{ member.name }}</p>
           </div>
         </div>

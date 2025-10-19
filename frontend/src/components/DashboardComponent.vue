@@ -43,20 +43,10 @@
             </h3>
           </div>
           <div class="card-body p-4">
-            <GameSearchComponent
-              :show-card="false"
-              :show-title="false"
-              :show-results="true"
-              :show-load-more="false"
-              placeholder="Search for games by title, genre, or developer..."
-              results-mode="compact"
-              pagination-mode="infinite-scroll"
-              max-height="400px"
-              :auto-search="true"
-              :debounce-ms="500"
-              @select-game="handleGameSelect"
-              @add-to-library="addToLibrary"
-            />
+            <GameSearchComponent :show-card="false" :show-title="false" :show-results="true" :show-load-more="false"
+              placeholder="Search for games by title, genre, or developer..." results-mode="compact"
+              pagination-mode="infinite-scroll" max-height="400px" :auto-search="true" :debounce-ms="500"
+              @select-game="handleGameSelect" @add-to-library="addToLibrary" />
           </div>
         </div>
       </div>
@@ -66,42 +56,20 @@
     <div class="row g-4">
       <!-- Popular Games -->
       <div class="col-12">
-        <GameSection
-          title="Popular Games"
-          icon="fas fa-fire text-danger"
-          :games="popularGames"
-          :loading="gamesStore.loading"
-          loading-message="Loading popular games..."
-          empty-message="No popular games available right now."
-          empty-icon="fas fa-gamepad"
-          :max-games-to-show="10"
-          @refresh="refreshPopularGames"
-          @view-all="viewAllPopularGames"
-          @game-click="handleGameClick"
-          @view-likes="handleViewLikes"
-          @view-lists="handleViewLists"
-          @view-reviews="handleViewReviews"
-        />
+        <GameSection title="Popular Games" icon="fas fa-fire text-danger" :games="popularGames"
+          :loading="gamesStore.loading" loading-message="Loading popular games..."
+          empty-message="No popular games available right now." empty-icon="fas fa-gamepad" :max-games-to-show="10"
+          @refresh="refreshPopularGames" @view-all="viewAllPopularGames" @game-click="handleGameClick"
+          @view-likes="handleViewLikes" @view-lists="handleViewLists" @view-reviews="handleViewReviews" />
       </div>
 
       <!-- New Releases -->
       <div class="col-12">
-        <GameSection
-          title="New Releases"
-          icon="fas fa-sparkles text-success"
-          :games="newGames"
-          :loading="gamesStore.loading"
-          loading-message="Loading new releases..."
-          empty-message="No new releases available right now."
-          empty-icon="fas fa-calendar-plus"
-          :max-games-to-show="10"
-          @refresh="refreshNewGames"
-          @view-all="viewAllNewGames"
-          @game-click="handleGameClick"
-          @view-likes="handleViewLikes"
-          @view-lists="handleViewLists"
-          @view-reviews="handleViewReviews"
-        />
+        <GameSection title="New Releases" icon="fas fa-sparkles text-success" :games="newGames"
+          :loading="gamesStore.loading" loading-message="Loading new releases..."
+          empty-message="No new releases available right now." empty-icon="fas fa-calendar-plus" :max-games-to-show="10"
+          @refresh="refreshNewGames" @view-all="viewAllNewGames" @game-click="handleGameClick"
+          @view-likes="handleViewLikes" @view-lists="handleViewLists" @view-reviews="handleViewReviews" />
       </div>
     </div>
 
@@ -131,22 +99,11 @@
             <!-- Reviews List -->
             <div v-else-if="latestReviews.length > 0">
               <div class="row g-3">
-                <div
-                  v-for="review in latestReviews"
-                  :key="review.id"
-                  class="col-12"
-                  :class="{ 'col-lg-6': latestReviews.length > 1 }"
-                >
-                  <ReviewCard
-                    :review="review"
-                    :show-game="true"
-                    :truncated="true"
-                    :max-length="120"
-                    :is-liked="likedReviews.has(review.id)"
-                    :is-processing-like="processingLikeReviews.has(review.id)"
-                    @toggleLike="handleToggleLike"
-                    @showComments="handleShowComments"
-                  />
+                <div v-for="review in latestReviews" :key="review.id" class="col-12"
+                  :class="{ 'col-lg-6': latestReviews.length > 1 }">
+                  <ReviewCard :review="review" :show-game="true" :truncated="true" :max-length="120"
+                    :is-liked="likedReviews.has(review.id)" :is-processing-like="processingLikeReviews.has(review.id)"
+                    @toggleLike="handleToggleLike" @showComments="handleShowComments" />
                 </div>
               </div>
             </div>
@@ -188,23 +145,11 @@
             <!-- Lists Grid -->
             <div v-else-if="latestLists.length > 0">
               <div class="row g-3">
-                <div
-                  v-for="list in latestLists.slice(0, 3)"
-                  :key="list.id"
-                  class="col-12"
-                  :class="{ 'col-lg-6': latestLists.length > 1, 'col-xl-4': latestLists.length > 2 }"
-                >
-                  <ListCard
-                    :list="list"
-                    :truncated="true"
-                    :max-length="150"
-                    :max-games-to-show="4"
-                    :show-like-button="false"
-                    :show-comment-button="true"
-                    @edit="handleEditList"
-                    @delete="handleDeleteList"
-                    @showComments="handleShowListComments"
-                  />
+                <div v-for="list in latestLists.slice(0, 3)" :key="list.id" class="col-12"
+                  :class="{ 'col-lg-6': latestLists.length > 1, 'col-xl-4': latestLists.length > 2 }">
+                  <ListCard :list="list" :truncated="true" :max-length="150" :max-games-to-show="4"
+                    :show-like-button="false" :show-comment-button="true" @edit="handleEditList"
+                    @delete="handleDeleteList" @showComments="handleShowListComments" />
                 </div>
               </div>
             </div>
@@ -352,7 +297,6 @@ const addToLibrary = async (game) => {
   }
 }
 
-
 const refreshPopularGames = async () => {
   try {
     await gamesStore.fetchPopularGames(10)
@@ -438,7 +382,7 @@ const loadLatestReviews = async () => {
     const reviews = await reviewsService.getLatestReviews()
     const reviewsWithCommentCounts = await commentsService.loadCommentCountsForReviews(reviews)
     latestReviews.value = reviewsWithCommentCounts
-    
+
     // Load like status for each review if user is authenticated
     if (authStore.user) {
       likedReviews.value.clear()
