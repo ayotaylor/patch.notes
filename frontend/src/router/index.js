@@ -172,6 +172,17 @@ const routes = [
       title: "Review Details - Patch Notes",
     },
   },
+  {
+    path: "/:username/game/:gameSlug",
+    name: "ReviewPage",
+    component: () => import("@/components/home/ReviewPage.vue"),
+    props: true,
+    meta: {
+      requiresAuth: false,
+      validateToken: "never",
+      title: "Review - Patch Notes",
+    },
+  },
 
   // Lists routes
   {

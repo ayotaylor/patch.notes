@@ -3,6 +3,7 @@ import { useRouter } from 'vue-router'
 import HomeHeader from './HeaderBar.vue'
 import HomeNavigation from './NavigationBar.vue'
 import GameCarousel from './GameCarousel.vue'
+import ReviewCardBase from './ReviewCardBase.vue'
 
 const router = useRouter()
 
@@ -44,38 +45,145 @@ const recentGames = [
 
 const popularReviews = [
   {
-    title: 'A Masterpiece of Open-World\nStorytelling',
-    author: 'Jane Doe',
-    game: 'Elden Ring',
-    excerpt:
-      'FromSoftware has once again redefined the genre, delivering an unforgettable experience that will be talked about for years to come...',
-    image: 'https://api.builder.io/api/v1/image/assets/TEMP/0bd39325f25778f231b679c1a37e88c27ae79953?width=486',
+    id: 1,
+    reviewText: 'FromSoftware has once again redefined the genre, delivering an unforgettable experience that will be talked about for years to come. The open-world design is masterful, giving players true freedom while maintaining carefully crafted encounters.',
+    rating: 5,
+    isLikedByCurrentUser: false,
+    user: {
+      id: 1,
+      username: 'janedoe',
+      displayName: 'Jane Doe',
+      profileImageUrl: 'https://via.placeholder.com/50'
+    },
+    game: {
+      id: 1,
+      name: 'Elden Ring',
+      slug: 'elden-ring',
+      releaseYear: 2022,
+      primaryImageUrl: 'https://images.igdb.com/igdb/image/upload/t_cover_big/co4jni.jpg',
+      isLikedByUser: true
+    },
+    likeCount: 245,
+    commentCount: 42
   },
   {
-    title: 'More Than a Remake, A Reimagining',
-    author: 'John Smith',
-    game: 'Final Fantasy VII Rebirth',
-    excerpt:
-      'Rebirth takes the beloved classic and expands upon it in every way imaginable, creating a new yet familiar journey...',
-    image: 'https://api.builder.io/api/v1/image/assets/TEMP/6fd4291a4679906e1e6abf2bceabdd785ba1260e?width=486',
+    id: 2,
+    reviewText: 'Rebirth takes the beloved classic and expands upon it in every way imaginable, creating a new yet familiar journey. The character development is phenomenal, and the combat system has been refined to perfection.',
+    rating: 4.5,
+    isLikedByCurrentUser: false,
+    user: {
+      id: 2,
+      username: 'johnsmith',
+      displayName: 'John Smith',
+      profileImageUrl: 'https://via.placeholder.com/50'
+    },
+    game: {
+      id: 2,
+      name: 'Final Fantasy VII Rebirth',
+      slug: 'final-fantasy-vii-rebirth',
+      releaseYear: 2024,
+      primaryImageUrl: 'https://images.igdb.com/igdb/image/upload/t_cover_big/co7rll.jpg',
+      isLikedByUser: false
+    },
+    likeCount: 189,
+    commentCount: 31
   },
   {
-    title: 'A Stylish and Thrilling Action RPG',
-    author: 'Alex Ray',
-    game: 'Stellar Blade',
-    excerpt:
-      'Stellar Blade delivers fast-paced combat and a visually stunning world, making it a must-play for fans of the genre...',
-    image: 'https://api.builder.io/api/v1/image/assets/TEMP/7c6219d978919ed031addaf3a55ff9879859eb41?width=486',
+    id: 3,
+    reviewText: 'Stellar Blade delivers fast-paced combat and a visually stunning world, making it a must-play for fans of the genre. The boss battles are incredibly designed and the story keeps you engaged throughout.',
+    rating: 4,
+    isLikedByCurrentUser: true,
+    user: {
+      id: 3,
+      username: 'alexray',
+      displayName: 'Alex Ray',
+      profileImageUrl: 'https://via.placeholder.com/50'
+    },
+    game: {
+      id: 3,
+      name: 'Stellar Blade',
+      slug: 'stellar-blade',
+      releaseYear: 2024,
+      primaryImageUrl: 'https://images.igdb.com/igdb/image/upload/t_cover_big/co7t4q.jpg',
+      isLikedByUser: true
+    },
+    likeCount: 156,
+    commentCount: 28
   },
   {
-    title: 'The Pinnacle of Co-op Shooters',
-    author: 'Sarah Chen',
-    game: 'Helldivers 2',
-    excerpt:
-      'Helldivers 2 offers chaotic, hilarious, and deeply satisfying cooperative gameplay that keeps you coming back for more...',
-    image: 'https://api.builder.io/api/v1/image/assets/TEMP/5d5d4b1d2ba265fa799a8e609a42c8e4dca4104c?width=486',
+    id: 4,
+    reviewText: 'Helldivers 2 offers chaotic, hilarious, and deeply satisfying cooperative gameplay that keeps you coming back for more. The friendly fire mechanic adds a layer of strategy and comedy that makes every mission memorable.',
+    rating: 4.5,
+    isLikedByCurrentUser: false,
+    user: {
+      id: 4,
+      username: 'sarahchen',
+      displayName: 'Sarah Chen',
+      profileImageUrl: 'https://via.placeholder.com/50'
+    },
+    game: {
+      id: 4,
+      name: 'Helldivers 2',
+      slug: 'helldivers-2',
+      releaseYear: 2024,
+      primaryImageUrl: 'https://images.igdb.com/igdb/image/upload/t_cover_big/co7kvi.jpg',
+      isLikedByUser: false
+    },
+    likeCount: 312,
+    commentCount: 67
   },
+  {
+    id: 5,
+    reviewText: 'An incredible open-world RPG that gives players unprecedented freedom in how they approach challenges. The pawn system creates emergent gameplay moments that are truly unique.',
+    rating: 4,
+    isLikedByCurrentUser: false,
+    user: {
+      id: 5,
+      username: 'mikegamer',
+      displayName: 'Mike Johnson',
+      profileImageUrl: 'https://via.placeholder.com/50'
+    },
+    game: {
+      id: 5,
+      name: "Dragon's Dogma 2",
+      slug: 'dragons-dogma-2',
+      releaseYear: 2024,
+      primaryImageUrl: 'https://images.igdb.com/igdb/image/upload/t_cover_big/co7f4l.jpg',
+      isLikedByUser: true
+    },
+    likeCount: 203,
+    commentCount: 45
+  },
+  {
+    id: 6,
+    reviewText: 'The pinnacle of modern RPG design. Every choice matters, every character is memorable, and the world reacts to your decisions in meaningful ways. A true masterpiece.',
+    rating: 5,
+    isLikedByCurrentUser: true,
+    user: {
+      id: 6,
+      username: 'rpgfan92',
+      displayName: 'Emma Davis',
+      profileImageUrl: 'https://via.placeholder.com/50'
+    },
+    game: {
+      id: 6,
+      name: "Baldur's Gate 3",
+      slug: 'baldurs-gate-3',
+      releaseYear: 2023,
+      primaryImageUrl: 'https://images.igdb.com/igdb/image/upload/t_cover_big/co5w2t.jpg',
+      isLikedByUser: true
+    },
+    likeCount: 487,
+    commentCount: 93
+  }
 ]
+
+const handleLikeReview = (review) => {
+  // TODO: Implement like functionality
+  console.log('Liking review:', review)
+  review.isLikedByCurrentUser = !review.isLikedByCurrentUser
+  review.likeCount += review.isLikedByCurrentUser ? 1 : -1
+}
 
 const popularLists = [
   {
@@ -187,19 +295,13 @@ const popularMembers = [
       <div class="w-full max-w-1280">
         <h3 class="font-newsreader text-2xl font-bold text-cod-gray mb-4 border-b border-gray-300">Popular Reviews</h3>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div v-for="(review, index) in popularReviews" :key="index" class="flex flex-col md:flex-row gap-6">
-            <div class="flex-1">
-              <h4 class="font-newsreader text-xl font-bold text-cod-gray mb-2 whitespace-pre-line">
-                {{ review.title }}
-              </h4>
-              <p class="font-tinos text-sm text-river-bed mb-2">
-                <span class="text-river-bed">By {{ review.author }} on </span>
-                <span class="text-cod-gray">{{ review.game }}</span>
-              </p>
-              <p class="font-tinos text-base text-ebony-clay leading-6 mt-2">{{ review.excerpt }}</p>
-            </div>
-            <img :src="review.image" :alt="review.game" class="w-full md:w-32 aspect-[3/4] object-cover rounded-lg" />
-          </div>
+          <ReviewCardBase
+            v-for="review in popularReviews"
+            :key="review.id"
+            :review="review"
+            variant="popular"
+            @like-review="handleLikeReview"
+          />
         </div>
       </div>
     </div>
