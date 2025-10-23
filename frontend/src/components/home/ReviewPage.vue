@@ -4,6 +4,9 @@ import { useRoute } from 'vue-router'
 import HomeHeader from './HeaderBar.vue'
 import HomeNavigation from './NavigationBar.vue'
 import ReviewCardBase from './ReviewCardBase.vue'
+import { useReviewLikes } from '@/composables/reviews/useReviewLikes'
+
+const { toggleLike } = useReviewLikes()
 
 const route = useRoute()
 
@@ -87,11 +90,12 @@ const loadReview = async () => {
   }
 }
 
-const handleLikeReview = (reviewData) => {
-  // TODO: Implement like functionality
-  console.log('Liking review:', reviewData)
-  reviewData.isLikedByCurrentUser = !reviewData.isLikedByCurrentUser
-  reviewData.likeCount += reviewData.isLikedByCurrentUser ? 1 : -1
+const handleLikeReview = async (reviewData) => {
+  await toggleLike(reviewData, (wasLiked) => {
+    // Update like count and status in local review data
+    reviewData.isLikedByCurrentUser = !wasLiked
+    reviewData.likeCount += wasLiked ? -1 : 1
+  })
 }
 
 onMounted(() => {

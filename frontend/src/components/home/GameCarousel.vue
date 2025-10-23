@@ -2,11 +2,12 @@
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import { useGamesStore } from '@/stores/gamesStore'
 import GameCard from './GameCard.vue'
+import GameCarouselSkeleton from './GameCarouselSkeleton.vue'
 
 const gamesStore = useGamesStore()
 
 // Props
-defineProps({
+const props = defineProps({
   title: {
     type: String,
     default: 'Popular Games'
@@ -18,6 +19,22 @@ defineProps({
   imageSize: {
     type: String,
     default: 'default'
+  },
+  games: {
+    type: Array,
+    default: null // null means fetch internally
+  },
+  loading: {
+    type: Boolean,
+    default: false
+  },
+  showViewAll: {
+    type: Boolean,
+    default: false
+  },
+  viewAllLink: {
+    type: String,
+    default: '/games'
   }
 })
 
@@ -25,22 +42,30 @@ defineProps({
 const emit = defineEmits(['game-click'])
 
 // State
-const loading = ref(false)
+const internalLoading = ref(false)
 const error = ref(null)
-const popularGames = ref([])
+const internalGames = ref([])
 const currentPage = ref(0)
 const gamesPerPage = ref(6)
 const slideDirection = ref('right')
 
-// Computed
+// Computed - use external games if provided, otherwise use internal
+const allGames = computed(() => {
+  return props.games !== null ? props.games : internalGames.value
+})
+
+const isLoading = computed(() => {
+  return props.games !== null ? props.loading : internalLoading.value
+})
+
 const totalPages = computed(() => {
-  return Math.ceil(popularGames.value.length / gamesPerPage.value)
+  return Math.ceil(allGames.value.length / gamesPerPage.value)
 })
 
 const displayedGames = computed(() => {
   const start = currentPage.value * gamesPerPage.value
   const end = start + gamesPerPage.value
-  return popularGames.value.slice(start, end)
+  return allGames.value.slice(start, end)
 })
 
 const canScrollLeft = computed(() => {
@@ -52,7 +77,7 @@ const canScrollRight = computed(() => {
 })
 
 const showArrows = computed(() => {
-  return popularGames.value.length > gamesPerPage.value
+  return allGames.value.length > gamesPerPage.value
 })
 
 const transitionName = computed(() => {
@@ -61,16 +86,19 @@ const transitionName = computed(() => {
 
 // Methods
 const fetchGames = async () => {
+  // Only fetch if games are not provided externally
+  if (props.games !== null) return
+
   try {
-    loading.value = true
+    internalLoading.value = true
     error.value = null
     const games = await gamesStore.fetchPopularGames(24, false)
-    popularGames.value = games
+    internalGames.value = games
   } catch (err) {
     console.error('Error fetching popular games:', err)
     error.value = 'Failed to load popular games'
   } finally {
-    loading.value = false
+    internalLoading.value = false
   }
 }
 
@@ -121,17 +149,26 @@ onBeforeUnmount(() => {
 
 <template>
   <div class="game-carousel">
-    <!-- Section Title -->
-    <h3
-      class="font-newsreader text-2xl font-bold text-cod-gray mb-4"
-      :class="{ 'border-b border-gray-300': showBorder }"
+    <!-- Section Title with View All Link -->
+    <div
+      class="flex justify-between items-center mb-4"
+      :class="{ 'border-b border-gray-300 pb-2': showBorder }"
     >
-      {{ title }}
-    </h3>
+      <h3 class="font-newsreader text-2xl font-bold text-cod-gray">
+        {{ title }}
+      </h3>
+      <router-link
+        v-if="showViewAll && !isLoading && allGames.length > 0"
+        :to="viewAllLink"
+        class="font-tinos text-base text-blue-600 hover:text-blue-800 hover:underline"
+      >
+        View All →
+      </router-link>
+    </div>
 
-    <!-- Loading State -->
-    <div v-if="loading && popularGames.length === 0" class="loading-state">
-      <div class="spinner"></div>
+    <!-- Loading State with Skeleton -->
+    <div v-if="isLoading && allGames.length === 0">
+      <GameCarouselSkeleton :count="6" />
     </div>
 
     <!-- Error State -->
@@ -141,7 +178,7 @@ onBeforeUnmount(() => {
     </div>
 
     <!-- Carousel Content -->
-    <div v-else-if="popularGames.length > 0" class="carousel-content">
+    <div v-else-if="allGames.length > 0" class="carousel-content">
       <!-- Games Container -->
       <div class="games-container">
         <div class="games-wrapper">

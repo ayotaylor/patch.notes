@@ -1,6 +1,7 @@
 <script setup>
 import GameImageComponent from './GameImageComponent.vue'
 import { useReviewCard } from '@/composables/useReviewCard'
+import { useReviewLikes } from '@/composables/reviews/useReviewLikes'
 
 const props = defineProps({
   review: {
@@ -26,9 +27,14 @@ const {
   navigateToGame
 } = useReviewCard(props.review, props.maxCharacters)
 
-const handleLikeReview = () => {
+const { toggleLike } = useReviewLikes()
+
+const handleLikeReview = async () => {
   if (isLoggedIn.value) {
-    emit('like-review', props.review)
+    await toggleLike(props.review, () => {
+      // Emit event to parent for potential UI updates
+      emit('like-review', props.review)
+    })
   }
 }
 </script>

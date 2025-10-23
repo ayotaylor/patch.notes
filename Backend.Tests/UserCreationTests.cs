@@ -36,7 +36,7 @@ public class UserCreationTests : IClassFixture<DatabaseFixture>, IAsyncLifetime
             await _fixture.CleanupSpecificUsersAsync(_createdUserIds);
         }
     }
-    [Fact]
+    [Fact(Skip = "Manual execution only - uncomment and run when you need to create permanent test users")]
     public async Task CreateThirtyTestUsers_ShouldSucceed()
     {
         // Get services from fixture
@@ -174,6 +174,152 @@ public class UserCreationTests : IClassFixture<DatabaseFixture>, IAsyncLifetime
 
         var createdProfiles = await context.UserProfiles.CountAsync();
         Assert.True(createdProfiles >= 30, $"Expected at least 30 profiles in database, found {createdProfiles}");
+    }
+
+    /// <summary>
+    /// Creates 10 permanent test users for manual testing purposes. These users will NOT be cleaned up automatically.
+    /// Use this method once to generate test users that persist in the database for development/testing.
+    /// Credentials will be written to Backend/testusers folder.
+    /// </summary>
+    [Fact/*Skip = "Manual execution only - uncomment and run when you need to create permanent test users")*/]
+    public async Task Create10PermanentTestUsers_WithCredentialsFile()
+    {
+        // Get services from fixture
+        var userManager = _fixture.UserManager;
+        var context = _fixture.Context;
+
+        var testUsers = new List<TestUserData>();
+        var random = new Random(42); // Fixed seed for reproducible results
+
+        var firstNames = new[]
+        {
+            "Alex", "Emma", "James", "Olivia", "William",
+            "Sophia", "Benjamin", "Isabella", "Lucas", "Mia"
+        };
+
+        var lastNames = new[]
+        {
+            "Smith", "Johnson", "Williams", "Brown", "Jones",
+            "Garcia", "Miller", "Davis", "Rodriguez", "Martinez"
+        };
+
+        var bios = new[]
+        {
+            "Gaming enthusiast and speedrunner. Love challenging myself with difficult games.",
+            "RPG lover with a passion for story-driven games and character development.",
+            "Competitive FPS player. Always looking for the next tournament.",
+            "Indie game developer and player. Supporting small studios!",
+            "Retro gaming collector with over 500 classic titles.",
+            "Casual gamer who enjoys relaxing puzzle and adventure games.",
+            "JRPG fan and anime lover. Turn-based combat is my jam!",
+            "Strategy game mastermind. Chess, Civ, Total War - I play them all.",
+            "Co-op gaming enthusiast. Gaming is better with friends!",
+            "Open world exploration lover. If I can climb it, I will."
+        };
+
+        // Use different email domain to distinguish from test users that get cleaned up
+        var emailDomain = "@reviewtester.dev";
+
+        for (int i = 1; i <= 10; i++)
+        {
+            var firstName = firstNames[i - 1];
+            var lastName = lastNames[i - 1];
+            var email = $"reviewer{i:D2}{emailDomain}";
+            var displayName = $"{firstName}{random.Next(100, 999)}";
+            var bio = bios[i - 1];
+            var password = $"TestPass{i}!";
+
+            // Use a transaction to ensure both user and profile are created together
+            using var transaction = await context.Database.BeginTransactionAsync();
+
+            try
+            {
+                // Create the user
+                var user = new User
+                {
+                    UserName = email,
+                    Email = email,
+                    FirstName = firstName,
+                    LastName = lastName,
+                    Provider = "Local",
+                    CreatedAt = DateTime.UtcNow.AddDays(-random.Next(1, 365)),
+                    EmailConfirmed = true
+                };
+
+                var result = await userManager.CreateAsync(user, password);
+
+                if (result.Succeeded)
+                {
+                    // Create fully populated user profile
+                    var profile = new UserProfile
+                    {
+                        UserId = user.Id,
+                        FirstName = firstName,
+                        LastName = lastName,
+                        DisplayName = displayName,
+                        Email = email,
+                        Bio = bio,
+                        DateOfBirth = DateTime.Now.AddYears(-random.Next(18, 50)).AddDays(-random.Next(0, 365)),
+                        PhoneNumber = $"+1{random.Next(200, 999)}{random.Next(200, 999)}{random.Next(1000, 9999)}",
+                        IsProfileUpdated = true,
+                        IsPublic = true, // All profiles public for testing
+                        CreatedAt = user.CreatedAt,
+                        UpdatedAt = DateTime.UtcNow
+                    };
+
+                    context.UserProfiles.Add(profile);
+                    await context.SaveChangesAsync();
+
+                    // Commit transaction
+                    await transaction.CommitAsync();
+
+                    var testUserData = new TestUserData
+                    {
+                        Id = user.Id,
+                        Email = email,
+                        Password = password,
+                        FirstName = firstName,
+                        LastName = lastName,
+                        DisplayName = displayName,
+                        Bio = bio,
+                        DateOfBirth = profile.DateOfBirth,
+                        PhoneNumber = profile.PhoneNumber,
+                        IsPublic = profile.IsPublic,
+                        CreatedAt = user.CreatedAt
+                    };
+
+                    testUsers.Add(testUserData);
+                    // NOTE: Not adding to _createdUserIds so these users won't be cleaned up
+                }
+                else
+                {
+                    await transaction.RollbackAsync();
+                    Assert.Fail($"Failed to create permanent user {email}: {string.Join(", ", result.Errors.Select(e => e.Description))}");
+                }
+            }
+            catch (Exception ex)
+            {
+                await transaction.RollbackAsync();
+                Assert.Fail($"Exception creating permanent user {email}: {ex.Message}");
+            }
+        }
+
+        // Verify we created 10 users
+        Assert.Equal(10, testUsers.Count);
+
+        // Write to file in Backend/testusers folder
+        var testUsersFolder = GetTestUsersFolder();
+        Directory.CreateDirectory(testUsersFolder);
+        var fileName = $"test_users_{DateTime.UtcNow:yyyyMMdd_HHmmss}.txt";
+        var filePath = Path.Combine(testUsersFolder, fileName);
+        await WriteTestUsersToFile(testUsers, filePath);
+
+        // Verify users exist in database
+        var permanentUsers = await context.Users.Where(u => u.Email!.EndsWith(emailDomain)).CountAsync();
+        Assert.Equal(10, permanentUsers);
+
+        var permanentProfiles = await context.UserProfiles.Where(p => p.Email!.EndsWith(emailDomain)).CountAsync();
+        Assert.Equal(10, permanentProfiles);
     }
 
     /// <summary>
@@ -332,6 +478,36 @@ public class UserCreationTests : IClassFixture<DatabaseFixture>, IAsyncLifetime
     }
 
     /// <summary>
+    /// Utility method to clean up the 10 review tester users when needed.
+    /// Run this if you need to remove the review tester users from the database.
+    /// </summary>
+    [Fact(Skip = "Manual execution only - run when you need to clean up review tester users")]
+    public async Task CleanupReviewTesterUsers_ForManualExecution()
+    {
+        // Get services from fixture
+        var context = _fixture.Context;
+        var emailDomain = "@reviewtester.dev";
+
+        // Find and remove review tester users
+        var reviewTesterUsers = context.Users.Where(u => u.Email!.EndsWith(emailDomain)).ToList();
+        var reviewTesterProfiles = context.UserProfiles.Where(p => p.Email!.EndsWith(emailDomain)).ToList();
+
+        if (reviewTesterUsers.Count > 0 || reviewTesterProfiles.Count > 0)
+        {
+            context.UserProfiles.RemoveRange(reviewTesterProfiles);
+            context.Users.RemoveRange(reviewTesterUsers);
+            await context.SaveChangesAsync();
+
+            // Verify cleanup
+            var remainingUsers = await context.Users.Where(u => u.Email!.EndsWith(emailDomain)).CountAsync();
+            var remainingProfiles = await context.UserProfiles.Where(p => p.Email!.EndsWith(emailDomain)).CountAsync();
+
+            Assert.Equal(0, remainingUsers);
+            Assert.Equal(0, remainingProfiles);
+        }
+    }
+
+    /// <summary>
     /// Utility method to clean up permanent test users when needed.
     /// Run this if you need to remove the permanent test users from the database.
     /// </summary>
@@ -359,6 +535,26 @@ public class UserCreationTests : IClassFixture<DatabaseFixture>, IAsyncLifetime
             Assert.Equal(0, remainingUsers);
             Assert.Equal(0, remainingProfiles);
         }
+    }
+
+    private static string GetTestUsersFolder()
+    {
+        // Navigate to Backend folder from test project
+        var currentDirectory = Directory.GetCurrentDirectory();
+        var backendFolder = currentDirectory;
+
+        // Find Backend folder
+        while (backendFolder != null && !Directory.Exists(Path.Combine(backendFolder, "Backend")))
+        {
+            backendFolder = Directory.GetParent(backendFolder)?.FullName;
+        }
+
+        if (backendFolder == null)
+        {
+            throw new DirectoryNotFoundException("Could not find Backend folder");
+        }
+
+        return Path.Combine(backendFolder, "Backend", "testusers");
     }
 
     private static async Task WriteTestUsersToFile(List<TestUserData> users, string filePath)

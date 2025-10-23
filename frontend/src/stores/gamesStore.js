@@ -684,7 +684,57 @@ export const useGamesStore = defineStore("games", () => {
 
       return gameInstances;
     } catch (err) {
-      console.error("fetchSimilarGames: Error:", err);
+      console.error("fetchNewGames: Error:", err);
+      error.value = err.message;
+      return [];
+    } finally {
+      loading.value = false;
+    }
+  };
+
+  const fetchLatestReviewedGames = async (limit = 10, force = false) => {
+    const cacheKey = `latest_reviewed_games_${limit}`;
+
+    // Check cache if not forcing refresh
+    if (!force && isCacheValid(cacheKey)) {
+      // Return cached results if available
+      const cached = Array.from(games.value.values()).slice(0, limit);
+      if (cached.length > 0) {
+        return cached;
+      }
+    }
+
+    try {
+      loading.value = true;
+      error.value = null;
+
+      const results = await gamesService.getLatestReviewedGames(limit)
+
+      if (!Array.isArray(results)) {
+        console.error('fetchLatestReviewedGames: Expected array but got:', typeof results);
+        return [];
+      }
+
+      const gameInstances = [];
+
+      for (const gameItem of results) {
+        try {
+          const gameInstance = createGame(gameItem);
+          if (gameInstance && gameInstance.id) {
+            // Cache with high priority cover preloading for recently reviewed games
+            cacheGame(gameInstance, null, { preloadCover: true, coverPriority: 'high' });
+            gameInstances.push(gameInstance);
+          }
+        } catch (gameError) {
+          console.error('fetchLatestReviewedGames: Error creating game instance:', gameError);
+        }
+      }
+
+      cacheTimestamps.value.set(cacheKey, Date.now());
+
+      return gameInstances;
+    } catch (err) {
+      console.error("fetchLatestReviewedGames: Error:", err);
       error.value = err.message;
       return [];
     } finally {
@@ -999,6 +1049,7 @@ export const useGamesStore = defineStore("games", () => {
     fetchPopularGames,
     fetchSimilarGames,
     fetchNewGames,
+    fetchLatestReviewedGames,
     removeFromLikes,
     addToLikes,
     getUserLikes,

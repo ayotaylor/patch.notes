@@ -1,0 +1,8 @@
+# Ignore all files in this directory (test user credentials)
+*
+
+# But keep this .gitignore file
+!.gitignore
+
+# Optional: Keep a README
+!README.md

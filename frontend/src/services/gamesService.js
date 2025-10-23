@@ -160,7 +160,7 @@ export const gamesService = {
     }
   },
 
-  // Get popular games
+  // Get new games
   async getNewGames(limit = 10) {
     try {
       if (typeof limit !== "number" || limit <= 0) {
@@ -171,6 +171,22 @@ export const gamesService = {
     } catch (error) {
       throw new Error(
         error.response?.data?.message || "Failed to fetch new games"
+      );
+    }
+  },
+
+  // Get latest reviewed games
+  // TODO: change implementation to get the latest reviewd games from API - review controller
+  async getLatestReviewedGames(limit = 10) {
+    try {
+      if (typeof limit !== "number" || limit <= 0) {
+        throw new Error("Limit must be a positive number");
+      }
+      const response = await apiClient.get(`/games/popular?limit=${limit}`);
+      return response.data.data || [];
+    } catch (error) {
+      throw new Error(
+        error.response?.data?.message || "Failed to fetch latest reviewed games"
       );
     }
   },

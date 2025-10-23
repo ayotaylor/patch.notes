@@ -8,6 +8,7 @@ import ReviewCardBase from './ReviewCardBase.vue'
 const reviews = ref([])
 const loading = ref(true)
 const error = ref(null)
+// eslint-disable-next-line no-unused-vars
 const displayCount = ref(15)
 
 // Generate placeholder review data

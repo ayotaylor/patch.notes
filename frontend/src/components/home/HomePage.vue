@@ -1,11 +1,30 @@
 <script setup>
+import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { useGamesStore } from '@/stores/gamesStore'
 import HomeHeader from './HeaderBar.vue'
 import HomeNavigation from './NavigationBar.vue'
 import GameCarousel from './GameCarousel.vue'
 import ReviewCardBase from './ReviewCardBase.vue'
+import { useReviews } from '@/composables/reviews/useReviews'
+import { useReviewLikes } from '@/composables/reviews/useReviewLikes'
 
 const router = useRouter()
+const gamesStore = useGamesStore()
+const { loadReviews } = useReviews()
+const { toggleLike, loadLikeStatusBatch } = useReviewLikes()
+
+// Reviews State
+const popularReviews = ref([])
+const loadingReviews = ref(true)
+const reviewsLoadError = ref(false)
+const retryAttempt = ref(0)
+const MAX_RETRIES = 2
+
+// Recently Reviewed Games State
+const recentlyReviewedGames = ref([])
+const loadingRecentGames = ref(true)
+const recentGamesError = ref(false)
 
 const handleGameClick = (game) => {
   // Navigate to game details page using slug or id
@@ -16,174 +35,85 @@ const handleGameClick = (game) => {
   }
 }
 
-const recentGames = [
-  {
-    title: 'Stellar Blade',
-    image: 'https://api.builder.io/api/v1/image/assets/TEMP/5b352c98b2010576119cea8b881d4e255e61691f?width=389',
-  },
-  {
-    title: 'Final Fantasy VII Rebirth',
-    image: 'https://api.builder.io/api/v1/image/assets/TEMP/2403265359b7360f8fa23191410ef2a8d6220254?width=389',
-  },
-  {
-    title: 'Elden Ring',
-    image: 'https://api.builder.io/api/v1/image/assets/TEMP/b57eff94a771a7bbd7a49146351932d115548b1c?width=389',
-  },
-  {
-    title: 'Helldivers 2',
-    image: 'https://api.builder.io/api/v1/image/assets/TEMP/3a2cb97c37806475d077d3802823f685321d0a0b?width=389',
-  },
-  {
-    title: "Dragon's Dogma 2",
-    image: 'https://api.builder.io/api/v1/image/assets/TEMP/4898fc79de31209bd2ee4b907bd4bc308e7c8b56?width=389',
-  },
-  {
-    title: "Baldur's Gate 3",
-    image: 'https://api.builder.io/api/v1/image/assets/TEMP/50d858b3ca9f3fb73a01db6ee80a38dc78743753?width=389',
-  },
-]
+// Load recently reviewed games from API using store
+const fetchRecentlyReviewedGames = async () => {
+  try {
+    loadingRecentGames.value = true
+    recentGamesError.value = false
 
-const popularReviews = [
-  {
-    id: 1,
-    reviewText: 'FromSoftware has once again redefined the genre, delivering an unforgettable experience that will be talked about for years to come. The open-world design is masterful, giving players true freedom while maintaining carefully crafted encounters.',
-    rating: 5,
-    isLikedByCurrentUser: false,
-    user: {
-      id: 1,
-      username: 'janedoe',
-      displayName: 'Jane Doe',
-      profileImageUrl: 'https://via.placeholder.com/50'
-    },
-    game: {
-      id: 1,
-      name: 'Elden Ring',
-      slug: 'elden-ring',
-      releaseYear: 2022,
-      primaryImageUrl: 'https://images.igdb.com/igdb/image/upload/t_cover_big/co4jni.jpg',
-      isLikedByUser: true
-    },
-    likeCount: 245,
-    commentCount: 42
-  },
-  {
-    id: 2,
-    reviewText: 'Rebirth takes the beloved classic and expands upon it in every way imaginable, creating a new yet familiar journey. The character development is phenomenal, and the combat system has been refined to perfection.',
-    rating: 4.5,
-    isLikedByCurrentUser: false,
-    user: {
-      id: 2,
-      username: 'johnsmith',
-      displayName: 'John Smith',
-      profileImageUrl: 'https://via.placeholder.com/50'
-    },
-    game: {
-      id: 2,
-      name: 'Final Fantasy VII Rebirth',
-      slug: 'final-fantasy-vii-rebirth',
-      releaseYear: 2024,
-      primaryImageUrl: 'https://images.igdb.com/igdb/image/upload/t_cover_big/co7rll.jpg',
-      isLikedByUser: false
-    },
-    likeCount: 189,
-    commentCount: 31
-  },
-  {
-    id: 3,
-    reviewText: 'Stellar Blade delivers fast-paced combat and a visually stunning world, making it a must-play for fans of the genre. The boss battles are incredibly designed and the story keeps you engaged throughout.',
-    rating: 4,
-    isLikedByCurrentUser: true,
-    user: {
-      id: 3,
-      username: 'alexray',
-      displayName: 'Alex Ray',
-      profileImageUrl: 'https://via.placeholder.com/50'
-    },
-    game: {
-      id: 3,
-      name: 'Stellar Blade',
-      slug: 'stellar-blade',
-      releaseYear: 2024,
-      primaryImageUrl: 'https://images.igdb.com/igdb/image/upload/t_cover_big/co7t4q.jpg',
-      isLikedByUser: true
-    },
-    likeCount: 156,
-    commentCount: 28
-  },
-  {
-    id: 4,
-    reviewText: 'Helldivers 2 offers chaotic, hilarious, and deeply satisfying cooperative gameplay that keeps you coming back for more. The friendly fire mechanic adds a layer of strategy and comedy that makes every mission memorable.',
-    rating: 4.5,
-    isLikedByCurrentUser: false,
-    user: {
-      id: 4,
-      username: 'sarahchen',
-      displayName: 'Sarah Chen',
-      profileImageUrl: 'https://via.placeholder.com/50'
-    },
-    game: {
-      id: 4,
-      name: 'Helldivers 2',
-      slug: 'helldivers-2',
-      releaseYear: 2024,
-      primaryImageUrl: 'https://images.igdb.com/igdb/image/upload/t_cover_big/co7kvi.jpg',
-      isLikedByUser: false
-    },
-    likeCount: 312,
-    commentCount: 67
-  },
-  {
-    id: 5,
-    reviewText: 'An incredible open-world RPG that gives players unprecedented freedom in how they approach challenges. The pawn system creates emergent gameplay moments that are truly unique.',
-    rating: 4,
-    isLikedByCurrentUser: false,
-    user: {
-      id: 5,
-      username: 'mikegamer',
-      displayName: 'Mike Johnson',
-      profileImageUrl: 'https://via.placeholder.com/50'
-    },
-    game: {
-      id: 5,
-      name: "Dragon's Dogma 2",
-      slug: 'dragons-dogma-2',
-      releaseYear: 2024,
-      primaryImageUrl: 'https://images.igdb.com/igdb/image/upload/t_cover_big/co7f4l.jpg',
-      isLikedByUser: true
-    },
-    likeCount: 203,
-    commentCount: 45
-  },
-  {
-    id: 6,
-    reviewText: 'The pinnacle of modern RPG design. Every choice matters, every character is memorable, and the world reacts to your decisions in meaningful ways. A true masterpiece.',
-    rating: 5,
-    isLikedByCurrentUser: true,
-    user: {
-      id: 6,
-      username: 'rpgfan92',
-      displayName: 'Emma Davis',
-      profileImageUrl: 'https://via.placeholder.com/50'
-    },
-    game: {
-      id: 6,
-      name: "Baldur's Gate 3",
-      slug: 'baldurs-gate-3',
-      releaseYear: 2023,
-      primaryImageUrl: 'https://images.igdb.com/igdb/image/upload/t_cover_big/co5w2t.jpg',
-      isLikedByUser: true
-    },
-    likeCount: 487,
-    commentCount: 93
+    const games = await gamesStore.fetchLatestReviewedGames(12, false)
+    recentlyReviewedGames.value = games
+  } catch (error) {
+    console.error('Error loading recently reviewed games:', error)
+    recentGamesError.value = true
+
+    // Retry with fewer games
+    try {
+      const games = await gamesStore.fetchLatestReviewedGames(6, false)
+      recentlyReviewedGames.value = games
+      recentGamesError.value = false
+    } catch (retryError) {
+      console.error('Retry failed for recently reviewed games:', retryError)
+      // Keep error state
+    }
+  } finally {
+    loadingRecentGames.value = false
   }
-]
-
-const handleLikeReview = (review) => {
-  // TODO: Implement like functionality
-  console.log('Liking review:', review)
-  review.isLikedByCurrentUser = !review.isLikedByCurrentUser
-  review.likeCount += review.isLikedByCurrentUser ? 1 : -1
 }
+
+// Load popular reviews from API
+const fetchPopularReviews = async () => {
+  try {
+    loadingReviews.value = true
+    reviewsLoadError.value = false
+
+    const result = await loadReviews({ page: 1, pageSize: 6 })
+    popularReviews.value = result.data
+
+    // Load like status for all reviews if user is authenticated
+    if (result.data.length > 0) {
+      await loadLikeStatusBatch(result.data)
+    }
+  } catch (error) {
+    console.error('Error loading popular reviews:', error)
+    reviewsLoadError.value = true
+
+    // Retry with fewer reviews if first attempt failed
+    if (retryAttempt.value < MAX_RETRIES) {
+      retryAttempt.value++
+      const retryPageSize = Math.max(3, 6 - retryAttempt.value * 2)
+      console.log(`Retrying with pageSize: ${retryPageSize}`)
+
+      try {
+        const result = await loadReviews({ page: 1, pageSize: retryPageSize })
+        popularReviews.value = result.data
+        reviewsLoadError.value = false
+
+        if (result.data.length > 0) {
+          await loadLikeStatusBatch(result.data)
+        }
+      } catch (retryError) {
+        console.error('Retry failed:', retryError)
+        // Keep error state, don't show section
+      }
+    }
+  } finally {
+    loadingReviews.value = false
+  }
+}
+
+const handleLikeReview = async (review) => {
+  await toggleLike(review, (wasLiked) => {
+    // Update like count in local review data
+    review.likeCount = (review.likeCount || 0) + (wasLiked ? -1 : 1)
+  })
+}
+
+// Load data on mount
+onMounted(() => {
+  fetchPopularReviews()
+  fetchRecentlyReviewedGames()
+})
 
 const popularLists = [
   {
@@ -269,32 +199,79 @@ const popularMembers = [
         <GameCarousel
           title="Popular Games"
           :show-border="true"
+          :show-view-all="true"
+          view-all-link="/games/popular"
           image-size="default"
           @game-click="handleGameClick"
         />
       </div>
     </div>
 
-    <!-- Recently Reviewed Section -->
-    <div class="flex justify-center px-4 md:px-8 lg:px-40 mt-8">
+    <!-- Recently Reviewed Games Section -->
+    <div v-if="!recentGamesError || loadingRecentGames || recentlyReviewedGames.length > 0" class="flex justify-center px-4 md:px-8 lg:px-40 mt-8">
       <div class="w-full max-w-1280">
-        <h3 class="font-newsreader text-2xl font-bold text-cod-gray mb-4 border-b border-gray-300">
-          Recently Reviewed
-        </h3>
-        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-6 overflow-x-auto">
-          <div v-for="game in recentGames" :key="game.title" class="flex flex-col">
-            <img :src="game.image" :alt="game.title" class="w-full aspect-[3/4] object-cover rounded-lg" />
-            <p class="font-tinos text-base text-cod-gray mt-3">{{ game.title }}</p>
-          </div>
-        </div>
+        <GameCarousel
+          title="Recently Reviewed"
+          :show-border="true"
+          :show-view-all="true"
+          view-all-link="/games/recent"
+          :games="recentlyReviewedGames"
+          :loading="loadingRecentGames"
+          image-size="default"
+          @game-click="handleGameClick"
+        />
       </div>
     </div>
 
     <!-- Popular Reviews Section -->
-    <div class="flex justify-center px-4 md:px-8 lg:px-40 mt-8">
+    <div v-if="!reviewsLoadError || loadingReviews || popularReviews.length > 0" class="flex justify-center px-4 md:px-8 lg:px-40 mt-8">
       <div class="w-full max-w-1280">
-        <h3 class="font-newsreader text-2xl font-bold text-cod-gray mb-4 border-b border-gray-300">Popular Reviews</h3>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <!-- Section Header with View All Link -->
+        <div class="flex justify-between items-center mb-4 border-b border-gray-300 pb-2">
+          <h3 class="font-newsreader text-2xl font-bold text-cod-gray">Popular Reviews</h3>
+          <router-link
+            v-if="!loadingReviews && popularReviews.length > 0"
+            to="/reviews"
+            class="font-tinos text-base text-blue-600 hover:text-blue-800 hover:underline"
+          >
+            View All →
+          </router-link>
+        </div>
+
+        <!-- Loading Skeleton -->
+        <div v-if="loadingReviews" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div v-for="n in 6" :key="`skeleton-${n}`" class="animate-pulse">
+            <div class="flex flex-col gap-4">
+              <!-- Row 1: Game image and user/game info -->
+              <div class="grid grid-cols-4 gap-4">
+                <!-- Skeleton image -->
+                <div class="col-span-1">
+                  <div class="bg-gray-300 rounded-lg w-full aspect-[3/4]"></div>
+                </div>
+                <!-- Skeleton text -->
+                <div class="col-span-3 flex flex-col justify-end pb-1 gap-2">
+                  <div class="h-4 bg-gray-300 rounded w-3/4"></div>
+                  <div class="h-4 bg-gray-300 rounded w-1/2"></div>
+                  <div class="flex gap-2">
+                    <div class="h-3 bg-gray-300 rounded w-20"></div>
+                    <div class="h-3 bg-gray-300 rounded w-20"></div>
+                  </div>
+                </div>
+              </div>
+              <!-- Row 2: Review text skeleton -->
+              <div class="space-y-2">
+                <div class="h-3 bg-gray-300 rounded"></div>
+                <div class="h-3 bg-gray-300 rounded"></div>
+                <div class="h-3 bg-gray-300 rounded w-5/6"></div>
+              </div>
+              <!-- Row 3: Like button skeleton -->
+              <div class="h-3 bg-gray-300 rounded w-24"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Reviews Grid -->
+        <div v-else-if="popularReviews.length > 0" class="grid grid-cols-1 md:grid-cols-2 gap-6">
           <ReviewCardBase
             v-for="review in popularReviews"
             :key="review.id"
@@ -302,6 +279,11 @@ const popularMembers = [
             variant="popular"
             @like-review="handleLikeReview"
           />
+        </div>
+
+        <!-- Empty State (only if not loading and no error) -->
+        <div v-else-if="!loadingReviews && !reviewsLoadError" class="text-center py-12">
+          <p class="font-tinos text-lg text-river-bed">No reviews available yet.</p>
         </div>
       </div>
     </div>
