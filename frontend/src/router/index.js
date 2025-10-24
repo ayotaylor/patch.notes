@@ -11,8 +11,9 @@ const LoginComponent = () => import("@/components/LoginComponent.vue");
 const RegisterComponent = () => import("@/components/RegisterComponent.vue");
 const DashboardComponent = () => import("@/components/DashboardComponent.vue");
 const ProfileComponent = () => import("@/components/ProfileComponent.vue");
-const GameDetailsComponent = () => import("@/components/GameDetailsComponent.vue");
-const ReviewsListPage = () => import("@/components/ReviewsListPage.vue");
+// const GameDetailsComponent = () => import("@/components/GameDetailsComponent.vue"); // Old game details component
+const GameDetailsComponent = () => import("@/components/home/GameDetails.vue"); // New game details component
+const ReviewsListPage = () => import("@/components/home/ReviewsListPage.vue");
 // const ListsPage = () => import("@/components/ListsPage.vue"); // Old lists page
 const ListsPage = () => import("@/components/home/ListsPage.vue");
 // const ListDetailsPage = () => import("@/components/ListDetailsPage.vue"); // Old list details page

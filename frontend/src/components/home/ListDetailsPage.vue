@@ -4,7 +4,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
 import HomeHeader from './HeaderBar.vue'
 import HomeNavigation from './NavigationBar.vue'
-import ListActionsPanel from './ListActionsPanel.vue'
+import ListActionsPanel from './ActionsPanel.vue'
 import GameCard from './GameCard.vue'
 import { useLists } from '@/composables/lists/useLists'
 import { useListLikes } from '@/composables/lists/useListLikes'
@@ -201,8 +201,8 @@ onMounted(() => {
         </div>
 
         <!-- List Content -->
-        <div v-else-if="list" class="flex gap-8">
-          <!-- Column 1: Main Content (75% width) -->
+        <div v-else-if="list" class="flex flex-col lg:flex-row gap-6">
+          <!-- Column 1: 75% - Main Content -->
           <div class="flex-1" style="width: 75%">
             <!-- Row 1: User info -->
             <div class="flex items-center gap-3 mb-3">
@@ -333,10 +333,11 @@ onMounted(() => {
             </div>
           </div>
 
-          <!-- Column 2: Actions Panel (25% width) -->
+          <!-- Column 2: 25% - Actions Panel -->
           <div style="width: 25%">
-            <div class="sticky top-8">
+            <div class="lg:sticky lg:top-4">
               <ListActionsPanel
+                context="list"
                 :can-edit="canEdit"
                 :can-delete="canDelete"
                 :is-liked="isListLiked"
@@ -354,3 +355,9 @@ onMounted(() => {
     </div>
   </div>
 </template>
+
+<style scoped>
+.max-w-1280 {
+  max-width: 1280px;
+}
+</style>

@@ -1,7 +1,7 @@
 <template>
   <div id="app">
     <!-- Navigation Bar -->
-     <AppNavbar v-if="showNavBar" />
+     <!--<AppNavbar v-if="showNavBar" /> -->
 
      <!-- Main Content -->
     <div class="main-content">
@@ -15,21 +15,21 @@
 </template>
 
 <script setup>
-import { computed, onMounted, onUnmounted, ref } from 'vue';
-import { useRoute } from 'vue-router';
+import { /*computed, */ onMounted, onUnmounted, ref } from 'vue';
+// import { useRoute } from 'vue-router';
 import { useAuthStore } from '@/stores/authStore';
-import AppNavbar from '@/components/AppNavBar.vue';
+//import AppNavbar from '@/components/AppNavBar.vue';
 import LoadingOverlay from '@/components/LoadingOverlay.vue';
 
-const route = useRoute();
+//const route = useRoute();
 const authStore = useAuthStore();
 const loadingMessage = ref('');
 
-const showNavBar = computed(() => {
-  const authRoutes = [
-    '/login', '/register', '/forgot-password', '/reset-password'];
-  return !authRoutes.includes(route.path);
-});
+// const showNavBar = computed(() => {
+//   const authRoutes = [
+//     '/login', '/register', '/forgot-password', '/reset-password'];
+//   return !authRoutes.includes(route.path);
+// });
 
 // Storage event handler for multi-tab sync
 const handleStorageChange = (event) => {

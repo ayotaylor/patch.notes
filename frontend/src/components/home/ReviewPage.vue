@@ -4,9 +4,13 @@ import { useRoute } from 'vue-router'
 import HomeHeader from './HeaderBar.vue'
 import HomeNavigation from './NavigationBar.vue'
 import ReviewCardBase from './ReviewCardBase.vue'
+import ActionsPanel from './ActionsPanel.vue'
 import { useReviewLikes } from '@/composables/reviews/useReviewLikes'
+import { useAuthStore } from '@/stores/authStore'
+import { computed } from 'vue'
 
 const { toggleLike } = useReviewLikes()
+const authStore = useAuthStore()
 
 const route = useRoute()
 
@@ -18,6 +22,23 @@ const gameSlug = ref(route.params.gameSlug)
 const review = ref(null)
 const loading = ref(true)
 const error = ref(null)
+
+// Computed properties for ActionsPanel
+const canEdit = computed(() => {
+  return authStore.user && review.value?.user?.id === authStore.user.id
+})
+
+const canDelete = computed(() => {
+  return authStore.user && review.value?.user?.id === authStore.user.id
+})
+
+const isReviewLiked = computed(() => {
+  return review.value?.isLikedByCurrentUser || false
+})
+
+const reviewLikeCount = computed(() => {
+  return review.value?.likeCount || 0
+})
 
 // Placeholder comments data
 const placeholderComments = ref([
@@ -98,6 +119,38 @@ const handleLikeReview = async (reviewData) => {
   })
 }
 
+// ActionsPanel handlers
+const handleLike = () => {
+  if (review.value) {
+    handleLikeReview(review.value)
+  }
+}
+
+const handleEdit = () => {
+  // TODO: Open edit review modal
+  console.log('Edit review')
+}
+
+const handleDelete = () => {
+  // TODO: Implement delete review functionality
+  console.log('Delete review')
+}
+
+const handleRate = () => {
+  // TODO: Open rate modal
+  console.log('Rate game')
+}
+
+const handleReview = () => {
+  // TODO: Open review modal
+  console.log('Write review')
+}
+
+const handleAddToList = () => {
+  // TODO: Open add to list modal
+  console.log('Add to list')
+}
+
 onMounted(() => {
   loadReview()
 })
@@ -112,7 +165,7 @@ onMounted(() => {
     <HomeNavigation />
 
     <!-- Review Details Section -->
-    <div class="flex justify-center px-4 md:px-8 lg:px-40 mt-8">
+    <div class="flex justify-center px-4 md:px-8 lg:px-40 mt-8 pb-16">
       <div class="w-full max-w-1280">
         <!-- Loading State -->
         <div v-if="loading" class="text-center py-16">
@@ -126,70 +179,113 @@ onMounted(() => {
         </div>
 
         <!-- Review Content -->
-        <div v-else-if="review">
-          <h2 class="font-newsreader text-3xl font-bold text-cod-gray mb-6 border-b border-gray-300 pb-4">
-            Review
-          </h2>
-
-          <ReviewCardBase
-            :review="review"
-            variant="detail"
-            @like-review="handleLikeReview"
-          />
-        </div>
-      </div>
-    </div>
-
-    <!-- Comments Section (Placeholder) -->
-    <div v-if="review" class="flex justify-center px-4 md:px-8 lg:px-40 mt-12 mb-16">
-      <div class="w-full max-w-1280">
-        <div class="border-t border-gray-300 pt-8">
-          <!-- Comments Header -->
-          <h3 class="font-newsreader text-2xl font-bold text-cod-gray mb-6">
-            Comments ({{ placeholderComments.length }})
-          </h3>
-
-          <!-- Comments List -->
-          <div class="space-y-6">
-            <div
-              v-for="comment in placeholderComments"
-              :key="comment.id"
-              class="border-b border-gray-200 pb-6 last:border-b-0"
-            >
-              <div class="grid grid-cols-4 gap-4">
-                <!-- Column 1: User info (25% width) -->
-                <div class="col-span-1">
-                  <div class="flex items-center gap-2">
-                    <img
-                      :src="comment.user.profileImageUrl"
-                      :alt="comment.user.username"
-                      class="w-8 h-8 rounded-full object-cover"
-                      @error="(e) => (e.target.style.display = 'none')"
-                    />
-                    <span class="font-tinos text-sm text-cod-gray font-semibold">
-                      {{ comment.user.username }}
-                    </span>
-                  </div>
-                </div>
-
-                <!-- Column 2: Comment text (75% width) -->
-                <div class="col-span-3">
-                  <p class="font-tinos text-base text-ebony-clay leading-6">
-                    {{ comment.text }}
-                  </p>
+        <div v-else-if="review" class="flex flex-col lg:flex-row gap-6">
+          <!-- Column 1: 25% - Game Image -->
+          <div class="lg:w-1/4">
+            <div class="lg:sticky lg:top-4">
+              <img
+                v-if="review.game?.primaryImageUrl"
+                :src="review.game.primaryImageUrl"
+                :alt="review.game.name"
+                class="w-full rounded-lg mb-4"
+                @error="(e) => (e.target.style.display = 'none')"
+              />
+              <div class="bg-white rounded-lg p-4">
+                <div class="text-center">
+                  <div class="font-newsreader text-2xl font-bold text-cod-gray">{{ review.rating.toFixed(1) }}</div>
+                  <div class="font-tinos text-sm text-gray-500">Rating</div>
                 </div>
               </div>
             </div>
           </div>
 
-          <!-- Placeholder message -->
-          <div class="mt-8 p-4 bg-gray-100 rounded-lg">
-            <p class="font-tinos text-sm text-river-bed italic text-center">
-              Comment functionality will be implemented in a future update.
-            </p>
+          <!-- Column 2: 50% - Main Content -->
+          <div class="lg:w-1/2">
+            <h2 class="font-newsreader text-3xl font-bold text-cod-gray mb-6 border-b border-gray-300 pb-4">
+              Review
+            </h2>
+
+            <ReviewCardBase
+              :review="review"
+              variant="detail"
+              @like-review="handleLikeReview"
+            />
+
+            <!-- Comments Section (Placeholder) -->
+            <div class="border-t border-gray-300 pt-8 mt-8">
+              <!-- Comments Header -->
+              <h3 class="font-newsreader text-2xl font-bold text-cod-gray mb-6">
+                Comments ({{ placeholderComments.length }})
+              </h3>
+
+              <!-- Comments List -->
+              <div class="space-y-6">
+                <div
+                  v-for="comment in placeholderComments"
+                  :key="comment.id"
+                  class="border-b border-gray-200 pb-6 last:border-b-0"
+                >
+                  <div class="grid grid-cols-4 gap-4">
+                    <!-- Column 1: User info (25% width) -->
+                    <div class="col-span-1">
+                      <div class="flex items-center gap-2">
+                        <img
+                          :src="comment.user.profileImageUrl"
+                          :alt="comment.user.username"
+                          class="w-8 h-8 rounded-full object-cover"
+                          @error="(e) => (e.target.style.display = 'none')"
+                        />
+                        <span class="font-tinos text-sm text-cod-gray font-semibold">
+                          {{ comment.user.username }}
+                        </span>
+                      </div>
+                    </div>
+
+                    <!-- Column 2: Comment text (75% width) -->
+                    <div class="col-span-3">
+                      <p class="font-tinos text-base text-ebony-clay leading-6">
+                        {{ comment.text }}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Placeholder message -->
+              <div class="mt-8 p-4 bg-gray-100 rounded-lg">
+                <p class="font-tinos text-sm text-river-bed italic text-center">
+                  Comment functionality will be implemented in a future update.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Column 3: 25% - Actions Panel -->
+          <div class="lg:w-1/4">
+            <div class="lg:sticky lg:top-4">
+              <ActionsPanel
+                context="review"
+                :can-edit="canEdit"
+                :can-delete="canDelete"
+                :is-liked="isReviewLiked"
+                :like-count="reviewLikeCount"
+                @like="handleLike"
+                @edit="handleEdit"
+                @delete="handleDelete"
+                @rate="handleRate"
+                @review="handleReview"
+                @add-to-list="handleAddToList"
+              />
+            </div>
           </div>
         </div>
       </div>
     </div>
   </div>
 </template>
+
+<style scoped>
+.max-w-1280 {
+  max-width: 1280px;
+}
+</style>
