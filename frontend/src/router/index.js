@@ -13,8 +13,10 @@ const DashboardComponent = () => import("@/components/DashboardComponent.vue");
 const ProfileComponent = () => import("@/components/ProfileComponent.vue");
 const GameDetailsComponent = () => import("@/components/GameDetailsComponent.vue");
 const ReviewsListPage = () => import("@/components/ReviewsListPage.vue");
-const ListsPage = () => import("@/components/ListsPage.vue");
-const ListDetailsPage = () => import("@/components/ListDetailsPage.vue");
+// const ListsPage = () => import("@/components/ListsPage.vue"); // Old lists page
+const ListsPage = () => import("@/components/home/ListsPage.vue");
+// const ListDetailsPage = () => import("@/components/ListDetailsPage.vue"); // Old list details page
+const ListDetailsPage = () => import("@/components/home/ListDetailsPage.vue");
 const MembersPage = () => import("@/components/MembersPage.vue");
 const RecommendationsPage = () => import("@/components/RecommendationsPage.vue");
 // const ForgotPassword = () => import('@/views/ForgotPassword.vue')

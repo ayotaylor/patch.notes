@@ -46,6 +46,7 @@ namespace Backend.Services
             var totalPages = (int)Math.Ceiling((double)totalCount / pageSize);
 
             var gameLists = await _context.GameLists
+                .AsSplitQuery()
                 .Include(gl => gl.User)
                 .Include(gl => gl.GameListItems)
                     .ThenInclude(gli => gli.Game)
@@ -79,6 +80,7 @@ namespace Backend.Services
             var totalPages = (int)Math.Ceiling((double)totalCount / pageSize);
 
             var gameLists = await _context.GameLists
+                .AsSplitQuery()
                 .Include(gl => gl.User)
                 .Include(gl => gl.GameListItems)
                     .ThenInclude(gli => gli.Game)
@@ -106,6 +108,7 @@ namespace Backend.Services
         public async Task<GameListDto?> GetGameListAsync(Guid listId)
         {
             var gameList = await _context.GameLists
+                .AsSplitQuery()
                 .Include(gl => gl.User)
                 .Include(gl => gl.GameListItems)
                     .ThenInclude(gli => gli.Game)

@@ -143,16 +143,18 @@ public class ReviewCreationTests : IClassFixture<DatabaseFixture>, IAsyncLifetim
             {
                 var gameDto = popularGames[gameIndex];
 
-                var game = await context.Games
-                    .FirstOrDefaultAsync(g => g.IgdbId == gameDto.IgdbId);
+                var gameId = await context.Games
+                    .Where(g => g.IgdbId == gameDto.IgdbId)
+                    .Select(g => g.Id)
+                    .FirstOrDefaultAsync();
 
                 // Check if user has already reviewed this game
                 var existingReview = await context.Reviews
-                    .FirstOrDefaultAsync(r => r.UserId == userProfileId && r.GameId == game.Id);
+                    .FirstOrDefaultAsync(r => r.UserId == userProfileId && r.GameId == gameId);
 
                 if (existingReview != null)
                 {
-                    Console.WriteLine($"  User already reviewed {game.Name}, skipping");
+                    Console.WriteLine($"  User already reviewed {gameDto.Name}, skipping");
                     continue;
                 }
 
@@ -164,7 +166,7 @@ public class ReviewCreationTests : IClassFixture<DatabaseFixture>, IAsyncLifetim
                 var review = new Review
                 {
                     UserId = userProfileId,
-                    GameId = game.Id,
+                    GameId = gameId,
                     Rating = rating,
                     ReviewText = reviewText,
                     ReviewDate = DateTime.UtcNow.AddDays(-random.Next(0, 365)),
@@ -181,11 +183,11 @@ public class ReviewCreationTests : IClassFixture<DatabaseFixture>, IAsyncLifetim
                     reviewCount++;
                     totalReviewsCreated++;
 
-                    Console.WriteLine($"  ✓ Review #{reviewCount}: {game.Name} - {rating}/5 stars");
+                    Console.WriteLine($"  ✓ Review #{reviewCount}: {gameDto.Name} - {rating}/5 stars");
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"  ✗ Failed to create review for {game.Name}: {ex.Message}");
+                    Console.WriteLine($"  ✗ Failed to create review for {gameDto.Name}: {ex.Message}");
                 }
             }
 

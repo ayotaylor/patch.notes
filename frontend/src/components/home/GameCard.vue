@@ -44,7 +44,12 @@ const imageClass = computed(() => {
 })
 
 const optimizedImageUrl = computed(() => {
-  const rawUrl = props.game.cover?.imageUrl || props.game.image || '/placeholder-game.jpg'
+  // Check multiple possible image properties
+  const rawUrl = props.game.coverImageUrl ||
+                 props.game.primaryImageUrl ||
+                 props.game.cover?.imageUrl ||
+                 props.game.image ||
+                 '/placeholder-game.jpg'
 
   // Map imageSize prop to IGDB size
   const igdbSizeMap = {

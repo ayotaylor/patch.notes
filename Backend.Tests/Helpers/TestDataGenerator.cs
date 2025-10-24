@@ -87,6 +87,20 @@ public static class TestDataGenerator
         "let down", "blown away", "underwhelmed", "delighted", "frustrated"
     };
 
+    private static readonly List<string> PredefinedListNames = new List<string>
+    {
+        "Favorites",
+        "Want to Play",
+        "Currently Playing"
+    };
+
+    private static readonly Dictionary<string, string> ListDescriptions = new Dictionary<string, string>
+    {
+        { "Favorites", "My all-time favorite games that I keep coming back to." },
+        { "Want to Play", "Games on my radar that I'm planning to play soon." },
+        { "Currently Playing", "Games I'm actively playing right now." }
+    };
+
     public static RegisterRequest GenerateRegisterRequest(int userIndex)
     {
         var firstName = FirstNames[userIndex % FirstNames.Count];
@@ -158,5 +172,17 @@ public static class TestDataGenerator
         if (random < 0.50) return 3; // 30%
         if (random < 0.80) return 4; // 30%
         return 5; // 20%
+    }
+
+    public static List<string> GetPredefinedListNames()
+    {
+        return new List<string>(PredefinedListNames);
+    }
+
+    public static string GetListDescription(string listName)
+    {
+        return ListDescriptions.TryGetValue(listName, out var description)
+            ? description
+            : $"A curated collection of {listName.ToLower()}.";
     }
 }
