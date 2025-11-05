@@ -56,10 +56,10 @@ const handleLikeReview = async () => {
     <div class="col-span-3 flex flex-col gap-3">
       <!-- Row 1: Game name and release year -->
       <div>
-        <span class="font-newsreader text-xl font-bold text-cod-gray cursor-pointer hover:underline" @click="navigateToGame">
+        <span class="font-newsreader text-xl font-bold text-theme-text-primary dark:text-theme-text-primary-dark cursor-pointer hover:underline" @click="navigateToGame">
           {{ review.game.name }}
         </span>
-        <span v-if="review.game.releaseYear" class="font-tinos text-base text-river-bed ml-2">
+        <span v-if="review.game.releaseYear" class="font-tinos text-base text-theme-text-secondary dark:text-theme-text-secondary-dark ml-2">
           ({{ review.game.releaseYear }})
         </span>
       </div>
@@ -73,7 +73,7 @@ const handleLikeReview = async () => {
           class="w-6 h-6 rounded-full object-cover"
           @error="(e) => (e.target.style.display = 'none')"
         />
-        <span class="font-tinos text-sm text-river-bed">{{ review.user.displayName }}</span>
+        <span class="font-tinos text-sm text-theme-text-secondary dark:text-theme-text-secondary-dark">{{ review.user.displayName }}</span>
       </div>
 
       <!-- Row 3: Review score, heart, comments, date -->
@@ -100,26 +100,26 @@ const handleLikeReview = async () => {
         <i v-if="review.game?.isLikedByUser" :class="[heartIcon, heartColor, 'text-sm']"></i>
 
         <!-- Comments with speech bubble -->
-        <div class="flex items-center gap-1 text-river-bed">
-          <div class="w-5 h-5 border border-river-bed rounded flex items-center justify-center">
+        <div class="flex items-center gap-1 text-theme-text-secondary dark:text-theme-text-secondary-dark">
+          <div class="w-5 h-5 border border-theme-text-secondary dark:border-theme-text-secondary-dark rounded flex items-center justify-center">
             <i class="fas fa-comment text-xs"></i>
           </div>
           <span class="font-tinos text-sm">{{ review.commentCount || 0 }}</span>
         </div>
 
         <!-- Review date -->
-        <span class="font-tinos text-sm text-river-bed">{{ review.relativeDate }}</span>
+        <span class="font-tinos text-sm text-theme-text-secondary dark:text-theme-text-secondary-dark">{{ review.relativeDate }}</span>
       </div>
 
       <!-- Row 4: Review text with "more" link -->
       <div>
-        <p class="font-tinos text-base text-ebony-clay leading-6 inline">
+        <p class="font-tinos text-base text-theme-text-primary dark:text-theme-text-primary-dark leading-6 inline">
           {{ displayedReviewText }}
         </p>
         <button
           v-if="showMoreLink"
           @click="navigateToReview"
-          class="font-tinos text-base text-blue-500 hover:underline ml-1"
+          class="font-tinos text-base text-blue-500 dark:text-blue-400 hover:underline ml-1"
         >
           read more
         </button>
@@ -130,14 +130,14 @@ const handleLikeReview = async () => {
         <button
           v-if="isLoggedIn"
           @click="handleLikeReview"
-          class="flex items-center gap-1 text-river-bed hover:text-cod-gray transition-colors"
+          class="flex items-center gap-1 text-theme-text-secondary dark:text-theme-text-secondary-dark hover:text-theme-text-primary dark:hover:text-theme-text-primary-dark transition-colors"
         >
           <i
             :class="review.isLikedByCurrentUser ? 'fas fa-thumbs-up text-blue-500' : 'far fa-thumbs-up'"
             class="text-sm"
           ></i>
         </button>
-        <span class="font-tinos text-sm text-river-bed">{{ review.likeCount || 0 }} likes</span>
+        <span class="font-tinos text-sm text-theme-text-secondary dark:text-theme-text-secondary-dark">{{ review.likeCount || 0 }} likes</span>
       </div>
     </div>
   </div>

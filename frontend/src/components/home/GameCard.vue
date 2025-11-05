@@ -1,6 +1,7 @@
 <template>
   <div
     class="game-card cursor-pointer"
+    :class="{ 'game-card-compact': hideTitle }"
     @click="$emit('click', game)"
   >
     <img
@@ -10,7 +11,10 @@
       class="w-full object-cover rounded-lg shadow-md"
       loading="lazy"
     />
-    <p class="font-tinos text-base text-cod-gray mt-3 line-clamp-2 min-h-[3rem]">
+    <p
+      v-if="!hideTitle"
+      class="font-tinos text-base text-theme-text-primary dark:text-theme-text-primary-dark mt-3 line-clamp-2 min-h-[3rem]"
+    >
       {{ game.name || game.title }}
     </p>
   </div>
@@ -29,6 +33,10 @@ const props = defineProps({
     type: String,
     default: 'default', // 'default', 'small', 'large'
     validator: (value) => ['default', 'small', 'large'].includes(value)
+  },
+  hideTitle: {
+    type: Boolean,
+    default: false
   }
 })
 
@@ -70,5 +78,14 @@ const optimizedImageUrl = computed(() => {
 .game-card {
   display: flex;
   flex-direction: column;
+}
+
+/* Compact mode: card height matches image height exactly */
+.game-card-compact {
+  height: fit-content;
+}
+
+.game-card-compact img {
+  margin-bottom: 0;
 }
 </style>

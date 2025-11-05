@@ -106,7 +106,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="min-h-screen bg-[#F6F7F7]">
+  <div class="min-h-screen bg-theme-bg-primary dark:bg-theme-bg-primary-dark transition-colors duration-200">
     <!-- Header Component -->
     <HomeHeader />
 
@@ -116,14 +116,14 @@ onMounted(() => {
     <!-- Reviews List Section -->
     <div class="flex justify-center px-4 md:px-8 lg:px-40 mt-8">
       <div class="w-full max-w-1280">
-        <h2 class="font-newsreader text-3xl font-bold text-cod-gray mb-6 border-b border-gray-300 pb-4">
+        <h2 class="font-newsreader text-3xl font-bold text-theme-text-primary dark:text-theme-text-primary-dark mb-6 border-b border-theme-border dark:border-theme-border-dark pb-4">
           All Reviews
         </h2>
 
         <!-- Loading State -->
         <div v-if="loading" class="text-center py-16">
-          <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-cod-gray"></div>
-          <p class="font-tinos text-base text-river-bed mt-4">Loading reviews...</p>
+          <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-theme-text-primary dark:border-theme-text-primary-dark"></div>
+          <p class="font-tinos text-base text-theme-text-secondary dark:text-theme-text-secondary-dark mt-4">Loading reviews...</p>
         </div>
 
         <!-- Error State -->
@@ -145,7 +145,7 @@ onMounted(() => {
 
         <!-- Empty State -->
         <div v-else class="text-center py-16">
-          <p class="font-tinos text-lg text-river-bed">No reviews found</p>
+          <p class="font-tinos text-lg text-theme-text-secondary dark:text-theme-text-secondary-dark">No reviews found</p>
         </div>
       </div>
     </div>

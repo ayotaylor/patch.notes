@@ -1,8 +1,6 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
-import HomeHeader from './HeaderBar.vue'
-import HomeNavigation from './NavigationBar.vue'
 import ReviewCardBase from './ReviewCardBase.vue'
 import ActionsPanel from './ActionsPanel.vue'
 import { useReviewLikes } from '@/composables/reviews/useReviewLikes'
@@ -157,20 +155,14 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="min-h-screen bg-[#F6F7F7]">
-    <!-- Header Component -->
-    <HomeHeader />
-
-    <!-- Navigation Component -->
-    <HomeNavigation />
-
+  <div class="min-h-screen bg-theme-bg-primary dark:bg-theme-bg-primary-dark transition-colors duration-200">
     <!-- Review Details Section -->
     <div class="flex justify-center px-4 md:px-8 lg:px-40 mt-8 pb-16">
       <div class="w-full max-w-1280">
         <!-- Loading State -->
         <div v-if="loading" class="text-center py-16">
-          <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-cod-gray"></div>
-          <p class="font-tinos text-base text-river-bed mt-4">Loading review...</p>
+          <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-theme-text-primary dark:border-theme-text-primary-dark"></div>
+          <p class="font-tinos text-base text-theme-text-secondary dark:text-theme-text-secondary-dark mt-4">Loading review...</p>
         </div>
 
         <!-- Error State -->
@@ -190,10 +182,10 @@ onMounted(() => {
                 class="w-full rounded-lg mb-4"
                 @error="(e) => (e.target.style.display = 'none')"
               />
-              <div class="bg-white rounded-lg p-4">
+              <div class="bg-theme-bg-secondary dark:bg-theme-bg-secondary-dark rounded-lg p-4">
                 <div class="text-center">
-                  <div class="font-newsreader text-2xl font-bold text-cod-gray">{{ review.rating.toFixed(1) }}</div>
-                  <div class="font-tinos text-sm text-gray-500">Rating</div>
+                  <div class="font-newsreader text-2xl font-bold text-theme-text-primary dark:text-theme-text-primary-dark">{{ review.rating.toFixed(1) }}</div>
+                  <div class="font-tinos text-sm text-theme-text-secondary dark:text-theme-text-secondary-dark">Rating</div>
                 </div>
               </div>
             </div>
@@ -201,7 +193,7 @@ onMounted(() => {
 
           <!-- Column 2: 50% - Main Content -->
           <div class="lg:w-1/2">
-            <h2 class="font-newsreader text-3xl font-bold text-cod-gray mb-6 border-b border-gray-300 pb-4">
+            <h2 class="font-newsreader text-3xl font-bold text-theme-text-primary dark:text-theme-text-primary-dark mb-6 border-b border-theme-border dark:border-theme-border-dark pb-4">
               Review
             </h2>
 
@@ -212,9 +204,9 @@ onMounted(() => {
             />
 
             <!-- Comments Section (Placeholder) -->
-            <div class="border-t border-gray-300 pt-8 mt-8">
+            <div class="border-t border-theme-border dark:border-theme-border-dark pt-8 mt-8">
               <!-- Comments Header -->
-              <h3 class="font-newsreader text-2xl font-bold text-cod-gray mb-6">
+              <h3 class="font-newsreader text-2xl font-bold text-theme-text-primary dark:text-theme-text-primary-dark mb-6">
                 Comments ({{ placeholderComments.length }})
               </h3>
 
@@ -223,7 +215,7 @@ onMounted(() => {
                 <div
                   v-for="comment in placeholderComments"
                   :key="comment.id"
-                  class="border-b border-gray-200 pb-6 last:border-b-0"
+                  class="border-b border-theme-border dark:border-theme-border-dark pb-6 last:border-b-0"
                 >
                   <div class="grid grid-cols-4 gap-4">
                     <!-- Column 1: User info (25% width) -->
@@ -235,7 +227,7 @@ onMounted(() => {
                           class="w-8 h-8 rounded-full object-cover"
                           @error="(e) => (e.target.style.display = 'none')"
                         />
-                        <span class="font-tinos text-sm text-cod-gray font-semibold">
+                        <span class="font-tinos text-sm text-theme-text-primary dark:text-theme-text-primary-dark font-semibold">
                           {{ comment.user.username }}
                         </span>
                       </div>
@@ -243,7 +235,7 @@ onMounted(() => {
 
                     <!-- Column 2: Comment text (75% width) -->
                     <div class="col-span-3">
-                      <p class="font-tinos text-base text-ebony-clay leading-6">
+                      <p class="font-tinos text-base text-theme-text-primary dark:text-theme-text-primary-dark leading-6">
                         {{ comment.text }}
                       </p>
                     </div>
@@ -252,8 +244,8 @@ onMounted(() => {
               </div>
 
               <!-- Placeholder message -->
-              <div class="mt-8 p-4 bg-gray-100 rounded-lg">
-                <p class="font-tinos text-sm text-river-bed italic text-center">
+              <div class="mt-8 p-4 bg-gray-200 dark:bg-gray-700 rounded-lg">
+                <p class="font-tinos text-sm text-theme-text-secondary dark:text-theme-text-secondary-dark italic text-center">
                   Comment functionality will be implemented in a future update.
                 </p>
               </div>

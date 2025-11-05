@@ -11,6 +11,7 @@ export const useGamesStore = defineStore("games", () => {
   const popularGames = ref([]);
   const similarGames = ref(new Map());
   const newGames = ref([]);
+  const latestReviewedGamesCache = ref([]);
   const loading = ref(false);
   const searchLoading = ref(false);
   const error = ref(null);
@@ -697,10 +698,10 @@ export const useGamesStore = defineStore("games", () => {
 
     // Check cache if not forcing refresh
     if (!force && isCacheValid(cacheKey)) {
-      // Return cached results if available
-      const cached = Array.from(games.value.values()).slice(0, limit);
-      if (cached.length > 0) {
-        return cached;
+      // Return cached results from dedicated storage
+      if (latestReviewedGamesCache.value && latestReviewedGamesCache.value.length > 0) {
+        //console.log('fetchLatestReviewedGames: Returning from cache');
+        return latestReviewedGamesCache.value.slice(0, limit);
       }
     }
 
@@ -710,26 +711,45 @@ export const useGamesStore = defineStore("games", () => {
 
       const results = await gamesService.getLatestReviewedGames(limit)
 
+      // Debug: Log API results
+      // console.log('fetchLatestReviewedGames: API returned', results.length, 'games');
+      // console.log('fetchLatestReviewedGames: API game IDs:', results.map(g => g.id || g.igdbId));
+
       if (!Array.isArray(results)) {
         console.error('fetchLatestReviewedGames: Expected array but got:', typeof results);
         return [];
       }
 
       const gameInstances = [];
+      const seenIds = new Set();
 
       for (const gameItem of results) {
         try {
           const gameInstance = createGame(gameItem);
           if (gameInstance && gameInstance.id) {
+            // Check for duplicates before adding
+            if (seenIds.has(gameInstance.id)) {
+              //console.warn('fetchLatestReviewedGames: Skipping duplicate game ID:', gameInstance.id);
+              continue;
+            }
+
+            seenIds.add(gameInstance.id);
+
             // Cache with high priority cover preloading for recently reviewed games
             cacheGame(gameInstance, null, { preloadCover: true, coverPriority: 'high' });
             gameInstances.push(gameInstance);
+            //console.log('fetchLatestReviewedGames: Added game', gameInstance.id, gameInstance.name);
           }
         } catch (gameError) {
-          console.error('fetchLatestReviewedGames: Error creating game instance:', gameError);
+          //console.error('fetchLatestReviewedGames: Error creating game instance:', gameError);
         }
       }
 
+      // console.log('fetchLatestReviewedGames: Returning', gameInstances.length, 'game instances');
+      // console.log('fetchLatestReviewedGames: Instance IDs:', gameInstances.map(g => g.id));
+
+      // Store in dedicated cache
+      latestReviewedGamesCache.value = gameInstances;
       cacheTimestamps.value.set(cacheKey, Date.now());
 
       return gameInstances;

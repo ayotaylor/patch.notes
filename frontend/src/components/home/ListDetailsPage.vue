@@ -179,7 +179,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="min-h-screen bg-[#F6F7F7]">
+  <div class="min-h-screen bg-theme-bg-primary dark:bg-theme-bg-primary-dark transition-colors duration-200">
     <!-- Header Component -->
     <HomeHeader />
 
@@ -191,8 +191,8 @@ onMounted(() => {
       <div class="w-full max-w-1280">
         <!-- Loading State -->
         <div v-if="loading" class="text-center py-16">
-          <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-cod-gray"></div>
-          <p class="font-tinos text-base text-river-bed mt-4">Loading list...</p>
+          <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-theme-text-primary dark:border-theme-text-primary-dark"></div>
+          <p class="font-tinos text-base text-theme-text-secondary dark:text-theme-text-secondary-dark mt-4">Loading list...</p>
         </div>
 
         <!-- Error State -->
@@ -213,24 +213,24 @@ onMounted(() => {
                 class="w-10 h-10 rounded-full object-cover"
                 @error="(e) => (e.target.style.display = 'none')"
               />
-              <span class="font-tinos text-base text-river-bed">
+              <span class="font-tinos text-base text-theme-text-secondary dark:text-theme-text-secondary-dark">
                 List by <span class="font-semibold">{{ list.user?.displayName || list.user?.username || 'Unknown' }}</span>
               </span>
             </div>
 
             <!-- Row 2: Updated date -->
             <div class="mb-2">
-              <span class="font-tinos text-sm text-gray-500">Updated {{ relativeDate }}</span>
+              <span class="font-tinos text-sm text-theme-text-secondary dark:text-theme-text-secondary-dark">Updated {{ relativeDate }}</span>
             </div>
 
             <!-- Row 3: List title -->
-            <h2 class="font-newsreader text-3xl font-bold text-cod-gray mb-4">
+            <h2 class="font-newsreader text-3xl font-bold text-theme-text-primary dark:text-theme-text-primary-dark mb-4">
               {{ list.title }}
             </h2>
 
             <!-- Row 4: List description -->
             <div v-if="list.description" class="mb-6">
-              <p class="font-tinos text-base text-ebony-clay leading-6 whitespace-pre-wrap">
+              <p class="font-tinos text-base text-theme-text-primary dark:text-theme-text-primary-dark leading-6 whitespace-pre-wrap">
                 {{ list.description }}
               </p>
             </div>
@@ -254,14 +254,14 @@ onMounted(() => {
                   :class="[
                     'px-6 py-2 rounded font-tinos text-base transition-colors',
                     currentPage === 1
-                      ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                      : 'bg-cod-gray text-white hover:bg-opacity-90'
+                      ? 'bg-gray-300 dark:bg-gray-700 text-gray-500 dark:text-gray-400 cursor-not-allowed'
+                      : 'bg-theme-btn-primary dark:bg-theme-btn-primary-dark text-white hover:bg-opacity-90'
                   ]"
                   @click="goToPreviousPage"
                 >
                   Previous
                 </button>
-                <span class="flex items-center font-tinos text-base text-river-bed">
+                <span class="flex items-center font-tinos text-base text-theme-text-secondary dark:text-theme-text-secondary-dark">
                   Page {{ currentPage }} of {{ totalPages }}
                 </span>
                 <button
@@ -269,8 +269,8 @@ onMounted(() => {
                   :class="[
                     'px-6 py-2 rounded font-tinos text-base transition-colors',
                     currentPage === totalPages
-                      ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                      : 'bg-cod-gray text-white hover:bg-opacity-90'
+                      ? 'bg-gray-300 dark:bg-gray-700 text-gray-500 dark:text-gray-400 cursor-not-allowed'
+                      : 'bg-theme-btn-primary dark:bg-theme-btn-primary-dark text-white hover:bg-opacity-90'
                   ]"
                   @click="goToNextPage"
                 >
@@ -281,13 +281,13 @@ onMounted(() => {
 
             <!-- Empty State -->
             <div v-else class="text-center py-12">
-              <p class="font-tinos text-lg text-river-bed">No games in this list yet.</p>
+              <p class="font-tinos text-lg text-theme-text-secondary dark:text-theme-text-secondary-dark">No games in this list yet.</p>
             </div>
 
             <!-- Comments Section (Placeholder) -->
-            <div class="border-t border-gray-300 pt-8 mt-8">
+            <div class="border-t border-theme-border dark:border-theme-border-dark pt-8 mt-8">
               <!-- Comments Header -->
-              <h3 class="font-newsreader text-2xl font-bold text-cod-gray mb-6">
+              <h3 class="font-newsreader text-2xl font-bold text-theme-text-primary dark:text-theme-text-primary-dark mb-6">
                 Comments ({{ placeholderComments.length }})
               </h3>
 
@@ -296,7 +296,7 @@ onMounted(() => {
                 <div
                   v-for="comment in placeholderComments"
                   :key="comment.id"
-                  class="border-b border-gray-200 pb-6 last:border-b-0"
+                  class="border-b border-theme-border dark:border-theme-border-dark pb-6 last:border-b-0"
                 >
                   <div class="grid grid-cols-4 gap-4">
                     <!-- Column 1: User info (25% width) -->
@@ -308,7 +308,7 @@ onMounted(() => {
                           class="w-8 h-8 rounded-full object-cover"
                           @error="(e) => (e.target.style.display = 'none')"
                         />
-                        <span class="font-tinos text-sm text-cod-gray font-semibold">
+                        <span class="font-tinos text-sm text-theme-text-primary dark:text-theme-text-primary-dark font-semibold">
                           {{ comment.user.username }}
                         </span>
                       </div>
@@ -316,7 +316,7 @@ onMounted(() => {
 
                     <!-- Column 2: Comment text (75% width) -->
                     <div class="col-span-3">
-                      <p class="font-tinos text-base text-ebony-clay leading-6">
+                      <p class="font-tinos text-base text-theme-text-primary dark:text-theme-text-primary-dark leading-6">
                         {{ comment.text }}
                       </p>
                     </div>
@@ -325,8 +325,8 @@ onMounted(() => {
               </div>
 
               <!-- Placeholder message -->
-              <div class="mt-8 p-4 bg-gray-100 rounded-lg">
-                <p class="font-tinos text-sm text-river-bed italic text-center">
+              <div class="mt-8 p-4 bg-gray-200 dark:bg-gray-700 rounded-lg">
+                <p class="font-tinos text-sm text-theme-text-secondary dark:text-theme-text-secondary-dark italic text-center">
                   Comment functionality will be implemented in a future update.
                 </p>
               </div>

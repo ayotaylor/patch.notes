@@ -2,6 +2,7 @@
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useGamesStore } from '@/stores/gamesStore'
+import { useTheme } from '@/composables/useTheme'
 import HomeHeader from './HeaderBar.vue'
 import HomeNavigation from './NavigationBar.vue'
 import GameCarousel from './GameCarousel.vue'
@@ -14,6 +15,7 @@ import { useListLikes } from '@/composables/lists/useListLikes'
 
 const router = useRouter()
 const gamesStore = useGamesStore()
+useTheme() // Initialize theme
 const { loadReviews } = useReviews()
 const { toggleLike, loadLikeStatusBatch } = useReviewLikes()
 const { loadLists } = useLists()
@@ -41,9 +43,9 @@ const MAX_LISTS_RETRIES = 2
 const handleGameClick = (game) => {
   // Navigate to game details page using slug or id
   if (game.slug) {
-    router.push({ name: 'game-details', params: { slug: game.slug } })
+    router.push({ name: 'GameDetails', params: { identifier: game.slug } })
   } else if (game.id) {
-    router.push({ name: 'game-details', params: { id: game.id } })
+    router.push({ name: 'GameDetails', params: { identifier: game.id } })
   }
 }
 
@@ -54,6 +56,7 @@ const fetchRecentlyReviewedGames = async () => {
     recentGamesError.value = false
 
     const games = await gamesStore.fetchLatestReviewedGames(12, false)
+
     recentlyReviewedGames.value = games
   } catch (error) {
     console.error('Error loading recently reviewed games:', error)
@@ -202,7 +205,7 @@ const popularMembers = [
 </script>
 
 <template>
-  <div class="min-h-screen bg-[#F6F7F7]">
+  <div class="min-h-screen bg-theme-bg-primary dark:bg-theme-bg-primary-dark transition-colors duration-200">
     <!-- Header Component -->
     <HomeHeader />
 
@@ -252,7 +255,7 @@ const popularMembers = [
           title="Recently Reviewed"
           :show-border="true"
           :show-view-all="true"
-          view-all-link="/games/recent"
+          view-all-link="/games/recently-reviewed"
           :games="recentlyReviewedGames"
           :loading="loadingRecentGames"
           image-size="default"
@@ -265,12 +268,12 @@ const popularMembers = [
     <div v-if="!reviewsLoadError || loadingReviews || popularReviews.length > 0" class="flex justify-center px-4 md:px-8 lg:px-40 mt-8">
       <div class="w-full max-w-1280">
         <!-- Section Header with View All Link -->
-        <div class="flex justify-between items-center mb-4 border-b border-gray-300 pb-2">
-          <h3 class="font-newsreader text-2xl font-bold text-cod-gray">Popular Reviews</h3>
+        <div class="flex justify-between items-center mb-4 border-b border-theme-border dark:border-theme-border-dark pb-2">
+          <h3 class="font-newsreader text-2xl font-bold text-theme-text-primary dark:text-theme-text-primary-dark">Popular Reviews</h3>
           <router-link
             v-if="!loadingReviews && popularReviews.length > 0"
             to="/reviews"
-            class="font-tinos text-base text-blue-600 hover:text-blue-800 hover:underline"
+            class="font-tinos text-base text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 hover:underline"
           >
             View All →
           </router-link>
@@ -321,7 +324,7 @@ const popularMembers = [
 
         <!-- Empty State (only if not loading and no error) -->
         <div v-else-if="!loadingReviews && !reviewsLoadError" class="text-center py-12">
-          <p class="font-tinos text-lg text-river-bed">No reviews available yet.</p>
+          <p class="font-tinos text-lg text-theme-text-secondary dark:text-theme-text-secondary-dark">No reviews available yet.</p>
         </div>
       </div>
     </div>
@@ -330,12 +333,12 @@ const popularMembers = [
     <div v-if="!listsLoadError || loadingLists || popularLists.length > 0" class="flex justify-center px-4 md:px-8 lg:px-40 mt-8">
       <div class="w-full max-w-1280">
         <!-- Section Header with View All Link -->
-        <div class="flex justify-between items-center mb-4 border-b border-gray-300 pb-2">
-          <h3 class="font-newsreader text-2xl font-bold text-cod-gray">Popular Lists</h3>
+        <div class="flex justify-between items-center mb-4 border-b border-theme-border dark:border-theme-border-dark pb-2">
+          <h3 class="font-newsreader text-2xl font-bold text-theme-text-primary dark:text-theme-text-primary-dark">Popular Lists</h3>
           <router-link
             v-if="!loadingLists && popularLists.length > 0"
             to="/lists"
-            class="font-tinos text-base text-blue-600 hover:text-blue-800 hover:underline"
+            class="font-tinos text-base text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 hover:underline"
           >
             View All →
           </router-link>
@@ -370,7 +373,7 @@ const popularMembers = [
 
         <!-- Empty State (only if not loading and no error) -->
         <div v-else-if="!loadingLists && !listsLoadError" class="text-center py-12">
-          <p class="font-tinos text-lg text-river-bed">No lists available yet.</p>
+          <p class="font-tinos text-lg text-theme-text-secondary dark:text-theme-text-secondary-dark">No lists available yet.</p>
         </div>
       </div>
     </div>
@@ -378,11 +381,11 @@ const popularMembers = [
     <!-- Popular Members Section -->
     <div class="flex justify-center px-4 md:px-8 lg:px-40 mt-8 pb-16">
       <div class="w-full max-w-1280">
-        <h3 class="font-newsreader text-2xl font-bold text-cod-gray mb-4 border-b border-gray-300">Popular Members</h3>
+        <h3 class="font-newsreader text-2xl font-bold text-theme-text-primary dark:text-theme-text-primary-dark mb-4 border-b border-theme-border dark:border-theme-border-dark">Popular Members</h3>
         <div class="flex flex-wrap justify-center gap-8">
           <div v-for="(member, index) in popularMembers" :key="index" class="flex flex-col items-center">
             <img :src="member.avatar" :alt="member.name" class="w-24 h-24 rounded-full mb-2" />
-            <p class="font-tinos text-base text-cod-gray text-center">{{ member.name }}</p>
+            <p class="font-tinos text-base text-theme-text-primary dark:text-theme-text-primary-dark text-center">{{ member.name }}</p>
           </div>
         </div>
       </div>

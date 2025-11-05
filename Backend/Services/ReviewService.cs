@@ -179,7 +179,7 @@ namespace Backend.Services
             return review?.ToDto();
         }
 
-        public async Task<ReviewDto?> CreateReviewAsync(Guid userId, int gameId, int rating, string? reviewText = null)
+        public async Task<ReviewDto?> CreateReviewAsync(Guid userId, int gameId, double rating, string? reviewText = null)
         {
             var userProfileId = await _context.UserProfiles
                 .Where(u => u.UserId == userId.ToString())
@@ -217,7 +217,7 @@ namespace Backend.Services
             return await GetReviewAsync(review.Id);
         }
 
-        public async Task<ReviewDto?> UpdateReviewAsync(Guid reviewId, int rating, string? reviewText = null)
+        public async Task<ReviewDto?> UpdateReviewAsync(Guid reviewId, double rating, string? reviewText = null)
         {
             var review = await _context.Reviews.FindAsync(reviewId);
             if (review == null)

@@ -8,8 +8,6 @@ import { useImageFallback, FALLBACK_TYPES } from '@/composables/useImageFallback
 import { socialService } from '@/services/socialService'
 import ActionsPanel from './ActionsPanel.vue'
 import RatingsDistribution from './RatingsDistribution.vue'
-import HomeHeader from './HeaderBar.vue'
-import HomeNavigation from './NavigationBar.vue'
 
 // Props
 const props = defineProps({
@@ -267,20 +265,20 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="min-h-screen bg-[#F6F7F7]">
+  <div class="min-h-screen bg-theme-bg-primary dark:bg-theme-bg-primary-dark transition-colors duration-200">
     <!-- Header Component -->
-    <HomeHeader />
+    <!-- <HomeHeader /> -->
 
     <!-- Navigation Component -->
-    <HomeNavigation />
+    <!-- <HomeNavigation /> -->
 
     <!-- Loading State -->
     <div v-if="loading" class="flex justify-center px-4 md:px-8 lg:px-40 mt-8">
       <div class="w-full max-w-1280">
         <div class="animate-pulse">
-          <div class="bg-gray-300 rounded-lg h-96 mb-4"></div>
-          <div class="h-8 bg-gray-300 rounded w-3/4 mb-2"></div>
-          <div class="h-6 bg-gray-300 rounded w-1/2"></div>
+          <div class="bg-gray-300 dark:bg-gray-700 rounded-lg h-96 mb-4"></div>
+          <div class="h-8 bg-gray-300 dark:bg-gray-700 rounded w-3/4 mb-2"></div>
+          <div class="h-6 bg-gray-300 dark:bg-gray-700 rounded w-1/2"></div>
         </div>
       </div>
     </div>
@@ -288,11 +286,11 @@ onMounted(async () => {
     <!-- Error State -->
     <div v-else-if="error" class="flex justify-center px-4 md:px-8 lg:px-40 mt-8">
       <div class="w-full max-w-1280">
-        <div class="bg-white rounded-lg p-8 text-center">
+        <div class="bg-theme-bg-secondary dark:bg-theme-bg-secondary-dark rounded-lg p-8 text-center">
           <p class="text-red-600 font-tinos text-lg mb-4">{{ error }}</p>
           <button
             @click="loadGameDetails"
-            class="px-6 py-2 bg-cod-gray text-white font-tinos rounded hover:bg-opacity-90"
+            class="px-6 py-2 bg-theme-btn-primary dark:bg-theme-btn-primary-dark text-white font-tinos rounded hover:bg-opacity-90"
           >
             Try Again
           </button>
@@ -316,15 +314,15 @@ onMounted(async () => {
               />
 
               <!-- Engagement Stats -->
-              <div class="bg-white rounded-lg p-4 mb-4">
+              <div class="bg-theme-bg-secondary dark:bg-theme-bg-secondary-dark rounded-lg p-4 mb-4">
                 <div class="flex justify-around text-center">
                   <div>
-                    <div class="font-newsreader text-2xl font-bold text-cod-gray">{{ likeCount }}</div>
-                    <div class="font-tinos text-sm text-gray-500">Likes</div>
+                    <div class="font-newsreader text-2xl font-bold text-theme-text-primary dark:text-theme-text-primary-dark">{{ likeCount }}</div>
+                    <div class="font-tinos text-sm text-gray-500 dark:text-gray-400">Likes</div>
                   </div>
                   <div>
-                    <div class="font-newsreader text-2xl font-bold text-cod-gray">{{ listCount }}</div>
-                    <div class="font-tinos text-sm text-gray-500">Lists</div>
+                    <div class="font-newsreader text-2xl font-bold text-theme-text-primary dark:text-theme-text-primary-dark">{{ listCount }}</div>
+                    <div class="font-tinos text-sm text-gray-500 dark:text-gray-400">Lists</div>
                   </div>
                 </div>
               </div>
@@ -335,28 +333,28 @@ onMounted(async () => {
           <div class="lg:w-1/2">
             <!-- Row 1: Game Title and Developer -->
             <div class="mb-4">
-              <h1 class="font-newsreader text-4xl font-bold text-cod-gray mb-2">
-                {{ gameName }} <span v-if="gameYear" class="text-gray-500">({{ gameYear }})</span>
+              <h1 class="font-newsreader text-4xl font-bold text-theme-text-primary dark:text-theme-text-primary-dark mb-2">
+                {{ gameName }} <span v-if="gameYear" class="text-gray-500 dark:text-gray-400">({{ gameYear }})</span>
               </h1>
-              <p class="font-tinos text-lg text-gray-600">{{ gameDeveloper }}</p>
+              <p class="font-tinos text-lg text-gray-600 dark:text-gray-400">{{ gameDeveloper }}</p>
             </div>
 
             <!-- Row 2: Game Summary -->
-            <div class="bg-white rounded-lg p-6 mb-6">
-              <p class="font-tinos text-base text-cod-gray leading-relaxed">{{ gameSummary }}</p>
+            <div class="bg-theme-bg-secondary dark:bg-theme-bg-secondary-dark rounded-lg p-6 mb-6">
+              <p class="font-tinos text-base text-theme-text-primary dark:text-theme-text-primary-dark leading-relaxed">{{ gameSummary }}</p>
             </div>
 
             <!-- Row 3: Game Details -->
-            <div class="bg-white rounded-lg p-6 mb-6">
+            <div class="bg-theme-bg-secondary dark:bg-theme-bg-secondary-dark rounded-lg p-6 mb-6">
               <div class="grid grid-cols-2 gap-4">
                 <!-- Genres -->
                 <div v-if="gameGenres.length > 0">
-                  <h3 class="font-tinos font-bold text-sm text-gray-500 mb-2">GENRES</h3>
+                  <h3 class="font-tinos font-bold text-sm text-gray-500 dark:text-gray-400 mb-2">GENRES</h3>
                   <div class="flex flex-wrap gap-2">
                     <span
                       v-for="(genre, index) in gameGenres"
                       :key="index"
-                      class="px-3 py-1 bg-gray-100 text-cod-gray font-tinos text-sm rounded"
+                      class="px-3 py-1 bg-gray-100 dark:bg-gray-700 text-theme-text-primary dark:text-theme-text-primary-dark font-tinos text-sm rounded"
                     >
                       {{ genre }}
                     </span>
@@ -365,26 +363,26 @@ onMounted(async () => {
 
                 <!-- Release Date -->
                 <div>
-                  <h3 class="font-tinos font-bold text-sm text-gray-500 mb-2">RELEASE DATE</h3>
-                  <p class="font-tinos text-base text-cod-gray">{{ gameReleaseDate }}</p>
+                  <h3 class="font-tinos font-bold text-sm text-gray-500 dark:text-gray-400 mb-2">RELEASE DATE</h3>
+                  <p class="font-tinos text-base text-theme-text-primary dark:text-theme-text-primary-dark">{{ gameReleaseDate }}</p>
                 </div>
 
                 <!-- Game Modes -->
                 <div v-if="gameModesText">
-                  <h3 class="font-tinos font-bold text-sm text-gray-500 mb-2">GAME MODES</h3>
-                  <p class="font-tinos text-base text-cod-gray">{{ gameModesText }}</p>
+                  <h3 class="font-tinos font-bold text-sm text-gray-500 dark:text-gray-400 mb-2">GAME MODES</h3>
+                  <p class="font-tinos text-base text-theme-text-primary dark:text-theme-text-primary-dark">{{ gameModesText }}</p>
                 </div>
 
                 <!-- Platforms -->
                 <div v-if="gamePlatformsText">
-                  <h3 class="font-tinos font-bold text-sm text-gray-500 mb-2">PLATFORMS</h3>
-                  <p class="font-tinos text-base text-cod-gray">{{ gamePlatformsText }}</p>
+                  <h3 class="font-tinos font-bold text-sm text-gray-500 dark:text-gray-400 mb-2">PLATFORMS</h3>
+                  <p class="font-tinos text-base text-theme-text-primary dark:text-theme-text-primary-dark">{{ gamePlatformsText }}</p>
                 </div>
               </div>
 
               <!-- New Release Badge -->
               <div v-if="isNewRelease" class="mt-4">
-                <span class="px-3 py-1 bg-yellow-400 text-cod-gray font-tinos text-sm font-bold rounded">
+                <span class="px-3 py-1 bg-yellow-400 dark:bg-yellow-500 text-theme-text-primary dark:text-theme-text-primary-dark font-tinos text-sm font-bold rounded">
                   NEW RELEASE
                 </span>
               </div>
@@ -392,44 +390,44 @@ onMounted(async () => {
 
             <!-- Popular Reviews Section -->
             <div class="mb-6">
-              <h2 class="font-newsreader text-2xl font-bold text-cod-gray mb-4 border-b border-gray-300 pb-2">
+              <h2 class="font-newsreader text-2xl font-bold text-theme-text-primary dark:text-theme-text-primary-dark mb-4 border-b border-theme-border dark:border-theme-border-dark pb-2">
                 Popular Reviews
               </h2>
-              <div v-if="popularReviews.length === 0" class="bg-white rounded-lg p-6 text-center">
-                <p class="font-tinos text-base text-gray-500">No reviews yet. Be the first to review!</p>
+              <div v-if="popularReviews.length === 0" class="bg-theme-bg-secondary dark:bg-theme-bg-secondary-dark rounded-lg p-6 text-center">
+                <p class="font-tinos text-base text-theme-text-secondary dark:text-theme-text-secondary-dark">No reviews yet. Be the first to review!</p>
               </div>
               <!-- TODO: Add ReviewCardBase components here when popular reviews are loaded -->
             </div>
 
             <!-- Recent Reviews Section -->
             <div class="mb-6">
-              <h2 class="font-newsreader text-2xl font-bold text-cod-gray mb-4 border-b border-gray-300 pb-2">
+              <h2 class="font-newsreader text-2xl font-bold text-theme-text-primary dark:text-theme-text-primary-dark mb-4 border-b border-theme-border dark:border-theme-border-dark pb-2">
                 Recent Reviews
               </h2>
-              <div v-if="recentReviews.length === 0" class="bg-white rounded-lg p-6 text-center">
-                <p class="font-tinos text-base text-gray-500">No recent reviews</p>
+              <div v-if="recentReviews.length === 0" class="bg-theme-bg-secondary dark:bg-theme-bg-secondary-dark rounded-lg p-6 text-center">
+                <p class="font-tinos text-base text-theme-text-secondary dark:text-theme-text-secondary-dark">No recent reviews</p>
               </div>
               <!-- TODO: Add ReviewCardBase components here when recent reviews are loaded -->
             </div>
 
             <!-- Popular Lists Section -->
             <div class="mb-6">
-              <h2 class="font-newsreader text-2xl font-bold text-cod-gray mb-4 border-b border-gray-300 pb-2">
+              <h2 class="font-newsreader text-2xl font-bold text-theme-text-primary dark:text-theme-text-primary-dark mb-4 border-b border-theme-border dark:border-theme-border-dark pb-2">
                 Popular Lists
               </h2>
-              <div v-if="listsWithGame.length === 0" class="bg-white rounded-lg p-6 text-center">
-                <p class="font-tinos text-base text-gray-500">No lists yet</p>
+              <div v-if="listsWithGame.length === 0" class="bg-theme-bg-secondary dark:bg-theme-bg-secondary-dark rounded-lg p-6 text-center">
+                <p class="font-tinos text-base text-theme-text-secondary dark:text-theme-text-secondary-dark">No lists yet</p>
               </div>
               <!-- TODO: Add list cards here when lists with game are loaded -->
             </div>
 
             <!-- Placeholder Comments Section -->
             <div class="mb-6">
-              <h2 class="font-newsreader text-2xl font-bold text-cod-gray mb-4 border-b border-gray-300 pb-2">
+              <h2 class="font-newsreader text-2xl font-bold text-theme-text-primary dark:text-theme-text-primary-dark mb-4 border-b border-theme-border dark:border-theme-border-dark pb-2">
                 Comments
               </h2>
-              <div class="bg-white rounded-lg p-6 text-center">
-                <p class="font-tinos text-base text-gray-500">Comments coming soon</p>
+              <div class="bg-theme-bg-secondary dark:bg-theme-bg-secondary-dark rounded-lg p-6 text-center">
+                <p class="font-tinos text-base text-theme-text-secondary dark:text-theme-text-secondary-dark">Comments coming soon</p>
               </div>
             </div>
           </div>

@@ -113,7 +113,7 @@ export function useAuthRedirect() {
       return redirect
     }
     
-    return '/dashboard'
+    return '/'
   }
 
   /**

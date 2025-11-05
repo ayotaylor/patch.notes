@@ -18,6 +18,7 @@ const ReviewsListPage = () => import("@/components/home/ReviewsListPage.vue");
 const ListsPage = () => import("@/components/home/ListsPage.vue");
 // const ListDetailsPage = () => import("@/components/ListDetailsPage.vue"); // Old list details page
 const ListDetailsPage = () => import("@/components/home/ListDetailsPage.vue");
+const GamesListPage = () => import("@/components/games/GamesListPage.vue");
 const MembersPage = () => import("@/components/MembersPage.vue");
 const RecommendationsPage = () => import("@/components/RecommendationsPage.vue");
 // const ForgotPassword = () => import('@/views/ForgotPassword.vue')
@@ -26,7 +27,7 @@ const RecommendationsPage = () => import("@/components/RecommendationsPage.vue")
 const routes = [
   {
     path: "/",
-    redirect: "/dashboard",
+    redirect: "/home-page",
   },
   {
     path: "/home-page",
@@ -96,6 +97,40 @@ const routes = [
       requiresAuth: false,
       validateToken: "never",
       title: "Profile - Patch Notes",
+    },
+  },
+  // Games category routes
+  {
+    path: "/games/popular",
+    name: "PopularGames",
+    component: GamesListPage,
+    props: { category: 'popular' },
+    meta: {
+      requiresAuth: false,
+      validateToken: "never",
+      title: "Popular Games - Patch Notes",
+    },
+  },
+  {
+    path: "/games/recently-reviewed",
+    name: "RecentlyReviewedGames",
+    component: GamesListPage,
+    props: { category: 'recently-reviewed' },
+    meta: {
+      requiresAuth: false,
+      validateToken: "never",
+      title: "Recently Reviewed Games - Patch Notes",
+    },
+  },
+  {
+    path: "/games/new",
+    name: "NewGames",
+    component: GamesListPage,
+    props: { category: 'new' },
+    meta: {
+      requiresAuth: false,
+      validateToken: "never",
+      title: "New Games - Patch Notes",
     },
   },
   {

@@ -1,10 +1,13 @@
 <script setup>
 import { ref, watch, onMounted, onUnmounted } from 'vue'
 import { useAuthStore } from '@/stores/authStore'
+import { useTheme } from '@/composables/useTheme'
 import SearchBar from './SearchBar.vue'
 import UserDropdown from './UserDropdown.vue'
+import ThemeToggle from '@/components/ThemeToggle.vue'
 
 const authStore = useAuthStore()
+/*const { isDark } = */useTheme()
 const isSticky = ref(false)
 const navbarRef = ref(null)
 const searchBarRef = ref(null)
@@ -59,15 +62,15 @@ const handleLogout = async () => {
 
 <template>
   <!-- Navigation (outside container for sticky to work, but maintains border width) -->
-  <div class="sticky top-0 z-50 bg-[#F6F7F7] flex justify-center px-4 md:px-8 lg:px-40">
-    <nav ref="navbarRef" class="w-full max-w-1280 border-b border-gray-300 py-4 transition-all duration-300">
+  <div class="nav-container sticky top-0 z-50 bg-[#F6F7F7] dark:bg-[#111827] flex justify-center px-4 md:px-8 lg:px-40 transition-colors duration-200">
+    <nav ref="navbarRef" class="w-full max-w-1280 border-b border-gray-300 dark:border-gray-700 py-4 transition-all duration-300">
       <div class="w-full flex items-center" :class="isSticky ? 'justify-between gap-4' : 'justify-center'">
         <!-- Mobile: Non-sticky - Hamburger left, Auth icon right -->
         <div v-if="!isSticky" class="lg:hidden w-full flex items-center justify-between">
           <!-- Hamburger Button (Left) -->
           <button
             @click="toggleMobileMenu"
-            class="p-2 text-cod-gray hover:opacity-70 transition-opacity"
+            class="p-2 text-cod-gray dark:text-[#9ab] hover:opacity-70 transition-opacity"
             aria-label="Toggle menu"
           >
             <svg
@@ -90,27 +93,33 @@ const handleLogout = async () => {
             </svg>
           </button>
 
-          <!-- Auth Icon (Right) -->
-          <router-link
-            v-if="authStore.user"
-            to="/profile"
-            class="p-2 text-cod-gray hover:opacity-70 transition-opacity"
-            aria-label="Profile"
-          >
-            <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
-              <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd" />
-            </svg>
-          </router-link>
-          <router-link
-            v-else
-            to="/login"
-            class="p-2 text-cod-gray hover:opacity-70 transition-opacity"
-            aria-label="Login"
-          >
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
-            </svg>
-          </router-link>
+          <!-- Right side icons -->
+          <div class="flex items-center gap-2">
+            <!-- Auth Icon -->
+            <router-link
+              v-if="authStore.user"
+              to="/profile"
+              class="p-2 text-cod-gray dark:text-[#9ab] hover:opacity-70 transition-opacity"
+              aria-label="Profile"
+            >
+              <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd" />
+              </svg>
+            </router-link>
+            <router-link
+              v-else
+              to="/login"
+              class="p-2 text-cod-gray dark:text-[#9ab] hover:opacity-70 transition-opacity"
+              aria-label="Login"
+            >
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
+              </svg>
+            </router-link>
+
+            <!-- Theme Toggle (Rightmost) -->
+            <ThemeToggle />
+          </div>
         </div>
 
         <!-- Mobile: Sticky - Hamburger left, Title center, Auth right -->
@@ -118,7 +127,7 @@ const handleLogout = async () => {
           <!-- Hamburger Button (Left) -->
           <button
             @click="toggleMobileMenu"
-            class="p-2 text-cod-gray hover:opacity-70 transition-opacity"
+            class="p-2 text-cod-gray dark:text-[#9ab] hover:opacity-70 transition-opacity"
             aria-label="Toggle menu"
           >
             <svg
@@ -142,43 +151,49 @@ const handleLogout = async () => {
           </button>
 
           <!-- Title (Center) -->
-          <h2 class="absolute left-1/2 transform -translate-x-1/2 text-xl font-newsreader font-bold text-cod-gray">Patchnotes*</h2>
+          <h2 class="absolute left-1/2 transform -translate-x-1/2 text-xl font-newsreader font-bold text-cod-gray dark:text-[#9ab]">Patchnotes*</h2>
 
-          <!-- Auth Icon (Right) -->
-          <router-link
-            v-if="authStore.user"
-            to="/profile"
-            class="p-2 text-cod-gray hover:opacity-70 transition-opacity"
-            aria-label="Profile"
-          >
-            <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
-              <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd" />
-            </svg>
-          </router-link>
-          <router-link
-            v-else
-            to="/login"
-            class="p-2 text-cod-gray hover:opacity-70 transition-opacity"
-            aria-label="Login"
-          >
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
-            </svg>
-          </router-link>
+          <!-- Right side icons -->
+          <div class="flex items-center gap-2">
+            <!-- Auth Icon -->
+            <router-link
+              v-if="authStore.user"
+              to="/profile"
+              class="p-2 text-cod-gray dark:text-[#9ab] hover:opacity-70 transition-opacity"
+              aria-label="Profile"
+            >
+              <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd" />
+              </svg>
+            </router-link>
+            <router-link
+              v-else
+              to="/login"
+              class="p-2 text-cod-gray dark:text-[#9ab] hover:opacity-70 transition-opacity"
+              aria-label="Login"
+            >
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
+              </svg>
+            </router-link>
+
+            <!-- Theme Toggle (Rightmost) -->
+            <ThemeToggle />
+          </div>
         </div>
 
         <!-- Desktop: Title (only when sticky) -->
         <div v-if="isSticky" class="hidden lg:flex items-center transition-opacity duration-300">
-          <h2 class="text-xl md:text-2xl font-newsreader font-bold text-cod-gray whitespace-nowrap">Patchnotes*</h2>
+          <h2 class="text-xl md:text-2xl font-newsreader font-bold text-cod-gray dark:text-[#9ab] whitespace-nowrap">Patchnotes*</h2>
         </div>
 
         <!-- Desktop: Navigation Links -->
         <div class="hidden lg:flex items-center gap-6 md:gap-8">
-          <router-link to="#" class="font-tinos text-sm md:text-base text-cod-gray hover:opacity-70 transition-opacity">Games</router-link>
-          <router-link to="/reviews" class="font-tinos text-sm md:text-base text-cod-gray hover:opacity-70 transition-opacity">Reviews</router-link>
-          <router-link to="/lists" class="font-tinos text-sm md:text-base text-cod-gray hover:opacity-70 transition-opacity">Lists</router-link>
-          <router-link to="#" class="font-tinos text-sm md:text-base text-cod-gray hover:opacity-70 transition-opacity">Members</router-link>
-          <router-link to="/recommendations" class="font-tinos text-sm md:text-base text-cod-gray hover:opacity-70 transition-opacity whitespace-nowrap">Ask Me Something</router-link>
+          <router-link to="#" class="font-tinos text-sm md:text-base text-cod-gray dark:text-[#9ab] hover:opacity-70 transition-opacity">Games</router-link>
+          <router-link to="/reviews" class="font-tinos text-sm md:text-base text-cod-gray dark:text-[#9ab] hover:opacity-70 transition-opacity">Reviews</router-link>
+          <router-link to="/lists" class="font-tinos text-sm md:text-base text-cod-gray dark:text-[#9ab] hover:opacity-70 transition-opacity">Lists</router-link>
+          <router-link to="#" class="font-tinos text-sm md:text-base text-cod-gray dark:text-[#9ab] hover:opacity-70 transition-opacity">Members</router-link>
+          <router-link to="/recommendations" class="font-tinos text-sm md:text-base text-cod-gray dark:text-[#9ab] hover:opacity-70 transition-opacity whitespace-nowrap">Ask Me Something</router-link>
         </div>
 
         <!-- Desktop: Right side (Search and Auth/User - only when sticky) -->
@@ -193,24 +208,27 @@ const handleLogout = async () => {
           <div v-else class="flex items-center gap-2">
             <router-link
               to="/register"
-              class="h-9 min-w-21 px-5 bg-cod-gray text-white font-roboto font-bold text-sm tracking-wide rounded flex items-center justify-center hover:bg-opacity-90 transition-opacity whitespace-nowrap"
+              class="h-9 min-w-21 px-5 bg-cod-gray dark:bg-gray-700 text-white font-roboto font-bold text-sm tracking-wide rounded flex items-center justify-center hover:bg-opacity-90 transition-opacity whitespace-nowrap"
             >
               Create Account
             </router-link>
             <router-link
               to="/login"
-              class="h-9 min-w-21 px-5 bg-white text-cod-gray border border-cod-gray font-roboto font-bold text-sm tracking-wide rounded flex items-center justify-center hover:bg-gray-50 transition-colors"
+              class="h-9 min-w-21 px-5 bg-white dark:bg-gray-800 text-cod-gray dark:text-[#9ab] border border-cod-gray dark:border-gray-600 font-roboto font-bold text-sm tracking-wide rounded flex items-center justify-center hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
             >
               Log In
             </router-link>
           </div>
+
+          <!-- Theme Toggle (Rightmost on desktop when sticky) -->
+          <ThemeToggle />
         </div>
       </div>
 
       <!-- Mobile Menu Dropdown -->
       <div
         v-if="isMobileMenuOpen"
-        class="lg:hidden mt-4 py-4 border-t border-gray-300"
+        class="lg:hidden mt-4 py-4 border-t border-gray-300 dark:border-gray-700"
       >
         <!-- Search Bar -->
         <div class="mb-4">
@@ -222,60 +240,60 @@ const handleLogout = async () => {
           <router-link
             to="#"
             @click="closeMobileMenu"
-            class="font-tinos text-base text-cod-gray hover:opacity-70 transition-opacity py-2"
+            class="font-tinos text-base text-cod-gray dark:text-[#9ab] hover:opacity-70 transition-opacity py-2"
           >
             Games
           </router-link>
           <router-link
             to="/reviews"
             @click="closeMobileMenu"
-            class="font-tinos text-base text-cod-gray hover:opacity-70 transition-opacity py-2"
+            class="font-tinos text-base text-cod-gray dark:text-[#9ab] hover:opacity-70 transition-opacity py-2"
           >
             Reviews
           </router-link>
           <router-link
             to="/lists"
             @click="closeMobileMenu"
-            class="font-tinos text-base text-cod-gray hover:opacity-70 transition-opacity py-2"
+            class="font-tinos text-base text-cod-gray dark:text-[#9ab] hover:opacity-70 transition-opacity py-2"
           >
             Lists
           </router-link>
           <router-link
             to="#"
             @click="closeMobileMenu"
-            class="font-tinos text-base text-cod-gray hover:opacity-70 transition-opacity py-2"
+            class="font-tinos text-base text-cod-gray dark:text-[#9ab] hover:opacity-70 transition-opacity py-2"
           >
             Members
           </router-link>
           <router-link
             to="/recommendations"
             @click="closeMobileMenu"
-            class="font-tinos text-base text-cod-gray hover:opacity-70 transition-opacity py-2"
+            class="font-tinos text-base text-cod-gray dark:text-[#9ab] hover:opacity-70 transition-opacity py-2"
           >
             Ask Me Something
           </router-link>
         </div>
 
         <!-- Auth Buttons or User Info -->
-        <div class="border-t border-gray-300 pt-4">
+        <div class="border-t border-gray-300 dark:border-gray-700 pt-4">
           <div v-if="authStore.user" class="flex flex-col gap-3">
             <router-link
               to="/profile"
               @click="closeMobileMenu"
-              class="font-tinos text-base text-cod-gray hover:opacity-70 transition-opacity py-2"
+              class="font-tinos text-base text-cod-gray dark:text-[#9ab] hover:opacity-70 transition-opacity py-2"
             >
               Profile
             </router-link>
             <router-link
               to="/home-page"
               @click="closeMobileMenu"
-              class="font-tinos text-base text-cod-gray hover:opacity-70 transition-opacity py-2"
+              class="font-tinos text-base text-cod-gray dark:text-[#9ab] hover:opacity-70 transition-opacity py-2"
             >
               Home
             </router-link>
             <button
               @click="handleLogout"
-              class="font-tinos text-base text-cod-gray hover:opacity-70 transition-opacity py-2 text-left"
+              class="font-tinos text-base text-cod-gray dark:text-[#9ab] hover:opacity-70 transition-opacity py-2 text-left"
             >
               Logout
             </button>
@@ -284,17 +302,25 @@ const handleLogout = async () => {
             <router-link
               to="/register"
               @click="closeMobileMenu"
-              class="h-10 px-5 bg-cod-gray text-white font-roboto font-bold text-sm tracking-wide rounded flex items-center justify-center hover:bg-opacity-90 transition-opacity"
+              class="h-10 px-5 bg-cod-gray dark:bg-gray-700 text-white font-roboto font-bold text-sm tracking-wide rounded flex items-center justify-center hover:bg-opacity-90 transition-opacity"
             >
               Create Account
             </router-link>
             <router-link
               to="/login"
               @click="closeMobileMenu"
-              class="h-10 px-5 bg-white text-cod-gray border border-cod-gray font-roboto font-bold text-sm tracking-wide rounded flex items-center justify-center hover:bg-gray-50 transition-colors"
+              class="h-10 px-5 bg-white dark:bg-gray-800 text-cod-gray dark:text-[#9ab] border border-cod-gray dark:border-gray-600 font-roboto font-bold text-sm tracking-wide rounded flex items-center justify-center hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
             >
               Log In
             </router-link>
+          </div>
+
+          <!-- Theme Toggle (Last item in mobile menu) -->
+          <div class="mt-4 pt-4 border-t border-gray-300 dark:border-gray-700">
+            <div class="flex items-center justify-between">
+              <span class="font-tinos text-base text-cod-gray dark:text-[#9ab]">Theme</span>
+              <ThemeToggle />
+            </div>
           </div>
         </div>
       </div>

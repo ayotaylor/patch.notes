@@ -1,7 +1,14 @@
 <template>
-  <div id="app">
+  <div id="app" class="!bg-theme-bg-primary dark:!bg-theme-bg-primary-dark transition-colors duration-200">
     <!-- Navigation Bar -->
+
      <!--<AppNavbar v-if="showNavBar" /> -->
+     <!-- Header Component -->
+    <!-- <HomeHeader /> -->
+    <!-- Navigation Component -->
+     <div v-if="route.name !== 'Home'">
+      <HomeNavigation />
+    </div>
 
      <!-- Main Content -->
     <div class="main-content">
@@ -16,12 +23,18 @@
 
 <script setup>
 import { /*computed, */ onMounted, onUnmounted, ref } from 'vue';
-// import { useRoute } from 'vue-router';
+import { useRoute } from 'vue-router';
 import { useAuthStore } from '@/stores/authStore';
+import { useTheme } from '@/composables/useTheme';
 //import AppNavbar from '@/components/AppNavBar.vue';
+// import HomeHeader from '@/components/home/HeaderBar.vue'
+import HomeNavigation from '@/components/home/NavigationBar.vue'
 import LoadingOverlay from '@/components/LoadingOverlay.vue';
 
-//const route = useRoute();
+// Initialize theme
+useTheme();
+
+const route = useRoute();
 const authStore = useAuthStore();
 const loadingMessage = ref('');
 

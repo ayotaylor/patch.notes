@@ -12,8 +12,8 @@ namespace Backend.Models.Social
         public Guid GameId { get; set; }
         
         [Required]
-        [Range(1, 5, ErrorMessage = "Rating must be between 1 and 5")]
-        public int Rating { get; set; }
+        [Range(1.0, 5.0, ErrorMessage = "Rating must be between 1.0 and 5.0")]
+        public double Rating { get; set; }
         
         [StringLength(1000, ErrorMessage = "Review text cannot exceed 1000 characters")]
         public string? ReviewText { get; set; }
