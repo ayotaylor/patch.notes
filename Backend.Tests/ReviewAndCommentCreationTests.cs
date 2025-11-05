@@ -41,10 +41,10 @@ public class ReviewAndCommentCreationTests : IClassFixture<DatabaseFixture>, IAs
     public async Task DisposeAsync()
     {
         // Clean up specific reviews and comments created during tests
-        if (_createdReviewIds.Count > 0 || _createdCommentIds.Count > 0)
-        {
-            await CleanupReviewsAndCommentsAsync(_createdReviewIds, _createdCommentIds);
-        }
+        // if (_createdReviewIds.Count > 0 || _createdCommentIds.Count > 0)
+        // {
+        //     await CleanupReviewsAndCommentsAsync(_createdReviewIds, _createdCommentIds);
+        // }
     }
 
     /// <summary>
@@ -53,7 +53,7 @@ public class ReviewAndCommentCreationTests : IClassFixture<DatabaseFixture>, IAs
     /// Comments are distributed evenly among other users (not the review author).
     /// Ratings support 0.5 increments on a 1.0-5.0 scale.
     /// </summary>
-    [Fact(Skip = "Manual execution only - run after creating test users and seeding games")]
+    [Fact/*(Skip = "Manual execution only - run after creating test users and seeding games")*/]
     public async Task CreateReviewsAndCommentsFromJson()
     {
         if (_reviewService == null || _commentService == null)
@@ -67,7 +67,8 @@ public class ReviewAndCommentCreationTests : IClassFixture<DatabaseFixture>, IAs
         // Get all unique users with @test or @reviewtester.dev in their email
         var testUsers = await context.Users
             .Where(u => u.Email!.Contains("@test") || u.Email!.Contains("@reviewtester.dev"))
-            .Include(u => u.UserProfile)
+            //.Include(u => u.UserProfile)
+            .Select(u => u.Id)
             .ToListAsync();
 
         if (testUsers.Count == 0)
@@ -76,18 +77,20 @@ public class ReviewAndCommentCreationTests : IClassFixture<DatabaseFixture>, IAs
             return;
         }
 
-        var userProfileIds = testUsers
-            .Where(u => u.UserProfile != null)
-            .Select(u => u.UserProfile!.Id)
-            .ToList();
+        var testUserIds = testUsers.Select(u => Guid.Parse(u)).ToList();
 
-        if (userProfileIds.Count == 0)
+        // var userProfileIds = testUsers
+        //     .Where(u => u.UserProfile != null)
+        //     .Select(u => u.UserProfile!.Id)
+        //     .ToList();
+
+        if (testUserIds.Count == 0)
         {
             Assert.Fail("No user profiles found for test users.");
             return;
         }
 
-        Console.WriteLine($"Found {userProfileIds.Count} test users for review creation");
+        Console.WriteLine($"Found {testUserIds.Count} test users for review creation");
 
         // Read and deserialize game-reviews.json
         var jsonPath = Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "game-reviews.json");
@@ -108,7 +111,7 @@ public class ReviewAndCommentCreationTests : IClassFixture<DatabaseFixture>, IAs
 
         Console.WriteLine($"Loaded {gameReviews.Count} reviews from game-reviews.json");
 
-        await CreateReviewsAndCommentsFromData(gameReviews, userProfileIds);
+        await CreateReviewsAndCommentsFromData(gameReviews, testUserIds);
 
         // Verify reviews were created
         var createdReviews = await context.Reviews
@@ -125,8 +128,8 @@ public class ReviewAndCommentCreationTests : IClassFixture<DatabaseFixture>, IAs
     /// Public so it can be called from other test classes or manually.
     /// </summary>
     /// <param name="gameReviews">List of game review data from JSON</param>
-    /// <param name="userProfileIds">List of UserProfile GUIDs to distribute reviews among</param>
-    public async Task CreateReviewsAndCommentsFromData(List<GameReviewData> gameReviews, List<Guid> userProfileIds)
+    /// <param name="userIds">List of UserID GUIDs to distribute reviews among</param>
+    public async Task CreateReviewsAndCommentsFromData(List<GameReviewData> gameReviews, List<Guid> userIds)
     {
         if (_reviewService == null || _commentService == null)
         {
@@ -142,7 +145,7 @@ public class ReviewAndCommentCreationTests : IClassFixture<DatabaseFixture>, IAs
         for (int i = 0; i < gameReviews.Count; i++)
         {
             var reviewData = gameReviews[i];
-            var userProfileId = userProfileIds[i % userProfileIds.Count]; // Round-robin distribution
+            var userProfileId = userIds[i % userIds.Count]; // Round-robin distribution
 
             // Get game by IgdbId
             var game = await context.Games
@@ -191,7 +194,7 @@ public class ReviewAndCommentCreationTests : IClassFixture<DatabaseFixture>, IAs
 
                 // Create comments for this review
                 // Distribute comments evenly among users, excluding the review author
-                var availableCommenters = userProfileIds.Where(id => id != userProfileId).ToList();
+                var availableCommenters = userIds.Where(id => id != userProfileId).ToList();
 
                 if (availableCommenters.Count == 0)
                 {
