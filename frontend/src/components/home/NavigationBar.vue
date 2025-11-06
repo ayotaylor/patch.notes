@@ -4,7 +4,7 @@ import { useAuthStore } from '@/stores/authStore'
 import { useTheme } from '@/composables/useTheme'
 import SearchBar from './SearchBar.vue'
 import UserDropdown from './UserDropdown.vue'
-import ThemeToggle from '@/components/ThemeToggle.vue'
+import ThemeToggle from '@/components/home/ThemeToggle.vue'
 
 const authStore = useAuthStore()
 /*const { isDark } = */useTheme()

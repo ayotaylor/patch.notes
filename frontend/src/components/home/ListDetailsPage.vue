@@ -2,8 +2,6 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
-import HomeHeader from './HeaderBar.vue'
-import HomeNavigation from './NavigationBar.vue'
 import ListActionsPanel from './ActionsPanel.vue'
 import GameCard from './GameCard.vue'
 import CommentList from './CommentList.vue'
@@ -153,11 +151,6 @@ onMounted(() => {
 
 <template>
   <div class="min-h-screen bg-theme-bg-primary dark:bg-theme-bg-primary-dark transition-colors duration-200">
-    <!-- Header Component -->
-    <HomeHeader />
-
-    <!-- Navigation Component -->
-    <HomeNavigation />
 
     <!-- List Details Section -->
     <div class="flex justify-center px-4 md:px-8 lg:px-40 mt-8">

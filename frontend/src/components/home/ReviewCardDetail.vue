@@ -1,6 +1,6 @@
 <script setup>
 // import GameImageComponent from './GameImageComponent.vue'
-import StarRating from '@/components/StarRating.vue'
+import StarRating from '@/components/home/StarRating.vue'
 import { useReviewCard } from '@/composables/useReviewCard'
 import { useReviewLikes } from '@/composables/reviews/useReviewLikes'
 

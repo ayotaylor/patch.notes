@@ -2,15 +2,15 @@ import { createRouter, createWebHistory } from "vue-router";
 import { useAuthStore } from "@/stores/authStore";
 import { getStoredToken, clearAuthData } from "@/utils/authUtils";
 import { buildRedirectPath } from "@/utils/authRedirect";
-import CompleteProfile from "@/components/CompleteProfile.vue";
+import CompleteProfile from "@/components/home/CompleteProfile.vue";
 
 // Import your views/components
 // You'll need to create these components or adjust the paths to match your existing ones
 const HomePage = () => import("@/components/home/HomePage.vue");
-const LoginComponent = () => import("@/components/LoginComponent.vue");
-const RegisterComponent = () => import("@/components/RegisterComponent.vue");
+const LoginComponent = () => import("@/components/home/LoginComponent.vue");
+const RegisterComponent = () => import("@/components/home/RegisterComponent.vue");
 const DashboardComponent = () => import("@/components/DashboardComponent.vue");
-const ProfileComponent = () => import("@/components/ProfileComponent.vue");
+const ProfileComponent = () => import("@/components/home/ProfileComponent.vue");
 // const GameDetailsComponent = () => import("@/components/GameDetailsComponent.vue"); // Old game details component
 const GameDetailsComponent = () => import("@/components/home/GameDetails.vue"); // New game details component
 const ReviewsListPage = () => import("@/components/home/ReviewsListPage.vue");

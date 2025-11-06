@@ -1,5 +1,5 @@
 <template>
-  <div ref="containerRef" class="relative h-48 bg-gray-200 rounded-lg overflow-hidden">
+  <div ref="containerRef" class="relative h-48 bg-theme-bg-secondary dark:bg-theme-bg-secondary-dark rounded-lg overflow-hidden transition-colors duration-200">
     <!-- Horizontal overlapping layout -->
     <div v-if="displayGames.length > 0" class="relative h-full flex items-center">
       <div
@@ -19,7 +19,9 @@
 
     <!-- Empty state if no games -->
     <div v-else class="flex items-center justify-center h-full">
-      <i class="fas fa-gamepad text-gray-400 text-4xl"></i>
+      <svg class="w-16 h-16 text-gray-400" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+        <path d="M21.5 8h-3.502c-.338-1.187-1.237-2.15-2.354-2.658L14.126 2.88c-.378-.17-.818.054-.938.454l-.91 3.024c-.073.242.089.494.337.525 1.809.225 3.167 1.632 3.345 3.395.025.25.238.423.487.423h4.553c.83 0 1.5.67 1.5 1.5v5.6c0 .83-.67 1.5-1.5 1.5-.83 0-1.5-.67-1.5-1.5V15.5c0-.276-.224-.5-.5-.5s-.5.224-.5.5v1.3c0 1.38 1.12 2.5 2.5 2.5s2.5-1.12 2.5-2.5v-5.6c0-1.38-1.12-2.5-2.5-2.5zM6.356 5.342C5.239 5.85 4.34 6.813 4.002 8H.5C-.62 8-1.5 8.88-1.5 10v5.6c0 1.38 1.12 2.5 2.5 2.5s2.5-1.12 2.5-2.5V14.3c0-.276.224-.5.5-.5s.5.224.5.5v1.5c0 .83-.67 1.5-1.5 1.5s-1.5-.67-1.5-1.5v-5.6c0-.83.67-1.5 1.5-1.5h4.553c.25 0 .462-.173.487-.423.178-1.763 1.536-3.17 3.345-3.395.248-.03.41-.283.337-.525l-.91-3.024c-.12-.4-.56-.624-.938-.454l-1.518.663z"/>
+      </svg>
     </div>
 
     <!-- Optional slot for overlay content (badges, etc.) -->
