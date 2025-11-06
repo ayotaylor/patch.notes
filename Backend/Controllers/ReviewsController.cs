@@ -186,6 +186,39 @@ namespace Backend.Controllers
             }
         }
 
+        [HttpGet("user/{displayName}/game/{slug}")]
+        public async Task<ActionResult<ApiResponse<ReviewDto>>> GetUserReviewForGame(string displayName, string slug)
+        {
+            try
+            {
+                var review = await _reviewService.GetUserReviewForGameWithSlugAsync(displayName, slug);
+                if (review == null)
+                {
+                    return Ok(new ApiResponse<ReviewDto>
+                    {
+                        Success = false,
+                        Message = "Review not found"
+                    });
+                }
+
+                return Ok(new ApiResponse<ReviewDto>
+                {
+                    Success = true,
+                    Data = review
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error fetching review for user {displayName} and game {GameId}", displayName, slug);
+                return StatusCode(500, new ApiResponse<ReviewDto>
+                {
+                    Success = false,
+                    Message = "An error occurred while fetching the review",
+                    Errors = [ex.Message]
+                });
+            }
+        }
+
         [HttpPost]
         [Authorize]
         public async Task<ActionResult<ApiResponse<ReviewDto>>> CreateReview([FromBody] CreateReviewRequest request)

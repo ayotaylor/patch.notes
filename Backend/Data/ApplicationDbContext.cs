@@ -75,20 +75,45 @@ namespace Backend.Data
 
             builder.Ignore<BaseEntity>();
 
+            // Global UTC DateTime handling - treats all DateTime values as UTC
+            // This ensures System.Text.Json serializes with 'Z' suffix
+            foreach (var entityType in builder.Model.GetEntityTypes())
+            {
+                foreach (var property in entityType.GetProperties())
+                {
+                    if (property.ClrType == typeof(DateTime))
+                    {
+                        property.SetValueConverter(
+                            new Microsoft.EntityFrameworkCore.Storage.ValueConversion.ValueConverter<DateTime, DateTime>(
+                                v => v.ToUniversalTime(),
+                                v => DateTime.SpecifyKind(v, DateTimeKind.Utc)));
+                    }
+                    else if (property.ClrType == typeof(DateTime?))
+                    {
+                        property.SetValueConverter(
+                            new Microsoft.EntityFrameworkCore.Storage.ValueConversion.ValueConverter<DateTime?, DateTime?>(
+                                v => v.HasValue ? v.Value.ToUniversalTime() : v,
+                                v => v.HasValue ? DateTime.SpecifyKind(v.Value, DateTimeKind.Utc) : v));
+                    }
+                }
+            }
+
             // Configure auto-updating timestamps for entities that inherit from BaseEntity
             // Apply this configuration to each specific entity that inherits from BaseEntity
+            // Using DATETIME instead of TIMESTAMP to avoid MySQL timezone conversions
+            // All dates are stored as UTC and should be serialized with 'Z' suffix
             foreach (var entityType in builder.Model.GetEntityTypes())
             {
                 if (typeof(BaseEntity).IsAssignableFrom(entityType.ClrType))
                 {
                     builder.Entity(entityType.ClrType)
                         .Property("UpdatedAt")
-                        .HasColumnType("timestamp")
+                        .HasColumnType("datetime(6)")
                         .ValueGeneratedOnAddOrUpdate();
 
                     builder.Entity(entityType.ClrType)
                         .Property("CreatedAt")
-                        .HasColumnType("timestamp")
+                        .HasColumnType("datetime(6)")
                         .ValueGeneratedOnAdd();
                 }
             }

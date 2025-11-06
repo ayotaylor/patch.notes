@@ -24,7 +24,7 @@ export function useReviews() {
    * @param {number} options.pageSize - Page size (default: 15)
    * @returns {Object} { data, hasNextPage, totalCount }
    */
-  const loadReviews = async ({ gameId, userId, page = 1, pageSize = 15 } = {}) => {
+  const loadReviews = async ({ gameId, userId, page = 1, pageSize = 20 } = {}) => {
     try {
       let response
 

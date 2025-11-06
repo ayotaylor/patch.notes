@@ -6,6 +6,7 @@ import HomeHeader from './HeaderBar.vue'
 import HomeNavigation from './NavigationBar.vue'
 import ListActionsPanel from './ActionsPanel.vue'
 import GameCard from './GameCard.vue'
+import CommentList from './CommentList.vue'
 import { useLists } from '@/composables/lists/useLists'
 import { useListLikes } from '@/composables/lists/useListLikes'
 
@@ -25,34 +26,6 @@ const error = ref(null)
 const currentPage = ref(1)
 const gamesPerPage = 20
 //const gamesPerRow = 5
-
-// Placeholder comments data
-const placeholderComments = ref([
-  {
-    id: 1,
-    user: {
-      username: 'GameCollector',
-      profileImageUrl: 'https://via.placeholder.com/40'
-    },
-    text: 'Amazing list! I\'ve been looking for something exactly like this.'
-  },
-  {
-    id: 2,
-    user: {
-      username: 'RPGFanatic',
-      profileImageUrl: 'https://via.placeholder.com/40'
-    },
-    text: 'Great selection of games. I would also add Persona 5 to this list!'
-  },
-  {
-    id: 3,
-    user: {
-      username: 'IndieGamer',
-      profileImageUrl: 'https://via.placeholder.com/40'
-    },
-    text: 'Solid recommendations. Definitely checking out some of these.'
-  }
-])
 
 // Computed
 const canEdit = computed(() => {
@@ -284,53 +257,12 @@ onMounted(() => {
               <p class="font-tinos text-lg text-theme-text-secondary dark:text-theme-text-secondary-dark">No games in this list yet.</p>
             </div>
 
-            <!-- Comments Section (Placeholder) -->
-            <div class="border-t border-theme-border dark:border-theme-border-dark pt-8 mt-8">
-              <!-- Comments Header -->
-              <h3 class="font-newsreader text-2xl font-bold text-theme-text-primary dark:text-theme-text-primary-dark mb-6">
-                Comments ({{ placeholderComments.length }})
-              </h3>
-
-              <!-- Comments List -->
-              <div class="space-y-6">
-                <div
-                  v-for="comment in placeholderComments"
-                  :key="comment.id"
-                  class="border-b border-theme-border dark:border-theme-border-dark pb-6 last:border-b-0"
-                >
-                  <div class="grid grid-cols-4 gap-4">
-                    <!-- Column 1: User info (25% width) -->
-                    <div class="col-span-1">
-                      <div class="flex items-center gap-2">
-                        <img
-                          :src="comment.user.profileImageUrl"
-                          :alt="comment.user.username"
-                          class="w-8 h-8 rounded-full object-cover"
-                          @error="(e) => (e.target.style.display = 'none')"
-                        />
-                        <span class="font-tinos text-sm text-theme-text-primary dark:text-theme-text-primary-dark font-semibold">
-                          {{ comment.user.username }}
-                        </span>
-                      </div>
-                    </div>
-
-                    <!-- Column 2: Comment text (75% width) -->
-                    <div class="col-span-3">
-                      <p class="font-tinos text-base text-theme-text-primary dark:text-theme-text-primary-dark leading-6">
-                        {{ comment.text }}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Placeholder message -->
-              <div class="mt-8 p-4 bg-gray-200 dark:bg-gray-700 rounded-lg">
-                <p class="font-tinos text-sm text-theme-text-secondary dark:text-theme-text-secondary-dark italic text-center">
-                  Comment functionality will be implemented in a future update.
-                </p>
-              </div>
-            </div>
+            <!-- Comments Section -->
+            <CommentList
+              v-if="list"
+              content-type="list"
+              :content-id="list.id"
+            />
           </div>
 
           <!-- Column 2: 25% - Actions Panel -->

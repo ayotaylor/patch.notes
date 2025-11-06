@@ -151,7 +151,9 @@ const handleLogout = async () => {
           </button>
 
           <!-- Title (Center) -->
-          <h2 class="absolute left-1/2 transform -translate-x-1/2 text-xl font-newsreader font-bold text-cod-gray dark:text-[#9ab]">Patchnotes*</h2>
+          <router-link to="/" class="absolute left-1/2 transform -translate-x-1/2">
+            <h2 class="text-xl font-newsreader font-bold text-cod-gray dark:text-[#9ab] hover:opacity-70 transition-opacity cursor-pointer">Patchnotes*</h2>
+          </router-link>
 
           <!-- Right side icons -->
           <div class="flex items-center gap-2">
@@ -184,7 +186,9 @@ const handleLogout = async () => {
 
         <!-- Desktop: Title (only when sticky) -->
         <div v-if="isSticky" class="hidden lg:flex items-center transition-opacity duration-300">
-          <h2 class="text-xl md:text-2xl font-newsreader font-bold text-cod-gray dark:text-[#9ab] whitespace-nowrap">Patchnotes*</h2>
+          <router-link to="/">
+            <h2 class="text-xl md:text-2xl font-newsreader font-bold text-cod-gray dark:text-[#9ab] whitespace-nowrap hover:opacity-70 transition-opacity cursor-pointer">Patchnotes*</h2>
+          </router-link>
         </div>
 
         <!-- Desktop: Navigation Links -->

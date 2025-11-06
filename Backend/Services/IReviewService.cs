@@ -10,6 +10,7 @@ namespace Backend.Services
         Task<PagedResponse<ReviewDto>> GetLatestReviewsAsync(int page = 1, int pageSize = 20);
         Task<ReviewDto?> GetReviewAsync(Guid reviewId);
         Task<ReviewDto?> GetUserReviewForGameAsync(Guid userId, int gameId);
+        Task<ReviewDto?> GetUserReviewForGameWithSlugAsync(string displayName, string slug);
         Task<ReviewDto?> CreateReviewAsync(Guid userId, int gameId, double rating, string? reviewText = null);
         Task<ReviewDto?> UpdateReviewAsync(Guid reviewId, double rating, string? reviewText = null);
         Task<bool> DeleteReviewAsync(Guid reviewId);

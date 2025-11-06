@@ -1,16 +1,19 @@
 <script setup>
-import { ref, onMounted } from 'vue'
-import { useRoute } from 'vue-router'
+import { ref, onMounted, computed } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import ReviewCardBase from './ReviewCardBase.vue'
 import ActionsPanel from './ActionsPanel.vue'
+import GameImageComponent from './GameImageComponent.vue'
+import CommentList from './CommentList.vue'
 import { useReviewLikes } from '@/composables/reviews/useReviewLikes'
 import { useAuthStore } from '@/stores/authStore'
-import { computed } from 'vue'
+import { reviewsService } from '@/services/reviewsService'
 
 const { toggleLike } = useReviewLikes()
 const authStore = useAuthStore()
 
 const route = useRoute()
+const router = useRouter()
 
 // Props from route params
 const username = ref(route.params.username)
@@ -38,69 +41,38 @@ const reviewLikeCount = computed(() => {
   return review.value?.likeCount || 0
 })
 
-// Placeholder comments data
-const placeholderComments = ref([
-  {
-    id: 1,
-    user: {
-      username: 'GamerDude123',
-      profileImageUrl: 'https://via.placeholder.com/40'
-    },
-    text: 'Great review! I completely agree with your assessment of the combat system.'
-  },
-  {
-    id: 2,
-    user: {
-      username: 'JaneTheGamer',
-      profileImageUrl: 'https://via.placeholder.com/40'
-    },
-    text: 'This game has been on my wishlist for a while. Your review convinced me to finally pick it up!'
-  },
-  {
-    id: 3,
-    user: {
-      username: 'RetroFan88',
-      profileImageUrl: 'https://via.placeholder.com/40'
-    },
-    text: 'I had a different experience with the story, but I respect your perspective. Solid review overall.'
-  }
-])
-
-// Placeholder review data (will be replaced with API call)
+// Load review from router state or fetch from API
 const loadReview = async () => {
   loading.value = true
   error.value = null
 
   try {
-    // TODO: Replace with actual API call
-    // const response = await reviewService.getReview(username.value, gameSlug.value)
-    // review.value = new Review(response.data)
+    // Check if review was passed via router state
+    const stateReview = history.state?.review || router.currentRoute.value.state?.review
 
-    // Placeholder data for now
-    review.value = {
-      id: 1,
-      reviewText: 'This is an absolutely incredible game that redefines the open-world genre. From the moment you step into the world, you\'re immediately immersed in a rich, vibrant environment that feels alive and dynamic. The attention to detail is astounding, from the weather systems to the NPC interactions.\n\nThe combat system is fluid and responsive, offering a perfect balance between challenge and accessibility. Boss fights are epic and memorable, each requiring a unique strategy to overcome. The variety of weapons and abilities keeps the gameplay fresh throughout the entire experience.\n\nThe story is compelling and emotionally resonant, with characters that feel real and relatable. The voice acting is top-notch, and the soundtrack perfectly complements every moment of the journey.\n\nIf you\'re a fan of open-world games, this is an absolute must-play. It sets a new standard for what the genre can achieve.',
-      rating: 4.5,
-      isLikedByCurrentUser: false,
-      user: {
-        id: 1,
-        username: username.value,
-        displayName: 'John Doe',
-        profileImageUrl: 'https://via.placeholder.com/50'
-      },
-      game: {
-        id: 1,
-        name: 'Elden Ring',
-        slug: gameSlug.value,
-        releaseYear: 2022,
-        primaryImageUrl: 'https://images.igdb.com/igdb/image/upload/t_cover_big/co4jni.jpg',
-        isLikedByUser: true
-      },
-      likeCount: 142,
-      commentCount: 23,
-      relativeDate: '2 days ago',
-      createdAt: new Date('2024-01-15')
+    if (stateReview) {
+      // Use review from state (navigation from review card)
+      review.value = stateReview
+      loading.value = false
+      return
     }
+
+    // If no state, fetch from API (direct URL access or page refresh)
+    if (!username.value || !gameSlug.value) {
+      error.value = 'Missing required parameters'
+      loading.value = false
+      return
+    }
+
+    const fetchedReview = await reviewsService.getUserGameReviewBySlug(username.value, gameSlug.value)
+
+    if (!fetchedReview) {
+      error.value = 'Review not found'
+      loading.value = false
+      return
+    }
+
+    review.value = fetchedReview
   } catch (err) {
     error.value = 'Failed to load review'
     console.error('Error loading review:', err)
@@ -172,87 +144,53 @@ onMounted(() => {
 
         <!-- Review Content -->
         <div v-else-if="review" class="flex flex-col lg:flex-row gap-6">
-          <!-- Column 1: 25% - Game Image -->
-          <div class="lg:w-1/4">
-            <div class="lg:sticky lg:top-4">
-              <img
-                v-if="review.game?.primaryImageUrl"
-                :src="review.game.primaryImageUrl"
-                :alt="review.game.name"
-                class="w-full rounded-lg mb-4"
-                @error="(e) => (e.target.style.display = 'none')"
-              />
-              <div class="bg-theme-bg-secondary dark:bg-theme-bg-secondary-dark rounded-lg p-4">
-                <div class="text-center">
-                  <div class="font-newsreader text-2xl font-bold text-theme-text-primary dark:text-theme-text-primary-dark">{{ review.rating.toFixed(1) }}</div>
-                  <div class="font-tinos text-sm text-theme-text-secondary dark:text-theme-text-secondary-dark">Rating</div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Column 2: 50% - Main Content -->
-          <div class="lg:w-1/2">
-            <h2 class="font-newsreader text-3xl font-bold text-theme-text-primary dark:text-theme-text-primary-dark mb-6 border-b border-theme-border dark:border-theme-border-dark pb-4">
-              Review
-            </h2>
-
-            <ReviewCardBase
-              :review="review"
-              variant="detail"
-              @like-review="handleLikeReview"
-            />
-
-            <!-- Comments Section (Placeholder) -->
-            <div class="border-t border-theme-border dark:border-theme-border-dark pt-8 mt-8">
-              <!-- Comments Header -->
-              <h3 class="font-newsreader text-2xl font-bold text-theme-text-primary dark:text-theme-text-primary-dark mb-6">
-                Comments ({{ placeholderComments.length }})
-              </h3>
-
-              <!-- Comments List -->
-              <div class="space-y-6">
-                <div
-                  v-for="comment in placeholderComments"
-                  :key="comment.id"
-                  class="border-b border-theme-border dark:border-theme-border-dark pb-6 last:border-b-0"
-                >
-                  <div class="grid grid-cols-4 gap-4">
-                    <!-- Column 1: User info (25% width) -->
-                    <div class="col-span-1">
-                      <div class="flex items-center gap-2">
-                        <img
-                          :src="comment.user.profileImageUrl"
-                          :alt="comment.user.username"
-                          class="w-8 h-8 rounded-full object-cover"
-                          @error="(e) => (e.target.style.display = 'none')"
-                        />
-                        <span class="font-tinos text-sm text-theme-text-primary dark:text-theme-text-primary-dark font-semibold">
-                          {{ comment.user.username }}
-                        </span>
-                      </div>
-                    </div>
-
-                    <!-- Column 2: Comment text (75% width) -->
-                    <div class="col-span-3">
-                      <p class="font-tinos text-base text-theme-text-primary dark:text-theme-text-primary-dark leading-6">
-                        {{ comment.text }}
-                      </p>
+          <!-- Left side: 75% - Game Image, Review Content, and Comments -->
+          <div class="lg:w-3/4 flex flex-col gap-6">
+            <!-- Row 1: Game Image and Review Content -->
+            <div class="flex flex-col lg:flex-row gap-6">
+              <!-- Column 1: 33.33% of 75% - Game Image -->
+              <div class="lg:w-1/3">
+                <div class="lg:sticky lg:top-4">
+                  <GameImageComponent
+                    v-if="review.game?.primaryImageUrl"
+                    :image-url="review.game.primaryImageUrl"
+                    :game-name="review.game.name"
+                    size="large"
+                    class="mb-4"
+                  />
+                  <div class="bg-theme-bg-secondary dark:bg-theme-bg-secondary-dark rounded-lg p-4">
+                    <div class="text-center">
+                      <div class="font-newsreader text-2xl font-bold text-theme-text-primary dark:text-theme-text-primary-dark">{{ review.rating.toFixed(1) }}</div>
+                      <div class="font-tinos text-sm text-theme-text-secondary dark:text-theme-text-secondary-dark">Rating</div>
                     </div>
                   </div>
                 </div>
               </div>
 
-              <!-- Placeholder message -->
-              <div class="mt-8 p-4 bg-gray-200 dark:bg-gray-700 rounded-lg">
-                <p class="font-tinos text-sm text-theme-text-secondary dark:text-theme-text-secondary-dark italic text-center">
-                  Comment functionality will be implemented in a future update.
-                </p>
+              <!-- Column 2: 66.66% of 75% - Main Content -->
+              <div class="lg:w-2/3">
+                <h2 class="font-newsreader text-3xl font-bold text-theme-text-primary dark:text-theme-text-primary-dark mb-6 border-b border-theme-border dark:border-theme-border-dark pb-4">
+                  Review
+                </h2>
+
+                <ReviewCardBase
+                  :review="review"
+                  variant="detail"
+                  @like-review="handleLikeReview"
+                />
               </div>
+            </div>
+
+            <!-- Row 2: Comments Section (full width of 75%) -->
+            <div class="w-full">
+              <CommentList
+                content-type="review"
+                :content-id="review.id"
+              />
             </div>
           </div>
 
-          <!-- Column 3: 25% - Actions Panel -->
+          <!-- Right side: 25% - Actions Panel -->
           <div class="lg:w-1/4">
             <div class="lg:sticky lg:top-4">
               <ActionsPanel

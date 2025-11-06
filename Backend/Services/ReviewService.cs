@@ -179,6 +179,33 @@ namespace Backend.Services
             return review?.ToDto();
         }
 
+        public async Task<ReviewDto?> GetUserReviewForGameWithSlugAsync(string displayName, string slug)
+        {
+            //TODO: put index on displayname in userprofile
+            var userProfileId = await _context.UserProfiles
+                .Where(u => u.DisplayName == displayName)
+                .Select(u => u.Id)
+                .FirstOrDefaultAsync();
+
+            var gameGuid = await _context.Games
+                .Where(g => g.Slug == slug)
+                .Select(g => g.Id)
+                .FirstOrDefaultAsync();
+
+            if (userProfileId == Guid.Empty || gameGuid == Guid.Empty)
+            {
+                return null;
+            }
+
+            var review = await _context.Reviews
+                .Include(r => r.User)
+                .Include(r => r.Game).ThenInclude(c => c.Covers)
+                .Include(r => r.Likes)
+                .FirstOrDefaultAsync(r => r.UserId == userProfileId && r.GameId == gameGuid);
+
+            return review?.ToDto();
+        }
+
         public async Task<ReviewDto?> CreateReviewAsync(Guid userId, int gameId, double rating, string? reviewText = null)
         {
             var userProfileId = await _context.UserProfiles

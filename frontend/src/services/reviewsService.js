@@ -255,7 +255,7 @@ export const reviewsService = {
     }
   },
 
-  // Check if user has reviewed a game
+  // Check if user has reviewed a game (by gameId)
   async getUserGameReview(userId, gameId) {
     try {
       if (!userId || (typeof userId !== "string" && typeof userId !== "number")) {
@@ -278,6 +278,35 @@ export const reviewsService = {
         return null; // No review found
       }
       console.error("Error fetching user game review:", error);
+      throw new Error(
+        error.response?.data?.message || "Failed to fetch user review"
+      );
+    }
+  },
+
+  // Get user's review for a game by username and slug
+  async getUserGameReviewBySlug(username, gameSlug) {
+    try {
+      if (!username || typeof username !== "string") {
+        throw new Error("Username must be a non-empty string");
+      }
+
+      if (!gameSlug || typeof gameSlug !== "string") {
+        throw new Error("Game slug must be a non-empty string");
+      }
+
+      const response = await apiClient.get(`/reviews/user/${username}/game/${gameSlug}`);
+      const review = response.data.data;
+      // Process single review if it has a game object
+      if (review && review.game) {
+        review.game = new Game(review.game);
+      }
+      return review;
+    } catch (error) {
+      if (error.response?.status === 404) {
+        return null; // No review found
+      }
+      console.error("Error fetching user game review by slug:", error);
       throw new Error(
         error.response?.data?.message || "Failed to fetch user review"
       );

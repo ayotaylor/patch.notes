@@ -55,8 +55,11 @@ export function useReviewCard(review, maxCharacters = 460) {
   // Navigation methods
   const navigateToReview = () => {
     const reviewData = review.value || review
-    const route = `/${reviewData.user.username}/game/${reviewData.game.slug}`
-    router.push(route)
+    const route = `/${reviewData.user.displayName}/game/${reviewData.game.slug}`
+    router.push({
+      path: route,
+      state: { review: reviewData }
+    })
   }
 
   const navigateToGame = () => {

@@ -1,8 +1,6 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import HomeHeader from './HeaderBar.vue'
-import HomeNavigation from './NavigationBar.vue'
 import OverlappingGameImages from './OverlappingGameImages.vue'
 import { useLists } from '@/composables/lists/useLists'
 import { useListLikes } from '@/composables/lists/useListLikes'
@@ -108,11 +106,6 @@ onMounted(() => {
 
 <template>
   <div class="min-h-screen bg-theme-bg-primary dark:bg-theme-bg-primary-dark transition-colors duration-200">
-    <!-- Header Component -->
-    <HomeHeader />
-
-    <!-- Navigation Component -->
-    <HomeNavigation />
 
     <!-- Lists Section -->
     <div class="flex justify-center px-4 md:px-8 lg:px-40 mt-8">

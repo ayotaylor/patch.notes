@@ -102,7 +102,15 @@ builder.Services.Configure<IgdbSettings>(
 // });
 // builder.Services.AddScoped<IgdbImportService>();
 
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        // Configure JSON serialization to handle UTC dates properly
+        options.JsonSerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter());
+        // Note: System.Text.Json automatically serializes DateTime as ISO 8601 format
+        // If DateTime.Kind is UTC, it will include the 'Z' suffix
+        // To ensure this, all DateTime values should be stored/created as UTC
+    });
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 

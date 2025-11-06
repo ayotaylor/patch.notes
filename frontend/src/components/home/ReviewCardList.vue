@@ -113,7 +113,10 @@ const handleLikeReview = async () => {
 
       <!-- Row 4: Review text with "more" link -->
       <div>
-        <p class="font-tinos text-base text-theme-text-primary dark:text-theme-text-primary-dark leading-6 inline">
+        <p
+          class="font-tinos text-base text-theme-text-primary dark:text-theme-text-primary-dark leading-6 inline cursor-pointer hover:opacity-80 transition-opacity"
+          @click="navigateToReview"
+        >
           {{ displayedReviewText }}
         </p>
         <button
