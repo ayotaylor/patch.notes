@@ -169,9 +169,9 @@ onMounted(() => {
 
               <!-- Column 2: 66.66% of 75% - Main Content -->
               <div class="lg:w-2/3">
-                <h2 class="font-newsreader text-3xl font-bold text-theme-text-primary dark:text-theme-text-primary-dark mb-6 border-b border-theme-border dark:border-theme-border-dark pb-4">
+                <!-- <h2 class="font-newsreader text-3xl font-bold text-theme-text-primary dark:text-theme-text-primary-dark mb-6 border-b border-theme-border dark:border-theme-border-dark pb-4">
                   Review
-                </h2>
+                </h2> -->
 
                 <ReviewCardBase
                   :review="review"
