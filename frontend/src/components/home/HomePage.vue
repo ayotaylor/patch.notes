@@ -3,7 +3,7 @@ import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useGamesStore } from '@/stores/gamesStore'
 import { useTheme } from '@/composables/useTheme'
-import HomeHeader from './HeaderBar.vue'
+import HeaderBar from './HeaderBar.vue'
 import HomeNavigation from './NavigationBar.vue'
 import GameCarousel from './GameCarousel.vue'
 import ReviewCardBase from './ReviewCardBase.vue'
@@ -207,7 +207,7 @@ const popularMembers = [
 <template>
   <div class="min-h-screen bg-theme-bg-primary dark:bg-theme-bg-primary-dark transition-colors duration-200">
     <!-- Header Component -->
-    <HomeHeader />
+    <HeaderBar />
 
     <!-- Navigation Component -->
     <HomeNavigation />

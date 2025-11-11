@@ -7,6 +7,7 @@ import GameCard from './GameCard.vue'
 import CommentList from './CommentList.vue'
 import { useLists } from '@/composables/lists/useLists'
 import { useListLikes } from '@/composables/lists/useListLikes'
+import PaginationControls from '@/components/home/buttons/PaginationControls.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -48,10 +49,6 @@ const paginatedGames = computed(() => {
 const totalPages = computed(() => {
   if (!list.value?.games) return 0
   return Math.ceil(list.value.games.length / gamesPerPage)
-})
-
-const hasMultiplePages = computed(() => {
-  return totalPages.value > 1
 })
 
 const relativeDate = computed(() => {
@@ -130,18 +127,8 @@ const handleGameClick = (game) => {
   }
 }
 
-const goToNextPage = () => {
-  if (currentPage.value < totalPages.value) {
-    currentPage.value++
-    window.scrollTo({ top: 0, behavior: 'smooth' })
-  }
-}
-
-const goToPreviousPage = () => {
-  if (currentPage.value > 1) {
-    currentPage.value--
-    window.scrollTo({ top: 0, behavior: 'smooth' })
-  }
+const handlePageChange = (newPage) => {
+  currentPage.value = newPage
 }
 
 onMounted(() => {
@@ -214,35 +201,11 @@ onMounted(() => {
               </div>
 
               <!-- Pagination Controls -->
-              <div v-if="hasMultiplePages" class="flex justify-center gap-4 mt-8">
-                <button
-                  :disabled="currentPage === 1"
-                  :class="[
-                    'px-6 py-2 rounded font-tinos text-base transition-colors',
-                    currentPage === 1
-                      ? 'bg-gray-300 dark:bg-gray-700 text-gray-500 dark:text-gray-400 cursor-not-allowed'
-                      : 'bg-theme-btn-primary dark:bg-theme-btn-primary-dark text-white hover:bg-opacity-90'
-                  ]"
-                  @click="goToPreviousPage"
-                >
-                  Previous
-                </button>
-                <span class="flex items-center font-tinos text-base text-theme-text-secondary dark:text-theme-text-secondary-dark">
-                  Page {{ currentPage }} of {{ totalPages }}
-                </span>
-                <button
-                  :disabled="currentPage === totalPages"
-                  :class="[
-                    'px-6 py-2 rounded font-tinos text-base transition-colors',
-                    currentPage === totalPages
-                      ? 'bg-gray-300 dark:bg-gray-700 text-gray-500 dark:text-gray-400 cursor-not-allowed'
-                      : 'bg-theme-btn-primary dark:bg-theme-btn-primary-dark text-white hover:bg-opacity-90'
-                  ]"
-                  @click="goToNextPage"
-                >
-                  Next
-                </button>
-              </div>
+              <PaginationControls
+                :current-page="currentPage"
+                :total-pages="totalPages"
+                @change="handlePageChange"
+              />
             </div>
 
             <!-- Empty State -->

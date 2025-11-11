@@ -7,22 +7,27 @@
         <SearchBar />
 
         <!-- User Dropdown (when logged in) or Auth Buttons (when logged out) -->
-        <div v-if="authStore.user">
-          <UserDropdown />
-        </div>
-        <div v-else class="flex items-center gap-2">
-          <router-link
-            to="/register"
-            class="h-9 min-w-21 px-5 bg-cod-gray dark:bg-gray-700 text-white font-roboto font-bold text-sm tracking-wide rounded flex items-center justify-center hover:bg-opacity-90 transition-opacity"
-          >
-            Create Account
-          </router-link>
-          <router-link
-            to="/login"
-            class="h-9 min-w-21 px-5 bg-theme-btn-secondary dark:bg-theme-btn-secondary-dark text-theme-text-primary dark:text-theme-text-primary-dark border border-theme-border dark:border-theme-border-dark font-roboto font-bold text-sm tracking-wide rounded flex items-center justify-center hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-          >
-            Log In
-          </router-link>
+        <div class="flex items-center gap-2">
+          <div v-if="authStore.user">
+            <UserDropdown />
+          </div>
+          <div v-else class="flex items-center gap-2">
+            <LinkButton
+              to="/register"
+              title="Create Account"
+              variant="primary"
+              size="md"
+            />
+            <LinkButton
+              to="/login"
+              title="Log In"
+              variant="secondary"
+              size="md"
+            />
+          </div>
+
+          <!-- Theme Toggle -->
+          <ThemeToggle />
         </div>
       </div>
 
@@ -43,6 +48,8 @@ import { useTheme } from '@/composables/useTheme';
 import { useAuthStore } from '@/stores/authStore';
 import SearchBar from '@/components/home/SearchBar.vue';
 import UserDropdown from './UserDropdown.vue';
+import ThemeToggle from '@/components/home/ThemeToggle.vue';
+import LinkButton from '@/components/home/buttons/LinkButton.vue';
 
 useTheme();
 const authStore = useAuthStore();

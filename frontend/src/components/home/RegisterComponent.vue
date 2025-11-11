@@ -126,17 +126,18 @@
               >
             </div>
 
-            <button
-              type="submit"
-              :disabled="loading || !isFormValid"
-              class="w-full px-6 py-3 bg-theme-btn-primary dark:bg-theme-btn-primary-dark text-white font-tinos text-base font-medium rounded-lg hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-theme-btn-primary dark:focus:ring-theme-btn-primary-dark transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center mb-4"
+            <FormButton
+              title="Create Account"
+              :disabled="!isFormValid"
+              :loading="loading"
+              icon-size="md"
             >
-              <span v-if="loading" class="inline-block w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></span>
-              <svg v-else class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <path d="M15 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm-9-2V7H4v3H1v2h3v3h2v-3h3v-2H6zm9 4c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
-              </svg>
-              Create Account
-            </button>
+              <template #icon-left>
+                <svg fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M15 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm-9-2V7H4v3H1v2h3v3h2v-3h3v-2H6zm9 4c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                </svg>
+              </template>
+            </FormButton>
           </form>
 
           <!-- Divider -->
@@ -194,6 +195,7 @@ import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
 import { useToast } from 'vue-toastification'
+import FormButton from '@/components/home/buttons/FormButton.vue'
 
 const router = useRouter()
 const authStore = useAuthStore()
