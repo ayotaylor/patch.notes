@@ -31,6 +31,9 @@ jobs:
           app_location: "/frontend"
           api_location: "" # No API - using Container Apps backend
           output_location: "dist"
+        env:
+          # Set production API URL during build
+          VUE_APP_API_BASE_URL: https://api.patchnotes.cool/api
 
       - name: Deployment Summary
         run: |
