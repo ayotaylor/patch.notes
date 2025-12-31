@@ -1,0 +1,44 @@
+name: Deploy patchnotes.cool
+on:
+  push:
+    branches: [main]
+    paths: ['Backend/**', 'frontend/**']
+
+jobs:
+  backend:
+    if: contains(github.event.head_commit.modified, 'Backend/')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+      - name: Deploy API
+        uses: azure/container-apps-deploy-action@v1
+        with:
+          appSourcePath: ${{ github.workspace }}
+          dockerfilePath: Backend/Dockerfile
+          containerAppName: patchnotes-api
+          resourceGroup: patchnotes-rg
+
+  frontend:
+    if: contains(github.event.head_commit.modified, 'Frontend/')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: true
+
+      - name: Build and Deploy Vue App
+        uses: Azure/static-web-apps-deploy@v1
+        with:
+          # Use the secret you just created
+          azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}
+          repo_token: ${{ secrets.GITHUB_TOKEN }} # Built-in GitHub secret
+          action: "upload"
+          
+          ###### MONOREPO PATHS ######
+          app_location: "/Frontend"      # Path to your Vue source
+          api_location: ""               # Leave empty as we use Container Apps for API
+          output_location: "dist"        # Where your 'npm run build' puts files
