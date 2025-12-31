@@ -43,54 +43,68 @@ builder.Services.AddScoped<HybridEmbeddingEnhancer>();
 
 // Add recommendation services
 builder.Services.AddHttpClient<GroqLanguageModel>();
-builder.Services.AddSingleton<QdrantClient>(provider =>
+
+// Check if Qdrant is configured before registering Qdrant-dependent services
+var qdrantUrl = builder.Configuration["Qdrant:Url"];
+var isQdrantEnabled = !string.IsNullOrEmpty(qdrantUrl);
+
+if (isQdrantEnabled)
 {
-    var configuration = provider.GetRequiredService<IConfiguration>();
-    var qdrantUrl = configuration["Qdrant:Url"] ?? "http://localhost:6333";
-    var uri = new Uri(qdrantUrl);
-    // Use gRPC port (6334) instead of HTTP port (6333) C# client uses gRPC interface by default
-    var grpcPort = uri.Port == 6333 ? 6334 : uri.Port;
-
-    // Configure optimized gRPC channel for high-throughput operations
-    var grpcAddress = $"http://{uri.Host}:{grpcPort}";
-    var grpcChannelOptions = new Grpc.Net.Client.GrpcChannelOptions
+    builder.Services.AddSingleton<QdrantClient>(provider =>
     {
-        MaxReceiveMessageSize = 16 * 1024 * 1024, // 16MB
-        MaxSendMessageSize = 16 * 1024 * 1024,    // 16MB
-        HttpHandler = new SocketsHttpHandler
+        var configuration = provider.GetRequiredService<IConfiguration>();
+        var url = configuration["Qdrant:Url"];
+        var uri = new Uri(url);
+        // Use gRPC port (6334) instead of HTTP port (6333) C# client uses gRPC interface by default
+        var grpcPort = uri.Port == 6333 ? 6334 : uri.Port;
+
+        // Configure optimized gRPC channel for high-throughput operations
+        var grpcAddress = $"http://{uri.Host}:{grpcPort}";
+        var grpcChannelOptions = new Grpc.Net.Client.GrpcChannelOptions
         {
-            EnableMultipleHttp2Connections = true,
-            KeepAlivePingDelay = TimeSpan.FromSeconds(30),
-            KeepAlivePingTimeout = TimeSpan.FromSeconds(5),
-            PooledConnectionIdleTimeout = TimeSpan.FromMinutes(10),
-            PooledConnectionLifetime = TimeSpan.FromMinutes(30),
-            MaxConnectionsPerServer = 10,
-            ConnectTimeout = TimeSpan.FromSeconds(30),
-            ResponseDrainTimeout = TimeSpan.FromSeconds(10),
-            RequestHeaderEncodingSelector = (_, _) => Encoding.UTF8
-        }
-    };
+            MaxReceiveMessageSize = 16 * 1024 * 1024, // 16MB
+            MaxSendMessageSize = 16 * 1024 * 1024,    // 16MB
+            HttpHandler = new SocketsHttpHandler
+            {
+                EnableMultipleHttp2Connections = true,
+                KeepAlivePingDelay = TimeSpan.FromSeconds(30),
+                KeepAlivePingTimeout = TimeSpan.FromSeconds(5),
+                PooledConnectionIdleTimeout = TimeSpan.FromMinutes(10),
+                PooledConnectionLifetime = TimeSpan.FromMinutes(30),
+                MaxConnectionsPerServer = 10,
+                ConnectTimeout = TimeSpan.FromSeconds(30),
+                ResponseDrainTimeout = TimeSpan.FromSeconds(10),
+                RequestHeaderEncodingSelector = (_, _) => Encoding.UTF8
+            }
+        };
 
-    var channel = Grpc.Net.Client.GrpcChannel.ForAddress(grpcAddress, grpcChannelOptions);
-    var grpcClient = new QdrantGrpcClient(channel);
-    return new QdrantClient(grpcClient);
-});
+        var channel = Grpc.Net.Client.GrpcChannel.ForAddress(grpcAddress, grpcChannelOptions);
+        var grpcClient = new QdrantGrpcClient(channel);
+        return new QdrantClient(grpcClient);
+    });
 
-builder.Services.AddScoped<IVectorDatabase, QdrantVectorDatabase>();
-builder.Services.AddScoped<IEmbeddingService, SentenceTransformerEmbeddingService>();
-builder.Services.AddScoped<ILanguageModel, GroqLanguageModel>();
-builder.Services.AddScoped<UserPreferenceService>();
-builder.Services.AddSingleton<ISemanticKeywordCache, SemanticKeywordCache>();
-builder.Services.AddScoped<GameIndexingService>();
-builder.Services.AddScoped<GameRecommendationService>();
-builder.Services.AddScoped<QueryEnhancementService>();
-builder.Services.AddScoped<EmbeddingDimensionValidator>();
-builder.Services.AddSingleton<ConversationStateService>();
-// Add game change tracking service and initial indexing service
-builder.Services.AddHostedService<GameIndexingBackgroundService>();
-builder.Services.AddHostedService<SemanticCacheWarmupService>();
-builder.Services.AddHostedService<CategoryNormalizationInitializationService>();
-builder.Services.AddScoped<GameChangeTrackingService>();
+    builder.Services.AddScoped<IVectorDatabase, QdrantVectorDatabase>();
+    builder.Services.AddScoped<IEmbeddingService, SentenceTransformerEmbeddingService>();
+    builder.Services.AddScoped<ILanguageModel, GroqLanguageModel>();
+    builder.Services.AddScoped<UserPreferenceService>();
+    builder.Services.AddSingleton<ISemanticKeywordCache, SemanticKeywordCache>();
+    builder.Services.AddScoped<GameIndexingService>();
+    builder.Services.AddScoped<GameRecommendationService>();
+    builder.Services.AddScoped<QueryEnhancementService>();
+    builder.Services.AddScoped<EmbeddingDimensionValidator>();
+    builder.Services.AddSingleton<ConversationStateService>();
+    // Add game change tracking service and initial indexing service
+    builder.Services.AddHostedService<GameIndexingBackgroundService>();
+    builder.Services.AddHostedService<SemanticCacheWarmupService>();
+    builder.Services.AddHostedService<CategoryNormalizationInitializationService>();
+    builder.Services.AddScoped<GameChangeTrackingService>();
+}
+else
+{
+    // Qdrant is not configured - skip recommendation services
+    var logger = LoggerFactory.Create(b => b.AddConsole()).CreateLogger("Startup");
+    logger.LogWarning("Qdrant URL is not configured. Recommendation features will be disabled.");
+}
 
 // add igdb import service -- TODO: to be removed later
 // get igdb settings from configuration
