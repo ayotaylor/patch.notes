@@ -131,8 +131,15 @@ if (!string.IsNullOrEmpty(keyVaultUrl))
 }
 
 // add db context for mysql
-// TODO: add connection string in cofnigguration
 var mySqlConnectionString = builder.Configuration.GetConnectionString("mysqldb");
+if (string.IsNullOrEmpty(mySqlConnectionString))
+{
+    throw new InvalidOperationException(
+        "MySQL connection string 'mysqldb' is not configured. " +
+        "For local development, add it to user secrets. " +
+        "For production, ensure 'ConnectionStrings--mysqldb' is set in Azure Key Vault.");
+}
+
 builder.Services.AddDbContextPool<ApplicationDbContext>(options =>
 {
     options.UseMySql(mySqlConnectionString, new MySqlServerVersion(new Version()), mySqlOptions =>
@@ -164,6 +171,14 @@ builder.Services.Configure<IdentityOptions>(options =>
 // add jwt authentication
 var jwtSettings = builder.Configuration.GetSection("Jwt").Get<JwtSettings>();
 jwtSettings.SecretKey = builder.Configuration["Jwt:SecretKey"]; // From secrets
+
+if (string.IsNullOrEmpty(jwtSettings.SecretKey))
+{
+    throw new InvalidOperationException(
+        "JWT Secret Key is not configured. " +
+        "For local development, add 'Jwt:SecretKey' to user secrets. " +
+        "For production, ensure 'Jwt--SecretKey' is set in Azure Key Vault.");
+}
 
 builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("Jwt"));
 var key = Encoding.UTF8.GetBytes(jwtSettings.SecretKey);

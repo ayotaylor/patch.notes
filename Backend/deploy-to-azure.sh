@@ -113,10 +113,19 @@ echo "✓ Managed Identity Principal ID: $IDENTITY_PRINCIPAL_ID"
 # Step 8: Grant Key Vault access to managed identity
 echo ""
 echo "Step 8: Granting Key Vault access to managed identity..."
-az keyvault set-policy \
+
+# Get Key Vault resource ID
+KEY_VAULT_ID=$(az keyvault show \
     --name $KEY_VAULT_NAME \
-    --object-id $IDENTITY_PRINCIPAL_ID \
-    --secret-permissions get list
+    --query "id" -o tsv)
+
+# Assign Key Vault Secrets User role (allows reading secrets)
+echo "Assigning 'Key Vault Secrets User' role..."
+az role assignment create \
+    --role "Key Vault Secrets User" \
+    --assignee-object-id $IDENTITY_PRINCIPAL_ID \
+    --assignee-principal-type ServicePrincipal \
+    --scope $KEY_VAULT_ID 2>/dev/null || echo "  (Role may already be assigned)"
 
 echo "✓ Key Vault access granted"
 
