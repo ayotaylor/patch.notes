@@ -264,21 +264,24 @@ app.UseAuthorization();
 
 app.MapControllers();
 
-// Validate embedding dimensions at startup to prevent runtime errors
-using (var scope = app.Services.CreateScope())
+// Validate embedding dimensions at startup to prevent runtime errors (only if Qdrant is enabled)
+if (isQdrantEnabled)
 {
-    var validator = scope.ServiceProvider.GetRequiredService<EmbeddingDimensionValidator>();
-    var validationResult = await validator.ValidateSystemDimensionsAsync();
-
-    if (!validationResult)
+    using (var scope = app.Services.CreateScope())
     {
-        var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
-        logger.LogCritical("❌ STARTUP FAILED: Embedding dimension validation failed! The system cannot start with incorrect dimensions.");
-        logger.LogCritical("Please check your configuration and ensure all embedding dimensions are consistent.");
-        logger.LogCritical("Expected dimensions: {ExpectedMessage}", EmbeddingConstants.GetExpectedDimensionsMessage());
+        var validator = scope.ServiceProvider.GetRequiredService<EmbeddingDimensionValidator>();
+        var validationResult = await validator.ValidateSystemDimensionsAsync();
 
-        // Terminate the application to prevent runtime errors
-        Environment.Exit(1);
+        if (!validationResult)
+        {
+            var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+            logger.LogCritical("❌ STARTUP FAILED: Embedding dimension validation failed! The system cannot start with incorrect dimensions.");
+            logger.LogCritical("Please check your configuration and ensure all embedding dimensions are consistent.");
+            logger.LogCritical("Expected dimensions: {ExpectedMessage}", EmbeddingConstants.GetExpectedDimensionsMessage());
+
+            // Terminate the application to prevent runtime errors
+            Environment.Exit(1);
+        }
     }
 }
 
