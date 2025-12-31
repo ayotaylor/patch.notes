@@ -34,7 +34,28 @@ namespace Backend.Services
 
             var games = await _context.Games
                 .Where(g => favoriteGameIds.Contains(g.Id))
-                .Include(c => c.Covers)
+                .Include(g => g.GameType)
+                .Include(g => g.Covers)
+                .Include(g => g.Screenshots)
+                .Include(g => g.GameGenres).ThenInclude(gg => gg.Genre)
+                .Include(g => g.AltNames)
+                .Include(g => g.ReleaseDates).ThenInclude(rd => rd.Platform)
+                .Include(g => g.ReleaseDates).ThenInclude(rd => rd.ReleaseDateRegion)
+                .Include(g => g.GameAgeRatings).ThenInclude(gar => gar.AgeRating)
+                    .ThenInclude(ar => ar.AgeRatingCategory).ThenInclude(arc => arc.RatingOrganization)
+                .Include(g => g.GameFranchises).ThenInclude(gf => gf.Franchise)
+                .Include(g => g.GameModes).ThenInclude(gm => gm.GameMode)
+                .Include(g => g.GameCompanies).ThenInclude(gc => gc.Company).ThenInclude(c => c.GameCompanies)
+                .Include(g => g.GamePlayerPerspectives).ThenInclude(gpp => gpp.PlayerPerspective)
+                .Include(g => g.GameThemes).ThenInclude(gt => gt.Theme)
+                .Include(g => g.DlcGames).ThenInclude(dg => dg.DlcGame).ThenInclude(g => g.Covers)
+                .Include(g => g.ExpansionGames).ThenInclude(eg => eg.ExpansionGame).ThenInclude(g => g.Covers)
+                .Include(g => g.PortGames).ThenInclude(pg => pg.PortGame).ThenInclude(g => g.Covers)
+                .Include(g => g.RemakeGames).ThenInclude(rg => rg.RemakeGame).ThenInclude(g => g.Covers)
+                .Include(g => g.RemasterGames).ThenInclude(rg => rg.RemasterGame).ThenInclude(g => g.Covers)
+                .Include(g => g.SimilarGames).ThenInclude(sg => sg.SimilarGameRef).ThenInclude(g => g.Covers)
+                .Include(g => g.Likes)
+                .Include(g => g.Favorites)
                 .ToListAsync();
 
             var favoritesDto = new List<GameDto>();
@@ -166,6 +187,28 @@ namespace Backend.Services
 
             var games = await _context.Games
                 .Where(g => likedGameIds.Contains(g.Id))
+                .Include(g => g.GameType)
+                .Include(g => g.Covers)
+                .Include(g => g.Screenshots)
+                .Include(g => g.GameGenres).ThenInclude(gg => gg.Genre)
+                .Include(g => g.AltNames)
+                .Include(g => g.ReleaseDates).ThenInclude(rd => rd.Platform)
+                .Include(g => g.ReleaseDates).ThenInclude(rd => rd.ReleaseDateRegion)
+                .Include(g => g.GameAgeRatings).ThenInclude(gar => gar.AgeRating)
+                    .ThenInclude(ar => ar.AgeRatingCategory).ThenInclude(arc => arc.RatingOrganization)
+                .Include(g => g.GameFranchises).ThenInclude(gf => gf.Franchise)
+                .Include(g => g.GameModes).ThenInclude(gm => gm.GameMode)
+                .Include(g => g.GameCompanies).ThenInclude(gc => gc.Company).ThenInclude(c => c.GameCompanies)
+                .Include(g => g.GamePlayerPerspectives).ThenInclude(gpp => gpp.PlayerPerspective)
+                .Include(g => g.GameThemes).ThenInclude(gt => gt.Theme)
+                .Include(g => g.DlcGames).ThenInclude(dg => dg.DlcGame).ThenInclude(g => g.Covers)
+                .Include(g => g.ExpansionGames).ThenInclude(eg => eg.ExpansionGame).ThenInclude(g => g.Covers)
+                .Include(g => g.PortGames).ThenInclude(pg => pg.PortGame).ThenInclude(g => g.Covers)
+                .Include(g => g.RemakeGames).ThenInclude(rg => rg.RemakeGame).ThenInclude(g => g.Covers)
+                .Include(g => g.RemasterGames).ThenInclude(rg => rg.RemasterGame).ThenInclude(g => g.Covers)
+                .Include(g => g.SimilarGames).ThenInclude(sg => sg.SimilarGameRef).ThenInclude(g => g.Covers)
+                .Include(g => g.Likes)
+                .Include(g => g.Favorites)
                 .ToListAsync();
 
             var gameLikes = new List<GameDto>();

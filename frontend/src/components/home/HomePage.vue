@@ -12,6 +12,7 @@ import { useReviews } from '@/composables/reviews/useReviews'
 import { useReviewLikes } from '@/composables/reviews/useReviewLikes'
 import { useLists } from '@/composables/lists/useLists'
 import { useListLikes } from '@/composables/lists/useListLikes'
+import { socialService } from '@/services/socialService'
 
 const router = useRouter()
 const gamesStore = useGamesStore()
@@ -39,6 +40,11 @@ const loadingLists = ref(true)
 const listsLoadError = ref(false)
 const listsRetryAttempt = ref(0)
 const MAX_LISTS_RETRIES = 2
+
+// Popular Members State
+const popularMembers = ref([])
+const loadingMembers = ref(true)
+const membersLoadError = ref(false)
 
 const handleGameClick = (game) => {
   // Navigate to game details page using slug or id
@@ -173,35 +179,37 @@ const handleLikeList = async (list) => {
   })
 }
 
+// Load popular members from API
+const fetchPopularMembers = async () => {
+  try {
+    loadingMembers.value = true
+    membersLoadError.value = false
+
+    const result = await socialService.getAllUsers(1, 6)
+    popularMembers.value = result.data || []
+  } catch (error) {
+    console.error('Error loading popular members:', error)
+    membersLoadError.value = true
+    popularMembers.value = []
+  } finally {
+    loadingMembers.value = false
+  }
+}
+
+// Navigate to user profile
+const handleMemberClick = (member) => {
+  if (member.id) {
+    router.push({ name: 'UserProfile', params: { userId: member.id } })
+  }
+}
+
 // Load data on mount
 onMounted(() => {
   fetchPopularReviews()
   fetchRecentlyReviewedGames()
   fetchPopularLists()
+  fetchPopularMembers()
 })
-
-const popularMembers = [
-  {
-    name: 'Jane Doe',
-    avatar: 'https://api.builder.io/api/v1/image/assets/TEMP/55268c3c8278136914ad3fc2c8674959eedf6bde?width=192',
-  },
-  {
-    name: 'John Smith',
-    avatar: 'https://api.builder.io/api/v1/image/assets/TEMP/e91e04677d2fb3dd66f0821d210c18bb5acf9dfc?width=192',
-  },
-  {
-    name: 'Alex Ray',
-    avatar: 'https://api.builder.io/api/v1/image/assets/TEMP/36f7fe8b6319dee36537570df19423e5a9839fc0?width=192',
-  },
-  {
-    name: 'Sarah Chen',
-    avatar: 'https://api.builder.io/api/v1/image/assets/TEMP/4168d38c2da8f88eb2ceeb275fc9b4fe28bd94df?width=192',
-  },
-  {
-    name: 'Emily Carter',
-    avatar: 'https://api.builder.io/api/v1/image/assets/TEMP/22a1fed35e0669138b94ae7aaf974e82e9c56bcc?width=192',
-  },
-]
 </script>
 
 <template>
@@ -379,14 +387,49 @@ const popularMembers = [
     </div>
 
     <!-- Popular Members Section -->
-    <div class="flex justify-center px-4 md:px-8 lg:px-40 mt-8 pb-16">
+    <div v-if="!membersLoadError || loadingMembers || popularMembers.length > 0" class="flex justify-center px-4 md:px-8 lg:px-40 mt-8 pb-16">
       <div class="w-full max-w-1280">
-        <h3 class="font-newsreader text-2xl font-bold text-theme-text-primary dark:text-theme-text-primary-dark mb-4 border-b border-theme-border dark:border-theme-border-dark">Popular Members</h3>
-        <div class="flex flex-wrap justify-center gap-8">
-          <div v-for="(member, index) in popularMembers" :key="index" class="flex flex-col items-center">
-            <img :src="member.avatar" :alt="member.name" class="w-24 h-24 rounded-full mb-2" />
-            <p class="font-tinos text-base text-theme-text-primary dark:text-theme-text-primary-dark text-center">{{ member.name }}</p>
+        <div class="flex justify-between items-center mb-4 border-b border-theme-border dark:border-theme-border-dark pb-2">
+          <h3 class="font-newsreader text-2xl font-bold text-theme-text-primary dark:text-theme-text-primary-dark">Popular Members</h3>
+          <router-link
+            v-if="!loadingMembers && popularMembers.length > 0"
+            to="/members"
+            class="font-tinos text-base text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 hover:underline"
+          >
+            View All →
+          </router-link>
+        </div>
+
+        <!-- Loading Skeleton -->
+        <div v-if="loadingMembers" class="flex flex-wrap justify-center gap-8">
+          <div v-for="n in 5" :key="`skeleton-${n}`" class="flex flex-col items-center animate-pulse">
+            <div class="w-24 h-24 bg-gray-300 rounded-full mb-2"></div>
+            <div class="h-4 bg-gray-300 rounded w-20"></div>
           </div>
+        </div>
+
+        <!-- Members Grid -->
+        <div v-else-if="popularMembers.length > 0" class="flex flex-wrap justify-center gap-8">
+          <button
+            v-for="member in popularMembers"
+            :key="member.id"
+            @click="handleMemberClick(member)"
+            class="flex flex-col items-center group cursor-pointer transition-transform hover:scale-105"
+          >
+            <img
+              :src="member.profileImageUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(member.displayName || member.username)}&size=96&background=6c757d&color=ffffff`"
+              :alt="member.displayName || member.username"
+              class="w-24 h-24 rounded-full mb-2 border-4 border-theme-border dark:border-theme-border-dark group-hover:border-theme-btn-primary dark:group-hover:border-theme-btn-primary-dark transition-colors"
+            />
+            <p class="font-tinos text-base text-theme-text-primary dark:text-theme-text-primary-dark text-center group-hover:text-theme-btn-primary dark:group-hover:text-theme-btn-primary-dark transition-colors">
+              {{ member.displayName || member.username }}
+            </p>
+          </button>
+        </div>
+
+        <!-- Empty State -->
+        <div v-else-if="!loadingMembers && !membersLoadError" class="text-center py-12">
+          <p class="font-tinos text-lg text-theme-text-secondary dark:text-theme-text-secondary-dark">No members available yet.</p>
         </div>
       </div>
     </div>

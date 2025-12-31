@@ -25,12 +25,13 @@ namespace Backend.Controllers
         {
             try
             {
+                _logger.LogInformation("Fetching favorites for user {UserId}, page {Page}, pageSize {PageSize}", userId, page, pageSize);
                 var favorites = await _socialService.GetUserFavoritesAsync(userId, page, pageSize);
                 if (favorites == null || favorites.Count <= 0)
                 {
-                    return Ok(new ApiResponse<List<FavoriteDto>>
+                    return Ok(new ApiResponse<List<GameDto>>
                     {
-                        Success = false,
+                        Success = true,
                         Message = "No favorites found for this user",
                         Data = []
                     });
@@ -43,12 +44,12 @@ namespace Backend.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error fetching user favorites");
+                _logger.LogError(ex, "Error fetching user favorites for {UserId}: {ErrorMessage}. Stack: {StackTrace}", userId, ex.Message, ex.StackTrace);
                 return StatusCode(500, new ApiResponse<List<GameDto>>
                 {
                     Success = false,
                     Message = "An error occurred while fetching user favorites",
-                    Errors = [ex.Message]
+                    Errors = [ex.Message, ex.InnerException?.Message ?? ""]
                 });
             }
         }

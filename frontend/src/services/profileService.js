@@ -38,7 +38,7 @@ export const profileService = {
       if (!profileData || typeof profileData !== 'object') {
         throw new Error("Profile data must be an object")
       }
-      const response = await apiClient.put('/profile', profileData);
+      const response = await apiClient.put('/profile/update', profileData);
       return response.data
     } catch (error) {
       throw new Error(

@@ -294,7 +294,7 @@ const saveProfile = async (profileData) => {
       console.log('Profile updated successfully:', response.data)
       // Redirect to the intended route or dashboard
       //const redirect = route.query.redirect || '/dashboard'
-      router.push('/dashboard')
+      router.push('/home-page')
     } else {
       throw new Error(response.message || 'Failed to update profile')
     }

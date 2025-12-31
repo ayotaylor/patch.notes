@@ -11,6 +11,7 @@ const LoginComponent = () => import("@/components/home/LoginComponent.vue");
 const RegisterComponent = () => import("@/components/home/RegisterComponent.vue");
 const DashboardComponent = () => import("@/components/DashboardComponent.vue");
 const ProfileComponent = () => import("@/components/home/ProfileComponent.vue");
+const EditProfileComponent = () => import("@/components/home/EditProfileComponent.vue");
 // const GameDetailsComponent = () => import("@/components/GameDetailsComponent.vue"); // Old game details component
 const GameDetailsComponent = () => import("@/components/home/GameDetails.vue"); // New game details component
 const ReviewsListPage = () => import("@/components/home/ReviewsListPage.vue");
@@ -87,6 +88,16 @@ const routes = [
       requiresAuth: true,
       validateToken: "cache",
       title: "Profile - Patch Notes",
+    },
+  },
+  {
+    path: "/profile/edit",
+    name: "EditProfile",
+    component: EditProfileComponent,
+    meta: {
+      requiresAuth: true,
+      validateToken: "cache",
+      title: "Edit Profile - Patch Notes",
     },
   },
   {

@@ -52,7 +52,7 @@ export const socialService = {
 
       const response = await apiClient.post("/social/favorites", {
         //userId: userId,
-        gameId: gameId,
+        GameId: gameId,
       });
 
       return response.data.data;
@@ -83,7 +83,7 @@ export const socialService = {
       const response = await apiClient.delete("/social/favorites", {
         data: {
           //userId: userId,
-          gameId: gameId,
+          GameId: gameId,
         },
       });
 
@@ -150,7 +150,7 @@ export const socialService = {
 
       const response = await apiClient.post("/social/likes", {
         //userId: userId,
-        gameId: gameId,
+        GameId: gameId,
       });
 
       return response.data.data;
@@ -182,7 +182,7 @@ export const socialService = {
       const response = await apiClient.delete("/social/likes", {
         data: {
           //userId: userId,
-          gameId: gameId,
+          GameId: gameId,
         },
       });
 
