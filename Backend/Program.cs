@@ -14,6 +14,7 @@ using Backend.Services.Recommendation.Interfaces;
 using Backend.Configuration;
 using Qdrant.Client;
 using Qdrant.Client.Grpc;
+using Azure.Identity;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -117,6 +118,18 @@ builder.Services.AddOpenApi();
 // add db context for todo example
 //builder.Services.AddDbContext<TodoContext>(opt => opt.UseInMemoryDatabase("TodoList"));
 
+var keyVaultUrl = builder.Configuration["AzureKeyVaultUrl"];
+
+if (!string.IsNullOrEmpty(keyVaultUrl))
+{
+    // 2. We are in Production! Add Key Vault to the config providers.
+    // This will OVERWRITE the "DefaultConnection" from appsettings.Development.json
+    // with the "ConnectionStrings--DefaultConnection" secret from the Vault.
+    builder.Configuration.AddAzureKeyVault(
+        new Uri(keyVaultUrl), 
+        new DefaultAzureCredential());
+}
+
 // add db context for mysql
 // TODO: add connection string in cofnigguration
 var mySqlConnectionString = builder.Configuration.GetConnectionString("mysqldb");
@@ -193,7 +206,7 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowVueApp", policy =>
     {
-        policy.WithOrigins("http://localhost:8080", "http://localhost:3000")
+        policy.WithOrigins("http://localhost:8080", "http://localhost:3000", "https://www.patchnotes.cool")
             .AllowAnyHeader()
             .AllowAnyMethod()
             .AllowCredentials();
