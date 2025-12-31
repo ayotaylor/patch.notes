@@ -254,7 +254,11 @@ if (app.Environment.IsDevelopment())
     });
 }
 
-app.UseHttpsRedirection();
+// Azure Container Apps handles HTTPS at ingress - don't redirect in production
+if (app.Environment.IsDevelopment())
+{
+    app.UseHttpsRedirection();
+}
 
 app.UseCors("AllowVueApp");
 
